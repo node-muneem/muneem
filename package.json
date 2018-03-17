@@ -5,7 +5,8 @@
   "main": "src/muneem.js",
   "scripts": {
     "test": "jasmine tests/unit/*test.js",
-    "postinstall": "node tasks/postinstall.js"
+    "postinstall": "node tasks/postinstall.js",
+    "coverage": "nyc report --reporter=lcov npm test"
   },
   "author": "Amit Gupta (https://github.com/amitguptagwl)",
   "license": "MIT",
@@ -29,6 +30,7 @@
   },
   "dependencies": {
     "find-my-way": "^1.10.4",
+    "nyc": "^11.6.0",
     "yamljs": "^0.3.0"
   }
 }
