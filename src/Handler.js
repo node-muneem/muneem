@@ -1,0 +1,41 @@
+
+Handler.prototype.handle = function(){
+    this.name = name;
+}
+
+Handler.prototype.setHandler = function(handler){
+    if(this.inParallel){
+        this.handle =  function(){ 
+            const args = arguments; 
+            setTimeout(
+                function(){
+                    handler(...args)
+                }
+            ,0)
+        };
+    }else{
+        this.handle = handler;
+    }
+}
+
+function Handler(name, handler, options){
+    this.handler;
+    if(options){
+        this.handlesStream = options.handlesStream;
+        this.inParallel = options.inParallel;
+    }
+
+    if(typeof handler === "function" ){
+        this.setHandler(handler)
+    }else if(typeof handler === "object"){
+        if(handler.handle){
+            this.setHandler(handler.handle);
+        }else{
+            throw Error("Handler should have 'handle' method.");    
+        }
+    }else{
+        throw Error("Handler should be of object or function type only.");
+    }
+}
+
+module.exports = Handler;
