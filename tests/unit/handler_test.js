@@ -4,20 +4,20 @@ describe ('Handler', () => {
     it('should throw error for invalid type', () => {
         
         expect(() => {
-            new Handler("test", "invalid");
+            new Handler("invalid");
         }).toThrowError("Handler should be of object or function type only.");
     });
 
     it('should throw error when given handler don\'t have handle method for invalid type', () => {
         
         expect(() => {
-            new Handler("test", {});
+            new Handler({});
         }).toThrowError("Handler should have 'handle' method.");
     });
 
     it('should create handler to run in sequence', () => {
         const handler = () => { return 56;};
-        const appHandler = new Handler("test", handler );
+        const appHandler = new Handler(handler );
 
         expect(appHandler.handle()).toEqual(56);
         expect(appHandler.handlesStream).toEqual(undefined);
@@ -28,7 +28,7 @@ describe ('Handler', () => {
         const handler = {
             handle : () => { return 56;}
         };
-        const appHandler = new Handler("test", handler, {
+        const appHandler = new Handler(handler, {
             handlesStream : true
         } );
 
@@ -39,13 +39,13 @@ describe ('Handler', () => {
 
     it('should create handler from an object to run in parallel', (done) => {
         const handler = {
-            handle : () => { done(); return 56;}
+            handle : (a) => { done(); return a;}
         };
-        const appHandler = new Handler("test", handler, {
+        const appHandler = new Handler(handler, {
             inParallel : true
         } );
 
-        appHandler.handle();
+        appHandler.handle(56);
         expect(appHandler.handlesStream).toEqual(undefined);
         expect(appHandler.inParallel).toEqual(true);
     });
