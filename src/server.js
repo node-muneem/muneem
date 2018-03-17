@@ -14,7 +14,7 @@ Server.prototype.close = function(){
     this.server.close();
 }
 
-function networkErrHandler(err,port,host) {
+function networkErrHandler(err,port,host,server) {
 	let msg;
 	switch (err.code) {
 	    case 'EACCES':
@@ -29,7 +29,7 @@ function networkErrHandler(err,port,host) {
 	    default:
 	      msg = err.message;
     }
-    this.server.unref();
+    server.unref();
     //console.log(color(msg,'red'));
     console.log(msg);
 }
@@ -40,15 +40,17 @@ const defaultOptions = {
 }
 function Server(options,requestResponseHandler,eventEmitter){
     this.options = Object.assign({},defaultOptions,options);
+    options = this.options;
     this.eventEmitter = eventEmitter;
 
     this.server = http.createServer((req,res) => {
         requestResponseHandler.lookup(req,res);
     });
+    const sLocal = this.server;
     //this.server.on('request', requestResponseHandler);
     this.server.on('error', function(err){
 		eventEmitter.emit('onServerError');
-		networkErrHandler(err,port,host);
+		networkErrHandler(err,options.port,options.host,sLocal);
 	});
 }
 

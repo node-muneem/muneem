@@ -24,7 +24,7 @@ function getFilePath(filepath){
         return filepath;
     }
 
-    throw Error("Path for mapping files/folder should either be absolute or relative to project directory.")
+    throw Error("Path for mapping files/folder should either be absolute or relative to project directory: " + filepath)
 }
 
 /**
