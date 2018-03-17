@@ -19,7 +19,6 @@ Handler.prototype.setHandler = function(handler){
 }
 
 function Handler(name, handler, options){
-    this.handler;
     if(options){
         this.handlesStream = options.handlesStream;
         this.inParallel = options.inParallel;
