@@ -1,13 +1,30 @@
 {
   "name": "muneem",
   "version": "1.0.0",
-  "description": "simple server",
-  "main": "index.js",
+  "description": "A framework to write fast web services in easy way. Designed for developers, QAs, Maintainers, and BAs",
+  "main": "src/muneem.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Amit Gupta",
+  "author": "Amit Gupta (https://github.com/amitguptagwl)",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/muneem4node/muneem.git"
+  },
+  "bugs": {
+    "url": "https://github.com/muneem4node/muneem/issues"
+  },
+  "homepage": "https://github.com/muneem4node/muneem",
+  "keywords": [
+    "REST",
+    "HTTP",
+    "web services",
+    "server"
+  ],
+  "devDependencies": {
+    "mocha": "^5.0.4"
+  },
   "dependencies": {
     "find-my-way": "^1.10.4",
     "yamljs": "^0.3.0"
