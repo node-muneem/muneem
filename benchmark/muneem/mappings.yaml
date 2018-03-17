@@ -1,0 +1,5 @@
+- route: 
+    uri: /sample
+    to: main
+    after: [ preStream, parallel ]
+    then: [ post ]
