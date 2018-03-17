@@ -23,7 +23,8 @@
     "server"
   ],
   "devDependencies": {
-    "mocha": "^5.0.4"
+    "jasmine": "^3.1.0",
+    "jasmine-core": "^3.1.0"
   },
   "dependencies": {
     "find-my-way": "^1.10.4",
