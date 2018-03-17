@@ -19,11 +19,6 @@ function getFilePath(filepath){
         return filepath;
     }
 
-    filepath = path.join(process.cwd() , filepath);
-    if (fs.existsSync(filepath)) {
-        return filepath;
-    }
-
     throw Error("Path for mapping files/folder should either be absolute or relative to project directory: " + filepath)
 }
 

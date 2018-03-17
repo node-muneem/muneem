@@ -1,5 +1,7 @@
+const path = require("path");
+
 const muneem = require("../../src/muneem")({
-    mappings : "/muneem/mappings.yaml"
+    mappings : path.join(__dirname, "mappings.yaml")
 });
 
 muneem.handlers.add("preStream", (req,params,routeMapping) => {

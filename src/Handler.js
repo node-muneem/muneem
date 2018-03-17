@@ -1,8 +1,4 @@
 
-Handler.prototype.handle = function(){
-    this.name = name;
-}
-
 Handler.prototype.setHandler = function(handler){
     if(this.inParallel){
         this.handle =  function(){ 
@@ -18,7 +14,7 @@ Handler.prototype.setHandler = function(handler){
     }
 }
 
-function Handler(name, handler, options){
+function Handler(handler, options){
     if(options){
         this.handlesStream = options.handlesStream;
         this.inParallel = options.inParallel;
