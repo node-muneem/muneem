@@ -35,6 +35,7 @@ function HttpAnswer(res){
     this.setHeader = res.setHeader;
     
     this.encoding = "utf8";
+    this.nativeResponse.statusCode = 200;
     //this.stream
     //this.data
 }
