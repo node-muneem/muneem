@@ -42,13 +42,13 @@ describe ('HandlersMap', () => {
 
     });
 
-    it('should not add a handler with same name', () => {
+    /* it('should not add a handler with same name', () => {
         
         expect(() => {
             const map = new HandlersMap();
             map.add("test", () => 35);
             map.add("test", () => 38);
         }).toThrowError("You've already added a handler with same name test");
-    });
+    }); */
 
 });

@@ -3,7 +3,8 @@ const Handler = require("./Handler");
 
 HandlersMap.prototype.add = function(name,handler,options){
     if(this.handlers[name]) {
-        throw Error("You've already added a handler with same name " + name);
+        //TODO: logger
+        console.log(name + " handler have replaced old mapping");
     }else{
         this.handlers[name] = new Handler(handler,options);
         return this.handlers[name];
