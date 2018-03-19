@@ -26,11 +26,11 @@
   ],
   "devDependencies": {
     "jasmine": "^3.1.0",
-    "jasmine-core": "^3.1.0"
+    "jasmine-core": "^3.1.0",
+    "nyc": "^11.6.0"
   },
   "dependencies": {
     "find-my-way": "^1.10.4",
-    "nyc": "^11.6.0",
     "yamljs": "^0.3.0"
   }
 }
