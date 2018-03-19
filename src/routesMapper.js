@@ -68,15 +68,7 @@ const loadRoutesFrom = function(router,routes,handlers,profile){
 
             router.on(route.when,route.uri, function(nativeRequest,nativeResponse,params){
                 const ans = new HttpAnswer(nativeResponse);
-                var parsedURL = url.parse(nativeRequest.url, true);
-                const req = {
-                    url: parsedURL.pathname,
-                    query : parsedURL.query,
-                    params : params,
-                    nativeRequest : nativeRequest,
-                    mapping: route,
-                    body: ''
-                }
+                const req = buildRequestWrapper(nativeRequest);
                 
                 //operation on request stream
 
@@ -94,39 +86,9 @@ const loadRoutesFrom = function(router,routes,handlers,profile){
                 nativeRequest.on('error', function(err) {
                     //logger.error(msg);
                 });
-
-                let contentLength = 0;
-                if(routeHandlers.reqDataStreamHandler){
-                    if(routeHandlers.reqDataStreamHandler.before){
-                        routeHandlers.reqDataStreamHandler.before(req,ans);
-                        if(ans.answered)  return;
-                    }
-
-                    nativeRequest.on('data', function(chunk) {
-                            routeHandlers.reqDataStreamHandler.handle(chunk);
-                            if(ans.answered){
-                                nativeRequest.removeAllListeners();
-                                //nativeRequest.removeListener('data', dataListener)
-                                //nativeRequest.removeListener('end', endListener)
-                            }  
-                    })
-                }else if(routeHandlers.reqDataHandlers.length > 0){
-                    //User may want to take multiple decisions instead of just refusing the request and closing the connection
-                    nativeRequest.on('data', function(chunk) {
-                        if(contentLength < route.maxLength){
-                            contentLength += chunk.length;
-                            req.body += chunk;//TODO: ask user if he wants Buffer array
-                        }else{
-                            //TODO: eventEmitter.emit("exceedContentLength")
-                            handlers.get("__exceedContentLength").handle(req,ans);
-
-                        }
-                    })  
-                }else{
-                    //Don't read the request body
-                }
                 
-                
+                handleRequestPayloadStream(nativeRequest, req, ans, routeHandlers);
+
                 nativeRequest.on('end', function() {
                     //TODO: do the conversion on demand
                     //nativeRequest.rawBody = Buffer.concat(body);
@@ -174,6 +136,60 @@ const loadRoutesFrom = function(router,routes,handlers,profile){
     }
 }
 
+/**
+ * If there is a stream handler attached to current route then call it on when request payload chunks are received.
+ * If there is no stream handler and data handler then there is no need to read the request body
+ * @param {*} nativeRequest 
+ * @param {*} wrappedRequest 
+ * @param {*} ans 
+ * @param {*} routeHandlers 
+ */
+function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHandlers){
+
+    let contentLength = 0;
+    if(routeHandlers.reqDataStreamHandler){
+        if(routeHandlers.reqDataStreamHandler.before){
+            routeHandlers.reqDataStreamHandler.before(wrappedRequest,ans);
+            if(ans.answered) nativeRequest.removeAllListeners();
+        }
+
+        nativeRequest.on('data', function(chunk) {
+                routeHandlers.reqDataStreamHandler.handle(chunk);
+                if(ans.answered){
+                    nativeRequest.removeAllListeners();
+                    //nativeRequest.removeListener('data', dataListener)
+                    //nativeRequest.removeListener('end', endListener)
+                }  
+        })
+    }else if(routeHandlers.reqDataHandlers.length > 0){
+        //User may want to take multiple decisions instead of just refusing the request and closing the connection
+        nativeRequest.on('data', function(chunk) {
+            if(contentLength < route.maxLength){
+                contentLength += chunk.length;
+                req.body += chunk;//TODO: ask user if he wants Buffer array
+            }else{
+                //TODO: eventEmitter.emit("exceedContentLength")
+                handlers.get("__exceedContentLength").handle(wrappedRequest,ans);
+
+            }
+        })  
+    }else{
+        //Don't read the request body
+    }
+}
+
+function buildRequestWrapper(request){
+    var parsedURL = url.parse(request.url, true);
+    return {
+        url: parsedURL.pathname,
+        query : parsedURL.query,
+        params : params,
+        nativeRequest : request,
+        mapping: route,
+        body: ''
+    }
+}
+
 function extractHandlersFromRoute(route,handlers){
     const routeHandlers = {
         reqHandlers : [],
@@ -181,7 +197,6 @@ function extractHandlersFromRoute(route,handlers){
         reqDataHandlers : [],
         resHandlers : []
     }
-    
 
     //Prepare the list of handler need to be called before
     if(route.after){
