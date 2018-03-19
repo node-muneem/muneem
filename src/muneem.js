@@ -5,7 +5,7 @@ var events = require('events');
 
 
 Muneem.prototype.createServer = function(options){
-    mapRoutes(this.router,this.options.mappings,this.handlers, this.options.profile);
+    mapRoutes(this.router,this.options.mappings,this.handlers);
     return new Server(options, this.router, this.eventEmitter);
 }
 
@@ -18,6 +18,7 @@ function Muneem(options){
         //maxParamLength: 500, //default is 100
     } */);
 }
+
 
 module.exports = function(options){
     return new Muneem(options);

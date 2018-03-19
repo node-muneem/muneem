@@ -6,10 +6,11 @@ HandlersMap.prototype.add = function(name,handler,options){
         throw Error("You've already added a handler with same name " + name);
     }else{
         this.handlers[name] = new Handler(handler,options);
+        return this.handlers[name];
     }
 }
 
-HandlersMap.prototype.removeIfExist = function(name){
+/* HandlersMap.prototype.removeIfExist = function(name){
     if(this.handlers[name]){
         delete this.handlers[name];
     }
@@ -17,7 +18,7 @@ HandlersMap.prototype.removeIfExist = function(name){
 
 HandlersMap.prototype.remove = function(name){
     delete this.handlers[name];
-}
+} */
 
 HandlersMap.prototype.get = function(name){
     return this.handlers[name];

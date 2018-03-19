@@ -1,0 +1,4 @@
+- route: 
+    uri: /unknown
+    to: main
+    then: [ unknown ]

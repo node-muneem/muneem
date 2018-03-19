@@ -1,0 +1,41 @@
+- route: 
+    uri: /without/pre/handlers
+    to: main
+    then: [ post ]
+
+- route: 
+    uri: /without/post/handlers
+    to: main
+    after: [ auth, parallel ]
+
+- route: 
+    uri: /with/pre/post/handlers
+    to: main
+    after: [ auth, parallel ]
+    then: [ post ]
+
+- route: 
+    uri: /without/pre/post/handlers
+    #in: all
+    to: main
+
+- route: 
+    uri: /in/test
+    in: test
+    to: main
+  
+- route: 
+    uri: /in/dev
+    in: dev
+    to: main
+
+#methods
+- route: 
+    uri: /post
+    to: main
+    when: POST
+
+- route: 
+    uri: /multiple/methods
+    to: main
+    when: ["POST" , "PUT"]

@@ -20,7 +20,7 @@ describe ('Handler', () => {
         const appHandler = new Handler(handler );
 
         expect(appHandler.handle()).toEqual(56);
-        expect(appHandler.handlesStream).toEqual(undefined);
+        //expect(appHandler.handlesStream).toEqual(undefined);
         expect(appHandler.inParallel).toEqual(undefined);
     });
 
@@ -28,12 +28,11 @@ describe ('Handler', () => {
         const handler = {
             handle : () => { return 56;}
         };
-        const appHandler = new Handler(handler, {
-            handlesStream : true
-        } );
+        const appHandler = new Handler(handler);
+        appHandler.toHandle("requestDataStream");
 
         expect(appHandler.handle()).toEqual(56);
-        expect(appHandler.handlesStream).toEqual(true);
+        expect(appHandler.type).toEqual("requestDataStream");
         expect(appHandler.inParallel).toEqual(undefined);
     });
 

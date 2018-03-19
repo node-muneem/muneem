@@ -1,4 +1,20 @@
 
+const types = ["request", "requestDataStream", "requestData", "response"];
+/**
+ * A handler can handle request, requestDataStream, requestData, or response
+ * @param {string} type 
+ */
+Handler.prototype.toHandle = function(type){
+    if(types.indexOf(type) === -1){
+        throw Error("Invalid type " + type);    
+    }
+
+    /* if(type !== "request" && this.inParallel){
+        throw Error( type + " handler are not allowed to run side by side");
+    } */
+    this.type = type;
+}
+
 Handler.prototype.setHandler = function(handler){
     if(this.inParallel){
         this.handle =  function(){ 
@@ -16,7 +32,7 @@ Handler.prototype.setHandler = function(handler){
 
 function Handler(handler, options){
     if(options){
-        this.handlesStream = options.handlesStream;
+        //this.handlesStream = options.handlesStream;
         this.inParallel = options.inParallel;
     }
 
@@ -31,6 +47,8 @@ function Handler(handler, options){
     }else{
         throw Error("Handler should be of object or function type only.");
     }
+
+    this.type = "requestData";
 }
 
 module.exports = Handler;

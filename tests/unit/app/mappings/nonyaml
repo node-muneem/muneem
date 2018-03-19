@@ -1,0 +1,15 @@
+- route: 
+    uri: /without/pre/handlers
+    to: main
+    then: [ post ]
+
+- route: 
+    uri: /without/post/handlers
+    to: main
+    after: [ auth, parallel ]
+
+- route: 
+    uri: /with/pre/post/handlers
+    to: main
+    after: [ auth, parallel ]
+    then: [ post ]

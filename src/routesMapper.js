@@ -1,18 +1,8 @@
 const YAML = require('yamljs');
 const fs = require('fs');
 const path = require('path');
+var url = require('url');
 const HttpAnswer = require('./HttpAnswer');
-
-
-/**
- * Read files from a directory
- */
-const ls = function(dirpath){
-	if(exports.isExist(dirpath)){
-		return fs.readdirSync(dirpath);
-	}
-	return [];
-}
 
 function getFilePath(filepath){
     if (fs.existsSync(filepath)) {
@@ -29,16 +19,32 @@ function getFilePath(filepath){
  * @param {*} handlers 
  * @param {string} profile 
  */
-const mapRoutes = function(router,filepath,handlers,profile){
+const mapRoutes = function(router,filepath,handlers){
+    const profile = process.env.NODE_ENV;
     filepath = getFilePath(filepath);
     if(fs.lstatSync(filepath).isDirectory()){
-        const files = ls(filepath);
-        for(let file in files){
-            if(file.endsWith(".yaml"))
-                loadRoutesFrom(router,file,handlers,profilefile);
+        const files = fs.readdirSync(filepath);
+        for(let index in files){
+            const fPath = path.join(filepath,files[index]);
+            if(!fs.lstatSync(fPath).isDirectory() && fPath.endsWith(".yaml")){
+                const routes = readRoutesFromFile(fPath);
+                routes && loadRoutesFrom(router,routes,handlers,profile);
+            }
         }
     }else{
-        loadRoutesFrom(router,filepath,handlers,profile);
+        const routes = readRoutesFromFile(filepath);
+        routes && loadRoutesFrom(router,routes,handlers,profile);
+    }
+}
+
+function readRoutesFromFile(filepath){
+    try{
+        //TODO : log total mappings
+        return YAML.parseFile(filepath);
+    }catch(e){
+        //TODO: use logger
+        console.log( filepath + " is an invalid Yaml file or have syntatx issues.");
+        console.log( e);
     }
 }
 
@@ -49,93 +55,116 @@ const mapRoutes = function(router,filepath,handlers,profile){
  * @param {*} handlers 
  * @param {string} profile 
  */
-const loadRoutesFrom = function(router,filepath,handlers,profile){
-    let routes;
-    try{
-    routes = YAML.parseFile(filepath);
-    }catch(e){
-        //TODO: use logger
-        console.log( filepath + " is an invalid Yaml file or have syntatx issues.");
-        console.log( e);
-        return;
-    }
-    const len = routes.length;
-    //TODO : log total mappings
-    for(let index=0;index<len;index++){
+const loadRoutesFrom = function(router,routes,handlers,profile){
+    
+    for(let index=0;index<routes.length;index++){
         const route = routes[index].route;
         if(route.in && route.in.indexOf(profile) === -1){
             continue; //skip mapping for other environments
         }else{
-            let streamHandlers = [],  preHandlers = [], postHandlers = [];
+            const routeHandlers = extractHandlersFromRoute(route,handlers);
 
-            //Prepare the list of handler need to be called before
-            if(route.after){
-                for(let i=0;i<route.after.length;i++){
-                    const handler = handlers.get(route.after[i]);
-                    if(!handler) throw Error("Unregistered handler " + router.after[i]);
-
-                    if(handler.handlesStream){
-                        if(preHandlers.length > 0){
-                            throw Error("MappingError: stream handlers should be called before.")
-                        }else{
-                            streamHandlers.push(handler);
-                        }
-                    }else{
-                        preHandlers.push(handler);
-                    }
-                }
-            }
-
-            //Prepare the list of handler need to be called after
-            if(route.then){
-                for(let i=0;i<route.then.length;i++){
-                    const handler = handlers.get(route.then[i]);
-                    if(!handler) throw Error("Unregistered handler " + route.then[i]);
-
-                    postHandlers.push(handler);
-                }
-            }
             route.when = route.when || "GET";//set default
 
-            router.on(route.when,route.uri, function(req,res,params){
-                const ans = new HttpAnswer(res);
+            router.on(route.when,route.uri, function(nativeRequest,nativeResponse,params){
+                const ans = new HttpAnswer(nativeResponse);
+                var parsedURL = url.parse(nativeRequest.url, true);
+                const req = {
+                    url: parsedURL.pathname,
+                    query : parsedURL.query,
+                    params : params,
+                    nativeRequest : nativeRequest,
+                    mapping: route,
+                    body: ''
+                }
+                
                 //operation on request stream
-                for(let i=0; i<streamHandlers.length;i++){
-                    streamHandlers[i].handle(req/* ,ans */,params,route/* , ...streamHandlers[i].with */);
+
+                for(let i=0; i<routeHandlers.reqHandlers.length;i++){
+                    routeHandlers.reqHandlers[i].handle(req ,ans);
+                    if(ans.answered)  return;
                 }
 
-                let body = [];
-                req.on('error', function(err) {
+                //need not to read the request body
+                // if the method is HEAD or GET
+                // if there is no main and post handler
+                // if some prehandler has already sent the response
+                // instead end the response
+
+                nativeRequest.on('error', function(err) {
                     //logger.error(msg);
-                }).on('data', function(chunk) {
-                    body.push(chunk);
-                }).on('end', function() {
-                    req.rawBody = Buffer.concat(body);
-                    req.body = req.rawBody.toString();
+                });
+
+                let contentLength = 0;
+                if(routeHandlers.reqDataStreamHandler){
+                    if(routeHandlers.reqDataStreamHandler.before){
+                        routeHandlers.reqDataStreamHandler.before(req,ans);
+                        if(ans.answered)  return;
+                    }
+
+                    nativeRequest.on('data', function(chunk) {
+                            routeHandlers.reqDataStreamHandler.handle(chunk);
+                            if(ans.answered){
+                                nativeRequest.removeAllListeners();
+                                //nativeRequest.removeListener('data', dataListener)
+                                //nativeRequest.removeListener('end', endListener)
+                            }  
+                    })
+                }else if(routeHandlers.reqDataHandlers.length > 0){
+                    //User may want to take multiple decisions instead of just refusing the request and closing the connection
+                    nativeRequest.on('data', function(chunk) {
+                        if(contentLength < route.maxLength){
+                            contentLength += chunk.length;
+                            req.body += chunk;//TODO: ask user if he wants Buffer array
+                        }else{
+                            //TODO: eventEmitter.emit("exceedContentLength")
+                            handlers.get("__exceedContentLength").handle(req,ans);
+
+                        }
+                    })  
+                }else{
+                    //Don't read the request body
+                }
+                
+                
+                nativeRequest.on('end', function() {
+                    //TODO: do the conversion on demand
+                    //nativeRequest.rawBody = Buffer.concat(body);
+                    //nativeRequest.body = nativeRequest.rawBody.toString();
+
+                    if(routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.before){
+                        routeHandlers.reqDataStreamHandler.after(req,ans);
+                        if(ans.answered)  return;
+                    }
 
                     //operation on request body
-                    for(let i=0; i<preHandlers.length;i++){
-                        preHandlers[i].handle(req/* ,ans */,params,route/* , ...preHandlers[i].with */);
+                    for(let i=0; i<routeHandlers.reqDataHandlers.length;i++){
+                        routeHandlers.reqDataHandlers[i].handle(req ,ans);
+                        if(ans.answered)  return;
                     }
                     
-                    handlers.get(route.to).handle(req,ans,params,route/* , ...handler(route.to).with */);
+                    handlers.get(route.to).handle(req,ans);
+                    if(ans.answered()) return;
 
                     //operation on respoonse
-                    for(let i=0; i<postHandlers.length;i++){
-                        if(ans.sent()){
-                            break;
-                        }
-                        postHandlers[i].handle(req,ans,params,route/* , ...postHandlers[i].with */);
+                    for(let i=0; i<routeHandlers.resHandlers.length;i++){
+                        routeHandlers.resHandlers[i].handle(req,ans);
+                        if(ans.answered()) return;
                     }
 
-                    if(!ans.sent()){//To confirm if some naughty postHandler has already answered
+                    if(!ans.answered()){//To confirm if some naughty postHandler has already answered
                         if(ans.stream){
-                            ans.stream.pipe(res);
+                            ans.stream.pipe(nativeResponse);
                         }else{
-                            if(ans.data){
-                                res.write(ans.data, ans.encoding);	
+                            if(ans.data !== undefined){
+                                if(typeof ans.data !== "string"){
+                                    //TODO: report to logger
+                                    console.log("response should be serialized to string for " + JSON.stringify(route,null,4));
+                                }else{
+                                    nativeResponse.write(ans.data, ans.encoding);	
+                                }
                             }
-                            res.end();	
+                            nativeResponse.end();	
                         }
                     }
 
@@ -143,6 +172,49 @@ const loadRoutesFrom = function(router,filepath,handlers,profile){
             })//router ends
         }
     }
+}
+
+function extractHandlersFromRoute(route,handlers){
+    const routeHandlers = {
+        reqHandlers : [],
+        reqDataStreamHandler: undefined,
+        reqDataHandlers : [],
+        resHandlers : []
+    }
+    
+
+    //Prepare the list of handler need to be called before
+    if(route.after){
+        for(let i=0;i<route.after.length;i++){
+            const handler = handlers.get(route.after[i]);
+            if(!handler) throw Error("Unregistered handler " + router.after[i]);
+
+            if(handler.type === "requestDataStream"){
+                if(routeHandlers.reqDataHandlers.length > 0){
+                    throw Error("MappingError: Request Stream handler should be called before.");
+                }else if(routeHandlers.reqDataStreamHandler){
+                    throw Error("MappingError: There is only one request stream handler per mapping allowed.");
+                }else{
+                    routeHandlers.reqDataStreamHandler = handler;
+                }
+            }else if(handler.type === "requestData"){
+                routeHandlers.reqDataHandlers.push(handler);
+            }else/*   if(handler.type === "request") */{
+                routeHandlers.reqHandlers.push(handler);
+            }
+        }
+    }
+
+    //Prepare the list of handler need to be called after
+    if(route.then){
+        for(let i=0;i<route.then.length;i++){
+            const handler = handlers.get(route.then[i]);
+            if(!handler) throw Error("Unregistered handler " + route.then[i]);
+            routeHandlers.resHandlers.push(handler);
+        }
+    }
+
+    return routeHandlers;
 }
 
 exports.mapRoutes = mapRoutes;
