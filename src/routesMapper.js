@@ -114,14 +114,20 @@ const loadRoutesFrom = function(router,routes,handlers,profile,options){
                     }
 
                     if(!ans.answered()){//To confirm if some naughty postHandler has already answered
-                        if(ans.stream){
-                            ans.stream.pipe(nativeResponse);
+                        if(ans.data && ans.data.pipe && typeof ans.data.pipe === "function"){//stream
+                            ans.data.pipe(nativeResponse);
                         }else{
                             if(ans.data !== undefined){
-                                if(typeof ans.data !== "string"){
+                                if(typeof ans.data !== "string" && !Buffer.isBuffer(ans.data)){
                                     //TODO: report to logger
-                                    console.log("response should be serialized to string for " + JSON.stringify(route,null,4));
+                                    console.log("Sorry!! Only string, buffer, or stream is expected to send as a response.");
+                                    console.log("Hint! check mapping ", JSON.stringify(route,null,4));
                                 }else{
+
+                                    if (!ans.getHeader('Content-Length') || !ans.getHeader('content-length')) {
+                                        ans.setHeader('Content-Length', '' + Buffer.byteLength(ans.data));
+                                    }
+
                                     nativeResponse.write(ans.data, ans.encoding);	
                                 }
                             }
