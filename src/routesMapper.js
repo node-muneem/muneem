@@ -63,8 +63,12 @@ const loadRoutesFrom = function(router,routes,handlers,profile,options){
             continue; //skip mapping for other environments
         }else{
             route.when = route.when || "GET";//set default
+            route.maxLength = route.maxLength || 1e6; //set 1mb default
             const routeHandlers = extractHandlersFromRoute(route,handlers,options);
 
+            //read request body when there is at least one handler to handle it
+            const readRequestBody = routeHandlers.reqDataHandlers.length > 0 
+                    || (routeHandlers.mainHandler && routeHandlers.mainHandler.type === "requestData");
 
             router.on(route.when,route.uri, function(nativeRequest,nativeResponse,params){
                 const ans = new HttpAnswer(nativeResponse);
@@ -86,16 +90,17 @@ const loadRoutesFrom = function(router,routes,handlers,profile,options){
                 nativeRequest.on('error', function(err) {
                     //logger.error(msg);
                 });
-                handleRequestPayloadStream(nativeRequest, req, ans, routeHandlers);
+                handleRequestPayloadStream(nativeRequest, req, ans, routeHandlers, readRequestBody);
 
                 nativeRequest.on('end', function() {
                     //TODO: do the conversion on demand
                     //nativeRequest.rawBody = Buffer.concat(body);
-                    //nativeRequest.body = nativeRequest.rawBody.toString();
 
-                    if(routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.before){
+                    if(routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.after){
                         routeHandlers.reqDataStreamHandler.after(req,ans);
                         if(ans.answered())  return;
+                    }else{
+                        req.body = req.body || Buffer.concat(req.body);
                     }
 
                     //operation on request body
@@ -104,7 +109,7 @@ const loadRoutesFrom = function(router,routes,handlers,profile,options){
                         if(ans.answered())  return;
                     }
                     
-                    handlers.get(route.to).handle(req,ans);
+                    if(routeHandlers.mainHandler) routeHandlers.mainHandler.handle(req,ans);
                     if(ans.answered()) return;
 
                     //operation on respoonse
@@ -149,7 +154,7 @@ const loadRoutesFrom = function(router,routes,handlers,profile,options){
  * @param {*} ans 
  * @param {*} routeHandlers 
  */
-function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHandlers){
+function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHandlers, readRequestBody){
 
     let contentLength = 0;
     if(routeHandlers.reqDataStreamHandler){
@@ -166,12 +171,12 @@ function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHan
                     //nativeRequest.removeListener('end', endListener)
                 }  
         })
-    }else if(routeHandlers.reqDataHandlers.length > 0){
+    }else if(readRequestBody){
         //User may want to take multiple decisions instead of just refusing the request and closing the connection
         nativeRequest.on('data', function(chunk) {
             if(contentLength < route.maxLength){
                 contentLength += chunk.length;
-                req.body += chunk;//TODO: ask user if he wants Buffer array
+                req.body.push(chunk);//TODO: ask user if he wants Buffer array
             }else{
                 //TODO: eventEmitter.emit("exceedContentLength")
                 handlers.get("__exceedContentLength").handle(wrappedRequest,ans);
@@ -191,7 +196,7 @@ function buildRequestWrapper(request,params,route){
         params : params,
         nativeRequest : request,
         mapping: route,
-        body: ''
+        body: []
     }
 }
 
@@ -200,7 +205,8 @@ function extractHandlersFromRoute(route,handlers,options){
         reqHandlers : [],
         reqDataStreamHandler: undefined,
         reqDataHandlers : [],
-        resHandlers : []
+        resHandlers : [],
+        mainHandler: undefined
     }
 
     //Prepare the list of handler need to be called before
@@ -242,6 +248,21 @@ function extractHandlersFromRoute(route,handlers,options){
             routeHandlers.resHandlers.push(handler);
         }
     }
+
+    if(route.to){
+        const mainHandler = handlers.get(route.to);
+        if(mainHandler.type === "requestDataStream"){
+            if(routeHandlers.reqDataStreamHandler){
+                throw Error("MappingError: There is only one request stream handler per mapping allowed.");
+            }else{
+                routeHandlers.reqDataStreamHandler = mainHandler;
+                routeHandlers.mainHandler  = undefined;
+            }
+        }else{
+            routeHandlers.mainHandler = mainHandler;
+        }
+    }
+        
 
     return routeHandlers;
 }
