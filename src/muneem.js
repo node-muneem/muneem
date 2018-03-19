@@ -5,7 +5,7 @@ var events = require('events');
 
 
 Muneem.prototype.createServer = function(options){
-    mapRoutes(this.router,this.options.mappings,this.handlers);
+    mapRoutes(this.router,this.options,this.handlers);
     return new Server(options, this.router, this.eventEmitter);
 }
 

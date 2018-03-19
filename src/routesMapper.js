@@ -19,21 +19,21 @@ function getFilePath(filepath){
  * @param {*} handlers 
  * @param {string} profile 
  */
-const mapRoutes = function(router,filepath,handlers){
+const mapRoutes = function(router,options,handlers){
     const profile = process.env.NODE_ENV;
-    filepath = getFilePath(filepath);
+    filepath = getFilePath(options.mappings);
     if(fs.lstatSync(filepath).isDirectory()){
         const files = fs.readdirSync(filepath);
         for(let index in files){
             const fPath = path.join(filepath,files[index]);
             if(!fs.lstatSync(fPath).isDirectory() && fPath.endsWith(".yaml")){
                 const routes = readRoutesFromFile(fPath);
-                routes && loadRoutesFrom(router,routes,handlers,profile);
+                routes && loadRoutesFrom(router,routes,handlers,profile,options);
             }
         }
     }else{
         const routes = readRoutesFromFile(filepath);
-        routes && loadRoutesFrom(router,routes,handlers,profile);
+        routes && loadRoutesFrom(router,routes,handlers,profile,options);
     }
 }
 
@@ -55,16 +55,16 @@ function readRoutesFromFile(filepath){
  * @param {*} handlers 
  * @param {string} profile 
  */
-const loadRoutesFrom = function(router,routes,handlers,profile){
+const loadRoutesFrom = function(router,routes,handlers,profile,options){
     
     for(let index=0;index<routes.length;index++){
         const route = routes[index].route;
         if(route.in && route.in.indexOf(profile) === -1){
             continue; //skip mapping for other environments
         }else{
-            const routeHandlers = extractHandlersFromRoute(route,handlers);
-
             route.when = route.when || "GET";//set default
+            const routeHandlers = extractHandlersFromRoute(route,handlers,options);
+
 
             router.on(route.when,route.uri, function(nativeRequest,nativeResponse,params){
                 const ans = new HttpAnswer(nativeResponse);
@@ -189,7 +189,7 @@ function buildRequestWrapper(request,params,route){
     }
 }
 
-function extractHandlersFromRoute(route,handlers){
+function extractHandlersFromRoute(route,handlers,options){
     const routeHandlers = {
         reqHandlers : [],
         reqDataStreamHandler: undefined,
@@ -202,6 +202,12 @@ function extractHandlersFromRoute(route,handlers){
         for(let i=0;i<route.after.length;i++){
             const handler = handlers.get(route.after[i]);
             if(!handler) throw Error("Unregistered handler " + router.after[i]);
+
+            if((route.when === "GET" || route.when === "HEAD") 
+                && (handler.type === "requestDataStream" || handler.type === "requestData") 
+                && !options.alwaysReadRequestPayload){
+                throw Error("Set alwaysReadRequestPayload if you want to read request body/payload for GET and HEAD methods");
+            }
 
             if(handler.type === "requestDataStream"){
                 if(routeHandlers.reqDataHandlers.length > 0){
@@ -224,6 +230,9 @@ function extractHandlersFromRoute(route,handlers){
         for(let i=0;i<route.then.length;i++){
             const handler = handlers.get(route.then[i]);
             if(!handler) throw Error("Unregistered handler " + route.then[i]);
+            else if(handler.type !== "response"){
+                throw Error("Ah! wrong place for " + route.then[i] + ". Only response handlers are allowed here.");
+            }
             routeHandlers.resHandlers.push(handler);
         }
     }
