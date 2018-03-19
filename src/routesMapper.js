@@ -68,13 +68,13 @@ const loadRoutesFrom = function(router,routes,handlers,profile){
 
             router.on(route.when,route.uri, function(nativeRequest,nativeResponse,params){
                 const ans = new HttpAnswer(nativeResponse);
-                const req = buildRequestWrapper(nativeRequest);
+                const req = buildRequestWrapper(nativeRequest,params,route);
                 
                 //operation on request stream
 
                 for(let i=0; i<routeHandlers.reqHandlers.length;i++){
                     routeHandlers.reqHandlers[i].handle(req ,ans);
-                    if(ans.answered)  return;
+                    if(ans.answered())  return;
                 }
 
                 //need not to read the request body
@@ -86,7 +86,6 @@ const loadRoutesFrom = function(router,routes,handlers,profile){
                 nativeRequest.on('error', function(err) {
                     //logger.error(msg);
                 });
-                
                 handleRequestPayloadStream(nativeRequest, req, ans, routeHandlers);
 
                 nativeRequest.on('end', function() {
@@ -96,13 +95,13 @@ const loadRoutesFrom = function(router,routes,handlers,profile){
 
                     if(routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.before){
                         routeHandlers.reqDataStreamHandler.after(req,ans);
-                        if(ans.answered)  return;
+                        if(ans.answered())  return;
                     }
 
                     //operation on request body
                     for(let i=0; i<routeHandlers.reqDataHandlers.length;i++){
                         routeHandlers.reqDataHandlers[i].handle(req ,ans);
-                        if(ans.answered)  return;
+                        if(ans.answered())  return;
                     }
                     
                     handlers.get(route.to).handle(req,ans);
@@ -150,12 +149,12 @@ function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHan
     if(routeHandlers.reqDataStreamHandler){
         if(routeHandlers.reqDataStreamHandler.before){
             routeHandlers.reqDataStreamHandler.before(wrappedRequest,ans);
-            if(ans.answered) nativeRequest.removeAllListeners();
+            if(ans.answered()) nativeRequest.removeAllListeners();
         }
 
         nativeRequest.on('data', function(chunk) {
                 routeHandlers.reqDataStreamHandler.handle(chunk);
-                if(ans.answered){
+                if(ans.answered()){
                     nativeRequest.removeAllListeners();
                     //nativeRequest.removeListener('data', dataListener)
                     //nativeRequest.removeListener('end', endListener)
@@ -178,7 +177,7 @@ function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHan
     }
 }
 
-function buildRequestWrapper(request){
+function buildRequestWrapper(request,params,route){
     var parsedURL = url.parse(request.url, true);
     return {
         url: parsedURL.pathname,
