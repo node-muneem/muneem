@@ -1,0 +1,4 @@
+- route: 
+    uri: /without/pre/handlers
+    to: main
+    then: [ parallel ]
