@@ -4,18 +4,20 @@ const muneem = require("../../src/muneem")({
     mappings : path.join(__dirname, "mappings.yaml")
 });
 
-muneem.handlers.add("preStream", (req,params,routeMapping) => {
+muneem.handlers.add("preStream", (req,answer) => {
     //console.log("preStream")
-});
-muneem.handlers.add("parallel", (req,params,routeMapping) => {
+}).toHandle("requestDataStream");
+muneem.handlers.add("parallel", (req,answer) => {
     //console.log("parallel")
-});
-muneem.handlers.add("main", (req,answer,params,routeMapping) => {
+},{
+    inParallel : true
+}).toHandle("request");
+muneem.handlers.add("main", (req,answer) => {
     answer.data = '{ "hello" : "world" }';
 });
-muneem.handlers.add("post", (req,answer,params,routeMapping) => {
+muneem.handlers.add("post", (req,answer) => {
     //console.log("post")
-});
+}).toHandle("response");
 const server = muneem.createServer();
 
 server.start();
