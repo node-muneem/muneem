@@ -1,16 +1,18 @@
 const HandlersMap = require("./HandlersMap");
 const mapRoutes = require("./routesMapper").mapRoutes;
 const Server = require("./server");
+const HttpAnswer = require("./HttpAnswer");
 var events = require('events');
 
 
-Muneem.prototype.createServer = function(options){
-    mapRoutes(this.router,this.options,this.handlers);
-    return new Server(options, this.router, this.eventEmitter);
+Muneem.prototype.createServer = function(serverOptions){
+    mapRoutes(this.router,this.appContext,this.handlers);
+    return new Server(serverOptions, this.router, this.eventEmitter);
 }
 
 function Muneem(options){
-    this.options = options;
+    if(!(this instanceof Muneem)) return new Muneem(options);
+    this.appContext =  options;
     this.eventEmitter = new events.EventEmitter();
     this.handlers = new HandlersMap();
     this.router = require('find-my-way')(/* {
@@ -19,10 +21,11 @@ function Muneem(options){
     } */);
 }
 
+Muneem.addToAnswer = function(methodName, fn ){
+    HttpAnswer.prototype[methodName] = fn;
+}
 
-module.exports = function(options){
-    return new Muneem(options);
-};
+module.exports = Muneem
 
 //options
 //  content location
