@@ -1,5 +1,5 @@
 const HandlersMap = require("./HandlersMap");
-const mapRoutes = require("./routesMapper").mapRoutes;
+const RoutesManager = require("./routesManager");
 const Server = require("./server");
 const HttpAnswer = require("./HttpAnswer");
 var events = require('events');
@@ -11,7 +11,10 @@ const registerDefaultHandlers = function(handlers){
 }
 
 Muneem.prototype.createServer = function(serverOptions){
-    mapRoutes(this.router,this.appContext,this.handlers);
+    this.routesManager.addRoutesFromMappingsFile(this.appContext.mappings);
+    if(this.routesManager.router.routes.length === 0){
+        throw Error("There is no route exist. Please check the mapping file or add them from the code.");
+    }
     return new Server(serverOptions, this.router, this.eventEmitter);
 }
 
@@ -21,14 +24,7 @@ function Muneem(options){
     this.eventEmitter = new events.EventEmitter();
     this.handlers = new HandlersMap();
     registerDefaultHandlers(this.handlers);
-    handlers = this.handlers;
-    this.router = require('find-my-way')( {
-        ignoreTrailingSlash: true,
-        maxParamLength: options.maxParamLength || 100,
-        defaultRoute : () =>{
-            handlers.get("__defaultRoute")();
-        }
-    } );
+    this.routesManager = new RoutesManager(this.appContext,this.handlers);
 }
 
 Muneem.addToAnswer = function(methodName, fn ){
