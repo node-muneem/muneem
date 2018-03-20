@@ -84,12 +84,6 @@ const loadRoutesFrom = function(router,routes,handlers,profile,appContext){
                     if(ans.answered())  return;
                 }
 
-                //need not to read the request body
-                // if the method is HEAD or GET
-                // if there is no main and post handler
-                // if some prehandler has already sent the response
-                // instead end the response
-
                 nativeRequest.on('error', function(err) {
                     //logger.error(msg);
                 });
@@ -179,13 +173,12 @@ function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHan
                 }  
         })
     }else if(readRequestBody){
-        //User may want to take multiple decisions instead of just refusing the request and closing the connection
         nativeRequest.on('data', function(chunk) {
             if(contentLength < route.maxLength){
                 contentLength += chunk.length;
                 req.body.push(chunk);//TODO: ask user if he wants Buffer array
             }else{
-                //TODO: eventEmitter.emit("exceedContentLength")
+                //User may want to take multiple decisions instead of just refusing the request and closing the connection
                 handlers.get("__exceedContentLength").handle(wrappedRequest,ans, context);
 
             }

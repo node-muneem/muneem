@@ -1,5 +1,6 @@
 - route: 
     uri: /without/pre/handlers
+    with: POST
     to: main
     then: [ post ]
 
@@ -32,7 +33,7 @@
 #methods
 - route: 
     uri: /post
-    to: main
+    to: stream
     when: POST
 
 - route: 
