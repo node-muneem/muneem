@@ -19,21 +19,21 @@ function getFilePath(filepath){
  * @param {*} handlers 
  * @param {string} profile 
  */
-const mapRoutes = function(router,options,handlers){
+const mapRoutes = function(router,appContext,handlers){
     const profile = process.env.NODE_ENV;
-    filepath = getFilePath(options.mappings);
+    filepath = getFilePath(appContext.mappings);
     if(fs.lstatSync(filepath).isDirectory()){
         const files = fs.readdirSync(filepath);
         for(let index in files){
             const fPath = path.join(filepath,files[index]);
             if(!fs.lstatSync(fPath).isDirectory() && fPath.endsWith(".yaml")){
                 const routes = readRoutesFromFile(fPath);
-                routes && loadRoutesFrom(router,routes,handlers,profile,options);
+                routes && loadRoutesFrom(router,routes,handlers,profile,appContext);
             }
         }
     }else{
         const routes = readRoutesFromFile(filepath);
-        routes && loadRoutesFrom(router,routes,handlers,profile,options);
+        routes && loadRoutesFrom(router,routes,handlers,profile,appContext);
     }
 }
 
@@ -55,16 +55,19 @@ function readRoutesFromFile(filepath){
  * @param {*} handlers 
  * @param {string} profile 
  */
-const loadRoutesFrom = function(router,routes,handlers,profile,options){
-    
+const loadRoutesFrom = function(router,routes,handlers,profile,appContext){
     for(let index=0;index<routes.length;index++){
         const route = routes[index].route;
+        const context = {
+            app: appContext,
+            route: route
+        }
         if(route.in && route.in.indexOf(profile) === -1){
             continue; //skip mapping for other environments
         }else{
             route.when = route.when || "GET";//set default
             route.maxLength = route.maxLength || 1e6; //set 1mb default
-            const routeHandlers = extractHandlersFromRoute(route,handlers,options);
+            const routeHandlers = extractHandlersFromRoute(route,handlers,appContext);
 
             //read request body when there is at least one handler to handle it
             const readRequestBody = routeHandlers.reqDataHandlers.length > 0 
@@ -72,12 +75,12 @@ const loadRoutesFrom = function(router,routes,handlers,profile,options){
 
             router.on(route.when,route.uri, function(nativeRequest,nativeResponse,params){
                 const ans = new HttpAnswer(nativeResponse);
-                const req = buildRequestWrapper(nativeRequest,params,route);
+                const req = buildRequestWrapper(nativeRequest,params);
                 
                 //operation on request stream
 
                 for(let i=0; i<routeHandlers.reqHandlers.length;i++){
-                    routeHandlers.reqHandlers[i].handle(req ,ans);
+                    routeHandlers.reqHandlers[i].handle(req ,ans, context);
                     if(ans.answered())  return;
                 }
 
@@ -90,14 +93,14 @@ const loadRoutesFrom = function(router,routes,handlers,profile,options){
                 nativeRequest.on('error', function(err) {
                     //logger.error(msg);
                 });
-                handleRequestPayloadStream(nativeRequest, req, ans, routeHandlers, readRequestBody);
+                handleRequestPayloadStream(nativeRequest, req, ans, routeHandlers, readRequestBody,context);
 
                 nativeRequest.on('end', function() {
                     //TODO: do the conversion on demand
                     //nativeRequest.rawBody = Buffer.concat(body);
 
                     if(routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.after){
-                        routeHandlers.reqDataStreamHandler.after(req,ans);
+                        routeHandlers.reqDataStreamHandler.after(req,ans, context);
                         if(ans.answered())  return;
                     }else{
                         req.body = req.body || Buffer.concat(req.body);
@@ -105,16 +108,20 @@ const loadRoutesFrom = function(router,routes,handlers,profile,options){
 
                     //operation on request body
                     for(let i=0; i<routeHandlers.reqDataHandlers.length;i++){
-                        routeHandlers.reqDataHandlers[i].handle(req ,ans);
+                        routeHandlers.reqDataHandlers[i].handle(req ,ans, context);
                         if(ans.answered())  return;
                     }
                     
-                    if(routeHandlers.mainHandler) routeHandlers.mainHandler.handle(req,ans);
-                    if(ans.answered()) return;
+                    if(routeHandlers.mainHandler) {
+                        //console.log("calling route.to ");
+                        routeHandlers.mainHandler.handle(req,ans, context);
+                        if(ans.answered()) return;
+                    }
 
                     //operation on respoonse
                     for(let i=0; i<routeHandlers.resHandlers.length;i++){
-                        routeHandlers.resHandlers[i].handle(req,ans);
+                        //console.log("calling route.then ");
+                        routeHandlers.resHandlers[i].handle(req,ans, context);
                         if(ans.answered()) return;
                     }
 
@@ -154,12 +161,12 @@ const loadRoutesFrom = function(router,routes,handlers,profile,options){
  * @param {*} ans 
  * @param {*} routeHandlers 
  */
-function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHandlers, readRequestBody){
+function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHandlers, readRequestBody, context){
 
     let contentLength = 0;
     if(routeHandlers.reqDataStreamHandler){
         if(routeHandlers.reqDataStreamHandler.before){
-            routeHandlers.reqDataStreamHandler.before(wrappedRequest,ans);
+            routeHandlers.reqDataStreamHandler.before(wrappedRequest,ans, context);
             if(ans.answered()) nativeRequest.removeAllListeners();
         }
 
@@ -179,7 +186,7 @@ function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHan
                 req.body.push(chunk);//TODO: ask user if he wants Buffer array
             }else{
                 //TODO: eventEmitter.emit("exceedContentLength")
-                handlers.get("__exceedContentLength").handle(wrappedRequest,ans);
+                handlers.get("__exceedContentLength").handle(wrappedRequest,ans, context);
 
             }
         })  
@@ -188,19 +195,18 @@ function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHan
     }
 }
 
-function buildRequestWrapper(request,params,route){
+function buildRequestWrapper(request,params){
     var parsedURL = url.parse(request.url, true);
     return {
         url: parsedURL.pathname,
         query : parsedURL.query,
         params : params,
         nativeRequest : request,
-        mapping: route,
         body: []
     }
 }
 
-function extractHandlersFromRoute(route,handlers,options){
+function extractHandlersFromRoute(route,handlers,appContext){
     const routeHandlers = {
         reqHandlers : [],
         reqDataStreamHandler: undefined,
@@ -217,7 +223,7 @@ function extractHandlersFromRoute(route,handlers,options){
 
             if((route.when === "GET" || route.when === "HEAD") 
                 && (handler.type === "requestDataStream" || handler.type === "requestData") 
-                && !options.alwaysReadRequestPayload){
+                && !appContext.alwaysReadRequestPayload){
                 throw Error("Set alwaysReadRequestPayload if you want to read request body/payload for GET and HEAD methods");
             }
 
@@ -263,7 +269,6 @@ function extractHandlersFromRoute(route,handlers,options){
         }
     }
         
-
     return routeHandlers;
 }
 
