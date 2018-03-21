@@ -58,6 +58,26 @@ describe ('RoutesManager', () => {
 
     });
 
+    it('should let user add route through code', () => {
+        const options = {
+            mappings : path.join(__dirname , "app/mappings/"),
+            alwaysReadRequestPayload: true
+        };
+        const routesManager =new RoutesManager(options,handlers);
+        routesManager.addRoutesFromMappingsFile(options.mappings);
+        routesManager.addRoute({
+            uri: "/route/from/code",
+            to : "main"
+        });
+        expect(routesManager.router.routes.length).toEqual(16);
+
+        routesManager.router.routes.forEach(r => {
+            expect(r.path).not.toEqual("/in/dev");
+            expect(r.path).not.toEqual("/in/test");
+        })
+
+    });
+
     /* it('should read mappings for the mentioned envirnment', () => {
         process.env.NODE_ENV = "dev"
         const options = {
