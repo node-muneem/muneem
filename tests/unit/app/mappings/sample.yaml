@@ -1,6 +1,6 @@
 - route: 
     uri: /without/pre/handlers
-    with: POST
+    when: POST
     to: main
     then: [ post ]
 

@@ -24,10 +24,10 @@ describe ('RoutesManager', () => {
             mappings :  path.join(__dirname , "app/mappings/invalid/invalid.yaml")
         };
         const routesManager =new RoutesManager(options,handlers);
-        routesManager.addRoutesFromMappingsFile(options.mappings)
         
-        expect(routesManager.router.routes).toEqual([]);
-
+        expect(() => {
+            routesManager.addRoutesFromMappingsFile(options.mappings)
+        }).toThrowError("There is no route exist. Please check the mapping file or add them from the code.");
     });
 
     it('should error when not exist file is given', () => {

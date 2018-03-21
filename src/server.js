@@ -1,4 +1,5 @@
 var http = require('http');
+const{ randomId} = require('./util');
 
 Server.prototype.start = function(){
     const eventEmitter = this.eventEmitter 
@@ -30,7 +31,6 @@ function networkErrHandler(err,port,host,server) {
 	      msg = err.message;
     }
     server.unref();
-    //console.log(color(msg,'red'));
     console.log(msg);
 }
 
@@ -44,6 +44,7 @@ function Server(options,requestResponseHandler,eventEmitter){
     this.eventEmitter = eventEmitter;
 
     this.server = http.createServer((req,res) => {
+        req.id = randomId();
         requestResponseHandler.lookup(req,res);
     });
     const sLocal = this.server;

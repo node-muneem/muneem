@@ -5,7 +5,6 @@ const HttpAnswer = require("./HttpAnswer");
 const log = require("./fakeLogger");
 var events = require('events');
 
-
 const registerDefaultHandlers = function(handlers){
     log.info("Adding __defaultRoute Handler")
     handlers.add("__defaultRoute" , require("./specialHandlers/defaultRoute").handle).toHandle("response");
@@ -17,9 +16,6 @@ const registerDefaultHandlers = function(handlers){
 
 Muneem.prototype.createServer = function(serverOptions){
     this.routesManager.addRoutesFromMappingsFile(this.appContext.mappings);
-    if(this.routesManager.router.routes.length === 0){
-        throw Error("There is no route exist. Please check the mapping file or add them from the code.");
-    }
     return new Server(serverOptions, this.routesManager.router, this.eventEmitter);
 }
 
@@ -39,8 +35,3 @@ Muneem.addToAnswer = function(methodName, fn ){
 
 Muneem.log = log;
 module.exports = Muneem
-
-//options
-//  content location
-//  route mapping location
-//  profile

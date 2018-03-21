@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 var url = require('url');
 const HttpAnswer = require('./HttpAnswer');
+const log = require('./muneem').log;
 const ApplicationSetupError = require('./ApplicationSetupError');
 const profile = process.env.NODE_ENV;
 
@@ -20,12 +21,20 @@ RoutesManager.prototype.addRoutesFromMappingsFile = function(filepath){
             const fPath = path.join(filepath,files[index]);
             if(!fs.lstatSync(fPath).isDirectory() && fPath.endsWith(".yaml")){
                 const routes = readRoutesFromFile(fPath);
+                log.info("reading "+ (routes && routes.length) +" routes from file " + fPath);
                 routes && this.loadRoutesFrom(routes);
             }
         }
     }else{
         const routes = readRoutesFromFile(filepath);
+        log.info("reading "+ (routes && routes.length) +" routes from file " + filepath);
         routes && this.loadRoutesFrom(routes);
+    }
+
+    if(this.router.routes.length === 0){
+        throw new ApplicationSetupError("There is no route exist. Please check the mapping file or add them from the code.");
+    }else{
+        log.info(this.router.routes.length + " routes are loaded. Don't be suprised if they are more than double than you added.");
     }
 }
 
@@ -79,12 +88,13 @@ RoutesManager.prototype.addRoute = function(route){
             || (routeHandlers.mainHandler && routeHandlers.mainHandler.type === "requestData");
 
     this.router.on(route.when,route.uri, function(nativeRequest,nativeResponse,params){
-        //console.log("mapping found")
         const ans = new HttpAnswer(nativeResponse);
         const asked = buildRequestWrapper(nativeRequest,params);
-            try{
+        try{
+            log.debug(asked," matched with ", route);
             //operation on request stream
             for(let i=0; i<routeHandlers.reqHandlers.length;i++){
+                log.debug(asked,"Executing request handlers");
                 routeHandlers.reqHandlers[i].handle(asked ,ans, context);
                 if(ans.answered())  return;
             }
@@ -94,7 +104,8 @@ RoutesManager.prototype.addRoute = function(route){
                 this.handlers.get("__error").handle(asked,ans);
             });
             //console.log("before handling stream")
-            handleRequestPayloadStream(nativeRequest, asked, ans, routeHandlers, readRequestBody,context);
+            log.debug(asked,"Executing request handler");
+            handleRequestPayloadStream(asked, ans, routeHandlers, readRequestBody,context);
             //console.log("after handling stream")
             
             nativeRequest.on('end', function() {
@@ -103,25 +114,29 @@ RoutesManager.prototype.addRoute = function(route){
                 //console.log("inside end event")
 
                 if(routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.after){
+                    log.debug(asked,"After executing request data stream handler");
                     routeHandlers.reqDataStreamHandler.after(asked,ans, context);
                     if(ans.answered())  return;
                 }else{
                     asked.body = asked.body || Buffer.concat(asked.body);
+                    //log.debug(asked,"Payload size: " + asked.body.length);
                 }
 
                 //operation on request body
+                log.debug(asked,"Executing request data handlers");
                 for(let i=0; i<routeHandlers.reqDataHandlers.length;i++){
                     routeHandlers.reqDataHandlers[i].handle(asked ,ans, context);
                     if(ans.answered())  return;
                 }
                 
                 if(routeHandlers.mainHandler) {
-                    //console.log("calling route.to ");
+                    log.debug(asked,"Executing route.to");
                     routeHandlers.mainHandler.handle(asked,ans, context);
                     if(ans.answered()) return;
                 }
 
                 //operation on respoonse
+                log.debug(asked,"Executing response handlers");
                 for(let i=0; i<routeHandlers.resHandlers.length;i++){
                     //console.log("calling route.then ");
                     routeHandlers.resHandlers[i].handle(asked,ans, context);
@@ -130,20 +145,20 @@ RoutesManager.prototype.addRoute = function(route){
 
                 if(!ans.answered()){//To confirm if some naughty postHandler has already answered
                     if(ans.data && ans.data.pipe && typeof ans.data.pipe === "function"){//stream
+                        log.debug(asked,"Responding back to client with stream");
                         ans.data.pipe(nativeResponse);
                     }else{
                         if(ans.data !== undefined){
                             if(typeof ans.data !== "string" && !Buffer.isBuffer(ans.data)){
-                                //TODO: report to logger
-                                console.log("Sorry!! Only string, buffer, or stream is expected to send as a response.");
-                                console.log("Hint! check mapping ", JSON.stringify(route,null,4));
-                            }else{
-
-                                if (!ans.getHeader('Content-Length') || !ans.getHeader('content-length')) {
-                                    ans.setHeader('Content-Length', '' + Buffer.byteLength(ans.data));
-                                }
-                                nativeResponse.write(ans.data, ans.encoding);	
+                                log.warn("Sorry!! Only string, buffer, or stream can be sent in response.");
+                                log.warn("Attempting JSON.stringify to transform Object to string");
+                                ans.data = JSON.stringify(ans.data);
                             }
+
+                            if (!ans.getHeader('Content-Length') || !ans.getHeader('content-length')) {
+                                ans.setHeader('Content-Length', '' + Buffer.byteLength(ans.data));
+                            }
+                            nativeResponse.write(ans.data, ans.encoding);	
                         }
                         nativeResponse.end();	
                     }
@@ -152,6 +167,7 @@ RoutesManager.prototype.addRoute = function(route){
             })//request event handler end
         }catch(e){
             ans.error = e;
+            ans.context = context;
             this.handlers.get("__error").handle(asked,ans);
         }
     })//router.on ends
@@ -161,35 +177,38 @@ RoutesManager.prototype.addRoute = function(route){
  * If there is a stream handler attached to current route then call it on when request payload chunks are received.
  * If there is no stream handler and data handler then there is no need to read the request body
  * @param {*} nativeRequest 
- * @param {*} wrappedRequest 
+ * @param {*} asked 
  * @param {*} ans 
  * @param {*} routeHandlers 
  */
-function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHandlers, readRequestBody, context){
+function handleRequestPayloadStream(asked, ans, routeHandlers, readRequestBody, context){
 
     let contentLength = 0;
     if(routeHandlers.reqDataStreamHandler){
         if(routeHandlers.reqDataStreamHandler.before){
-            routeHandlers.reqDataStreamHandler.before(wrappedRequest,ans, context);
-            if(ans.answered()) nativeRequest.removeAllListeners();
+            routeHandlers.reqDataStreamHandler.before(asked,ans, context);
+            if(ans.answered()) asked.nativeRequest.removeAllListeners();
         }
-
-        nativeRequest.on('data', function(chunk) {
+        
+        log.debug(asked,"Before executing request data stream handler");
+        asked.nativeRequest.on('data', function(chunk) {
                 routeHandlers.reqDataStreamHandler.handle(chunk);
                 if(ans.answered()){
-                    nativeRequest.removeAllListeners();
-                    //nativeRequest.removeListener('data', dataListener)
-                    //nativeRequest.removeListener('end', endListener)
+                    asked.nativeRequest.removeAllListeners();
+                    //asked.nativeRequest.removeListener('data', dataListener)
+                    //asked.nativeRequest.removeListener('end', endListener)
                 }  
         })
     }else if(readRequestBody){
-        nativeRequest.on('data', function(chunk) {
+        log.debug(asked,"Before reading request payload/body");
+        asked.nativeRequest.on('data', function(chunk) {
             if(contentLength < route.maxLength){
                 contentLength += chunk.length;
                 req.body.push(chunk);//TODO: ask user if he wants Buffer array
             }else{
                 //User may want to take multiple decisions instead of just refusing the request and closing the connection
-                this.handlers.get("__exceedContentLength").handle(wrappedRequest,ans, context);
+                log.debug(asked,"Calling __exceedContentLength handler");
+                this.handlers.get("__exceedContentLength").handle(asked,ans, context);
             }
         })  
     }else{
@@ -200,6 +219,7 @@ function handleRequestPayloadStream(nativeRequest, wrappedRequest, ans, routeHan
 function buildRequestWrapper(request,params){
     var parsedURL = url.parse(request.url, true);
     return {
+        id : request.id,
         url: parsedURL.pathname,
         query : parsedURL.query,
         params : params,
