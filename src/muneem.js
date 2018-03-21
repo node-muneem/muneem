@@ -2,12 +2,17 @@ const HandlersMap = require("./HandlersMap");
 const RoutesManager = require("./routesManager");
 const Server = require("./server");
 const HttpAnswer = require("./HttpAnswer");
+const log = require("./fakeLogger");
 var events = require('events');
 
 
 const registerDefaultHandlers = function(handlers){
+    log.info("Adding __defaultRoute Handler")
     handlers.add("__defaultRoute" , require("./specialHandlers/defaultRoute").handle).toHandle("response");
+    log.info("Adding __exceedContentLength handler")
     handlers.add("__exceedContentLength" , require("./specialHandlers/exceedContentLengthHandler").handle).toHandle("response");
+    log.info("Adding __error handler")
+    handlers.add("__error" , require("./specialHandlers/exceptionHandler").handle,{ inParallel : true});
 }
 
 Muneem.prototype.createServer = function(serverOptions){
@@ -28,9 +33,11 @@ function Muneem(options){
 }
 
 Muneem.addToAnswer = function(methodName, fn ){
+    log.info("Adding a methods " + methodName + " to HttpAnswer");
     HttpAnswer.prototype[methodName] = fn;
 }
 
+Muneem.log = log;
 module.exports = Muneem
 
 //options

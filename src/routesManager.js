@@ -3,11 +3,12 @@ const fs = require('fs');
 const path = require('path');
 var url = require('url');
 const HttpAnswer = require('./HttpAnswer');
+const ApplicationSetupError = require('./ApplicationSetupError');
 const profile = process.env.NODE_ENV;
 
 function checkPath(filepath){
     if (!fs.existsSync(filepath)) {
-        throw Error("Path for mapping files/folder should either be absolute or relative to project directory: " + filepath)
+        throw new ApplicationSetupError("Path for mapping files/folder should either be absolute or relative to project directory: " + filepath);
     }
 }
 
@@ -81,74 +82,78 @@ RoutesManager.prototype.addRoute = function(route){
         //console.log("mapping found")
         const ans = new HttpAnswer(nativeResponse);
         const asked = buildRequestWrapper(nativeRequest,params);
-        
-        //operation on request stream
-        for(let i=0; i<routeHandlers.reqHandlers.length;i++){
-            routeHandlers.reqHandlers[i].handle(asked ,ans, context);
-            if(ans.answered())  return;
-        }
-
-        nativeRequest.on('error', function(err) {
-            //logger.error(msg);
-        });
-        //console.log("before handling stream")
-        handleRequestPayloadStream(nativeRequest, asked, ans, routeHandlers, readRequestBody,context);
-        //console.log("after handling stream")
-        
-        nativeRequest.on('end', function() {
-            //TODO: do the conversion on demand
-            //nativeRequest.rawBody = Buffer.concat(body);
-            //console.log("inside end event")
-
-            if(routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.after){
-                routeHandlers.reqDataStreamHandler.after(asked,ans, context);
-                if(ans.answered())  return;
-            }else{
-                asked.body = asked.body || Buffer.concat(asked.body);
-            }
-
-            //operation on request body
-            for(let i=0; i<routeHandlers.reqDataHandlers.length;i++){
-                routeHandlers.reqDataHandlers[i].handle(asked ,ans, context);
+            try{
+            //operation on request stream
+            for(let i=0; i<routeHandlers.reqHandlers.length;i++){
+                routeHandlers.reqHandlers[i].handle(asked ,ans, context);
                 if(ans.answered())  return;
             }
+
+            nativeRequest.on('error', function(err) {
+                ans.error = err;
+                this.handlers.get("__error").handle(asked,ans);
+            });
+            //console.log("before handling stream")
+            handleRequestPayloadStream(nativeRequest, asked, ans, routeHandlers, readRequestBody,context);
+            //console.log("after handling stream")
             
-            if(routeHandlers.mainHandler) {
-                //console.log("calling route.to ");
-                routeHandlers.mainHandler.handle(asked,ans, context);
-                if(ans.answered()) return;
-            }
+            nativeRequest.on('end', function() {
+                //TODO: do the conversion on demand
+                //nativeRequest.rawBody = Buffer.concat(body);
+                //console.log("inside end event")
 
-            //operation on respoonse
-            for(let i=0; i<routeHandlers.resHandlers.length;i++){
-                //console.log("calling route.then ");
-                routeHandlers.resHandlers[i].handle(asked,ans, context);
-                if(ans.answered()) return;
-            }
-
-            if(!ans.answered()){//To confirm if some naughty postHandler has already answered
-                if(ans.data && ans.data.pipe && typeof ans.data.pipe === "function"){//stream
-                    ans.data.pipe(nativeResponse);
+                if(routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.after){
+                    routeHandlers.reqDataStreamHandler.after(asked,ans, context);
+                    if(ans.answered())  return;
                 }else{
-                    if(ans.data !== undefined){
-                        if(typeof ans.data !== "string" && !Buffer.isBuffer(ans.data)){
-                            //TODO: report to logger
-                            console.log("Sorry!! Only string, buffer, or stream is expected to send as a response.");
-                            console.log("Hint! check mapping ", JSON.stringify(route,null,4));
-                        }else{
-
-                            if (!ans.getHeader('Content-Length') || !ans.getHeader('content-length')) {
-                                ans.setHeader('Content-Length', '' + Buffer.byteLength(ans.data));
-                            }
-
-                            nativeResponse.write(ans.data, ans.encoding);	
-                        }
-                    }
-                    nativeResponse.end();	
+                    asked.body = asked.body || Buffer.concat(asked.body);
                 }
-            }
 
-        })//request event handler end
+                //operation on request body
+                for(let i=0; i<routeHandlers.reqDataHandlers.length;i++){
+                    routeHandlers.reqDataHandlers[i].handle(asked ,ans, context);
+                    if(ans.answered())  return;
+                }
+                
+                if(routeHandlers.mainHandler) {
+                    //console.log("calling route.to ");
+                    routeHandlers.mainHandler.handle(asked,ans, context);
+                    if(ans.answered()) return;
+                }
+
+                //operation on respoonse
+                for(let i=0; i<routeHandlers.resHandlers.length;i++){
+                    //console.log("calling route.then ");
+                    routeHandlers.resHandlers[i].handle(asked,ans, context);
+                    if(ans.answered()) return;
+                }
+
+                if(!ans.answered()){//To confirm if some naughty postHandler has already answered
+                    if(ans.data && ans.data.pipe && typeof ans.data.pipe === "function"){//stream
+                        ans.data.pipe(nativeResponse);
+                    }else{
+                        if(ans.data !== undefined){
+                            if(typeof ans.data !== "string" && !Buffer.isBuffer(ans.data)){
+                                //TODO: report to logger
+                                console.log("Sorry!! Only string, buffer, or stream is expected to send as a response.");
+                                console.log("Hint! check mapping ", JSON.stringify(route,null,4));
+                            }else{
+
+                                if (!ans.getHeader('Content-Length') || !ans.getHeader('content-length')) {
+                                    ans.setHeader('Content-Length', '' + Buffer.byteLength(ans.data));
+                                }
+                                nativeResponse.write(ans.data, ans.encoding);	
+                            }
+                        }
+                        nativeResponse.end();	
+                    }
+                }
+
+            })//request event handler end
+        }catch(e){
+            ans.error = e;
+            this.handlers.get("__error").handle(asked,ans);
+        }
     })//router.on ends
 }
 
@@ -223,19 +228,19 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
     if(route.after){
         for(let i=0;i<route.after.length;i++){
             const handler = this.handlers.get(route.after[i]);
-            if(!handler) throw Error("Unregistered handler " + route.after[i]);
+            if(!handler) throw new ApplicationSetupError("Unregistered handler " + route.after[i]);
 
             if((route.when === "GET" || route.when === "HEAD") 
                 && (handler.type === "requestDataStream" || handler.type === "requestData") 
                 && !this.appContext.alwaysReadRequestPayload){
-                throw Error("Set alwaysReadRequestPayload if you want to read request body/payload for GET and HEAD methods");
+                throw new ApplicationSetupError("Set alwaysReadRequestPayload if you want to read request body/payload for GET and HEAD methods");
             }
 
             if(handler.type === "requestDataStream"){
                 if(routeHandlers.reqDataHandlers.length > 0){
-                    throw Error("MappingError: Request Stream handler should be called before.");
+                    throw new ApplicationSetupError("MappingError: Request Stream handler should be called before.");
                 }else if(routeHandlers.reqDataStreamHandler){
-                    throw Error("MappingError: There is only one request stream handler per mapping allowed.");
+                    throw new ApplicationSetupError("MappingError: There is only one request stream handler per mapping allowed.");
                 }else{
                     routeHandlers.reqDataStreamHandler = handler;
                 }
@@ -251,9 +256,9 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
     if(route.then){
         for(let i=0;i<route.then.length;i++){
             const handler = this.handlers.get(route.then[i]);
-            if(!handler) throw Error("Unregistered handler " + route.then[i]);
+            if(!handler) throw new ApplicationSetupError("Unregistered handler " + route.then[i]);
             else if(handler.type !== "response"){
-                throw Error("Ah! wrong place for " + route.then[i] + ". Only response handlers are allowed here.");
+                throw new ApplicationSetupError("Ah! wrong place for " + route.then[i] + ". Only response handlers are allowed here.");
             }
             routeHandlers.resHandlers.push(handler);
         }
@@ -263,7 +268,7 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
         const mainHandler = this.handlers.get(route.to);
         if(mainHandler.type === "requestDataStream"){
             if(routeHandlers.reqDataStreamHandler){
-                throw Error("MappingError: There is only one request stream handler per mapping allowed.");
+                throw new ApplicationSetupError("MappingError: There is only one request stream handler per mapping allowed.");
             }else{
                 routeHandlers.reqDataStreamHandler = mainHandler;
                 routeHandlers.mainHandler  = undefined;
@@ -280,7 +285,6 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
 function RoutesManager(appContext,handlers){
     this.appContext = appContext;
     this.handlers = handlers;
-    //console.log(handlers);
     this.router = require('find-my-way')( {
         ignoreTrailingSlash: true,
         maxParamLength: appContext.maxParamLength || 100,
