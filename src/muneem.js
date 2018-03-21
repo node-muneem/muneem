@@ -6,8 +6,8 @@ var events = require('events');
 
 
 const registerDefaultHandlers = function(handlers){
-    handlers.add("__defaultRoute" , require("./specialHandlers/defaultRoute")).toHandle("response");
-    handlers.add("__exceedContentLength" , require("./specialHandlers/exceedContentLengthHandler")).toHandle("response");
+    handlers.add("__defaultRoute" , require("./specialHandlers/defaultRoute").handle).toHandle("response");
+    handlers.add("__exceedContentLength" , require("./specialHandlers/exceedContentLengthHandler").handle).toHandle("response");
 }
 
 Muneem.prototype.createServer = function(serverOptions){
@@ -15,7 +15,7 @@ Muneem.prototype.createServer = function(serverOptions){
     if(this.routesManager.router.routes.length === 0){
         throw Error("There is no route exist. Please check the mapping file or add them from the code.");
     }
-    return new Server(serverOptions, this.router, this.eventEmitter);
+    return new Server(serverOptions, this.routesManager.router, this.eventEmitter);
 }
 
 function Muneem(options){

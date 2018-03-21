@@ -78,6 +78,7 @@ RoutesManager.prototype.addRoute = function(route){
             || (routeHandlers.mainHandler && routeHandlers.mainHandler.type === "requestData");
 
     this.router.on(route.when,route.uri, function(nativeRequest,nativeResponse,params){
+        //console.log("mapping found")
         const ans = new HttpAnswer(nativeResponse);
         const asked = buildRequestWrapper(nativeRequest,params);
         
@@ -90,11 +91,14 @@ RoutesManager.prototype.addRoute = function(route){
         nativeRequest.on('error', function(err) {
             //logger.error(msg);
         });
+        //console.log("before handling stream")
         handleRequestPayloadStream(nativeRequest, asked, ans, routeHandlers, readRequestBody,context);
-
+        //console.log("after handling stream")
+        
         nativeRequest.on('end', function() {
             //TODO: do the conversion on demand
             //nativeRequest.rawBody = Buffer.concat(body);
+            //console.log("inside end event")
 
             if(routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.after){
                 routeHandlers.reqDataStreamHandler.after(asked,ans, context);
@@ -276,11 +280,14 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
 function RoutesManager(appContext,handlers){
     this.appContext = appContext;
     this.handlers = handlers;
+    //console.log(handlers);
     this.router = require('find-my-way')( {
         ignoreTrailingSlash: true,
         maxParamLength: appContext.maxParamLength || 100,
-        defaultRoute : () =>{
-            handlers.get("__defaultRoute")();
+        defaultRoute : (nativeRequest,nativeResponse) =>{
+            const answer = new HttpAnswer(nativeResponse);
+            const asked = buildRequestWrapper(nativeRequest);
+            handlers.get("__defaultRoute").handle(asked,answer);
         }
     } );
 }
