@@ -1,6 +1,6 @@
 function fake () { /* I eat your logs*/}
 
-module.exports = {
+exports.log = {
   fatal: fake,
   error: fake,
   warn: fake,

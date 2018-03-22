@@ -13,24 +13,46 @@ Handler.prototype.toHandle = function(type){
         throw Error( type + " handler are not allowed to run side by side");
     } */
     this.type = type;
+    return this;
 }
 
 Handler.prototype.setHandler = function(handler){
+    //const beforeFn = this.beforeFn;
+    //const afterFn = this.afterFn;
+
     if(this.inParallel){
         this.handle =  function(){ 
             const args = arguments; 
             setTimeout(
                 function(){
-                    handler(...args)
+                    //beforeFn(...args);
+                    handler(...args);  
+                    //afterFn(...args);
                 }
             ,0)
         };
     }else{
-        this.handle = handler;
+        /* this.handle = function() {
+            beforeFn(...arguments);
+            handler(...arguments);  
+            afterFn(...arguments);
+        } */ 
+        this.handle = handler
     }
 }
 
-function Handler(handler, options){
+Handler.prototype.before = function(fn){
+    this.beforeFn = fn;
+}
+
+Handler.prototype.after = function(fn){
+    this.afterFn = fn;
+}
+
+function Handler(name,handler, options){
+    this.name = name;
+    this.beforeFn = () => {};
+    this.afterFn = () => {};
     if(options){
         //this.handlesStream = options.handlesStream;
         this.inParallel = options.inParallel;

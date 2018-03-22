@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 var url = require('url');
 const HttpAnswer = require('./HttpAnswer');
-const log = require('./muneem').log;
+const logger = require("./fakeLogger");
 const ApplicationSetupError = require('./ApplicationSetupError');
 const profile = process.env.NODE_ENV;
 
@@ -21,20 +21,20 @@ RoutesManager.prototype.addRoutesFromMappingsFile = function(filepath){
             const fPath = path.join(filepath,files[index]);
             if(!fs.lstatSync(fPath).isDirectory() && fPath.endsWith(".yaml")){
                 const routes = readRoutesFromFile(fPath);
-                log.info("reading "+ (routes && routes.length) +" routes from file " + fPath);
-                routes && this.loadRoutesFrom(routes);
+                logger.log.info("reading "+ (routes && routes.length) +" routes from file " + fPath);
+                routes && this.addRoutes(routes);
             }
         }
     }else{
         const routes = readRoutesFromFile(filepath);
-        log.info("reading "+ (routes && routes.length) +" routes from file " + filepath);
-        routes && this.loadRoutesFrom(routes);
+        logger.log.info("reading "+ (routes && routes.length) +" routes from file " + filepath);
+        routes && this.addRoutes(routes);
     }
 
     if(this.router.routes.length === 0){
         throw new ApplicationSetupError("There is no route exist. Please check the mapping file or add them from the code.");
     }else{
-        log.info(this.router.routes.length + " routes are loaded. Don't be suprised if they are more than double than you added.");
+        logger.log.info(this.router.routes.length + " routes are loaded. Don't be suprised if there are more than double routes are created.");
     }
 }
 
@@ -44,12 +44,10 @@ RoutesManager.prototype.addRoutesFromMappingsFile = function(filepath){
  */
 function readRoutesFromFile(filepath){
     try{
-        //TODO : log total mappings
         return YAML.parseFile(filepath);
     }catch(e){
-        //TODO: use logger
-        console.log( filepath + " is an invalid Yaml file or have syntatx issues.");
-        console.log( e);
+        logger.log.error( filepath + " is an invalid Yaml file or have syntatx issues.");
+        logger.log.error( e);
     }
 }
 
@@ -57,23 +55,19 @@ function readRoutesFromFile(filepath){
  * Iterate through routes and add them
  * @param {Array} routes
  */
-RoutesManager.prototype.loadRoutesFrom = function(routes){
+RoutesManager.prototype.addRoutes = function(routes){
     for(let index=0;index<routes.length;index++){
-        const route = routes[index].route;
-        if(route.in && route.in.indexOf(profile) === -1){
-            continue; //skip mapping for other environments
-        }else{
-            this.addRoute(route);
-        }
+        this.addRoute(routes[index].route);
     }
 }
 
 /**
  * Check a route mapping against the handlers added to muneem container.
  * Create routes with necessary handlers' calls
- * @param {object} routes
+ * @param {object} route
  */
 RoutesManager.prototype.addRoute = function(route){
+    if(route.in && route.in.indexOf(profile) === -1) return; //skip mapping for other environments
     const context = {
         app: this.appContext,
         route: route
@@ -91,10 +85,10 @@ RoutesManager.prototype.addRoute = function(route){
         const ans = new HttpAnswer(nativeResponse);
         const asked = buildRequestWrapper(nativeRequest,params);
         try{
-            log.debug(asked," matched with ", route);
+            logger.log.debug(asked," matched with ", route);
             //operation on request stream
             for(let i=0; i<routeHandlers.reqHandlers.length;i++){
-                log.debug(asked,"Executing request handlers");
+                logger.log.debug(asked,"Executing request handlers");
                 routeHandlers.reqHandlers[i].handle(asked ,ans, context);
                 if(ans.answered())  return;
             }
@@ -103,55 +97,51 @@ RoutesManager.prototype.addRoute = function(route){
                 ans.error = err;
                 this.handlers.get("__error").handle(asked,ans);
             });
-            //console.log("before handling stream")
-            log.debug(asked,"Executing request handler");
+            logger.log.debug(asked,"Executing request handler");
             handleRequestPayloadStream(asked, ans, routeHandlers, readRequestBody,context);
-            //console.log("after handling stream")
             
             nativeRequest.on('end', function() {
                 //TODO: do the conversion on demand
                 //nativeRequest.rawBody = Buffer.concat(body);
-                //console.log("inside end event")
 
                 if(routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.after){
-                    log.debug(asked,"After executing request data stream handler");
+                    logger.log.debug(asked,"After executing request data stream handler");
                     routeHandlers.reqDataStreamHandler.after(asked,ans, context);
                     if(ans.answered())  return;
                 }else{
                     asked.body = asked.body || Buffer.concat(asked.body);
-                    //log.debug(asked,"Payload size: " + asked.body.length);
+                    //logger.log.debug(asked,"Payload size: " + asked.body.length);
                 }
 
                 //operation on request body
-                log.debug(asked,"Executing request data handlers");
+                logger.log.debug(asked,"Executing request data handlers");
                 for(let i=0; i<routeHandlers.reqDataHandlers.length;i++){
                     routeHandlers.reqDataHandlers[i].handle(asked ,ans, context);
                     if(ans.answered())  return;
                 }
                 
                 if(routeHandlers.mainHandler) {
-                    log.debug(asked,"Executing route.to");
+                    logger.log.debug(asked,"Executing route.to");
                     routeHandlers.mainHandler.handle(asked,ans, context);
                     if(ans.answered()) return;
                 }
 
                 //operation on respoonse
-                log.debug(asked,"Executing response handlers");
+                logger.log.debug(asked,"Executing response handlers");
                 for(let i=0; i<routeHandlers.resHandlers.length;i++){
-                    //console.log("calling route.then ");
                     routeHandlers.resHandlers[i].handle(asked,ans, context);
                     if(ans.answered()) return;
                 }
 
                 if(!ans.answered()){//To confirm if some naughty postHandler has already answered
                     if(ans.data && ans.data.pipe && typeof ans.data.pipe === "function"){//stream
-                        log.debug(asked,"Responding back to client with stream");
+                        logger.log.debug(asked,"Responding back to client with stream");
                         ans.data.pipe(nativeResponse);
                     }else{
                         if(ans.data !== undefined){
                             if(typeof ans.data !== "string" && !Buffer.isBuffer(ans.data)){
-                                log.warn("Sorry!! Only string, buffer, or stream can be sent in response.");
-                                log.warn("Attempting JSON.stringify to transform Object to string");
+                                logger.log.warn("Sorry!! Only string, buffer, or stream can be sent in response.");
+                                logger.log.warn("Attempting JSON.stringify to transform Object to string");
                                 ans.data = JSON.stringify(ans.data);
                             }
 
@@ -190,7 +180,7 @@ function handleRequestPayloadStream(asked, ans, routeHandlers, readRequestBody, 
             if(ans.answered()) asked.nativeRequest.removeAllListeners();
         }
         
-        log.debug(asked,"Before executing request data stream handler");
+        logger.log.debug(asked,"Before executing request data stream handler");
         asked.nativeRequest.on('data', function(chunk) {
                 routeHandlers.reqDataStreamHandler.handle(chunk);
                 if(ans.answered()){
@@ -200,14 +190,14 @@ function handleRequestPayloadStream(asked, ans, routeHandlers, readRequestBody, 
                 }  
         })
     }else if(readRequestBody){
-        log.debug(asked,"Before reading request payload/body");
+        logger.log.debug(asked,"Before reading request payload/body");
         asked.nativeRequest.on('data', function(chunk) {
             if(contentLength < route.maxLength){
                 contentLength += chunk.length;
                 req.body.push(chunk);//TODO: ask user if he wants Buffer array
             }else{
                 //User may want to take multiple decisions instead of just refusing the request and closing the connection
-                log.debug(asked,"Calling __exceedContentLength handler");
+                logger.log.debug(asked,"Calling __exceedContentLength handler");
                 this.handlers.get("__exceedContentLength").handle(asked,ans, context);
             }
         })  
@@ -253,7 +243,7 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
             if((route.when === "GET" || route.when === "HEAD") 
                 && (handler.type === "requestDataStream" || handler.type === "requestData") 
                 && !this.appContext.alwaysReadRequestPayload){
-                throw new ApplicationSetupError("Set alwaysReadRequestPayload if you want to read request body/payload for GET and HEAD methods");
+                throw new ApplicationSetupError("Set alwaysReadRequestPayload if you want to read request body/payload for GET and HEAD methods (which is not idle)");
             }
 
             if(handler.type === "requestDataStream"){
@@ -301,17 +291,25 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
     return routeHandlers;
 }
 
+function callAll(arrayOfFunctions,asked,handlerName){
+    for(let i=0; i < arrayOfFunctions.length; i++){
+        arrayOfFunctions[i](asked,handlerName);
+    }
+}
 
-function RoutesManager(appContext,handlers){
+function RoutesManager(appContext,map){
     this.appContext = appContext;
-    this.handlers = handlers;
+    this.handlers = map;
+    this.beforeAll = [], this.beforeEach = [],  this.beforeMain = [];
+    this.afterAll = [], this.afterEach = [],  this.afterMain = [];
+
     this.router = require('find-my-way')( {
         ignoreTrailingSlash: true,
         maxParamLength: appContext.maxParamLength || 100,
         defaultRoute : (nativeRequest,nativeResponse) =>{
             const answer = new HttpAnswer(nativeResponse);
             const asked = buildRequestWrapper(nativeRequest);
-            handlers.get("__defaultRoute").handle(asked,answer);
+            map.get("__defaultRoute").handle(asked,answer);
         }
     } );
 }

@@ -1,14 +1,15 @@
 const RoutesManager = require("../../src/routesManager");
-const HandlersMap = require("../../src/HandlersMap");
+const Container = require("../../src/Container");
+const Handler = require("../../src/Handler");
 const path = require("path");
 
 describe ('RoutesManager', () => {
-    const handlers = new HandlersMap();
-    handlers.add("auth", () => 30).toHandle("request")
-    handlers.add("parallel", () => 30)
-    handlers.add("stream", () => 30).toHandle("requestDataStream")
-    handlers.add("post", () => 30).toHandle("response")
-    handlers.add("main", () => 30).toHandle("requestData")
+    const container = new Container();
+    container.add("auth",new Handler("auth", () => {}).toHandle("request"))
+    container.add("parallel",new Handler("parallel", () => {}))
+    container.add("stream",new Handler("stream", () => {}).toHandle("requestDataStream"))
+    container.add("post",new Handler("post", () => {}).toHandle("response"))
+    container.add("main",new Handler("main", () => {}).toHandle("requestData"))
 
     let env;
     beforeEach(()=>{
@@ -23,7 +24,7 @@ describe ('RoutesManager', () => {
         const options = {
             mappings :  path.join(__dirname , "app/mappings/invalid/invalid.yaml")
         };
-        const routesManager =new RoutesManager(options,handlers);
+        const routesManager =new RoutesManager(options,container);
         
         expect(() => {
             routesManager.addRoutesFromMappingsFile(options.mappings)
@@ -34,7 +35,7 @@ describe ('RoutesManager', () => {
         const options = {
             mappings : path.join(__dirname , "app/mappings/notfound.yaml")
         };
-        const routesManager =new RoutesManager(options,handlers);
+        const routesManager =new RoutesManager(options,container);
 
         expect(() => {
             routesManager.addRoutesFromMappingsFile(options.mappings)
@@ -47,8 +48,10 @@ describe ('RoutesManager', () => {
             mappings : path.join(__dirname , "app/mappings/"),
             alwaysReadRequestPayload: true
         };
-        const routesManager =new RoutesManager(options,handlers);
+        const routesManager =new RoutesManager(options,container);
+
         routesManager.addRoutesFromMappingsFile(options.mappings);
+        
         expect(routesManager.router.routes.length).toEqual(14);
 
         routesManager.router.routes.forEach(r => {
@@ -63,7 +66,7 @@ describe ('RoutesManager', () => {
             mappings : path.join(__dirname , "app/mappings/"),
             alwaysReadRequestPayload: true
         };
-        const routesManager =new RoutesManager(options,handlers);
+        const routesManager =new RoutesManager(options,container);
         routesManager.addRoutesFromMappingsFile(options.mappings);
         routesManager.addRoute({
             uri: "/route/from/code",
@@ -100,7 +103,7 @@ describe ('RoutesManager', () => {
         const options = {
             mappings : path.join(__dirname , "app/mappings/invalid/unknownHandler.yaml")
         };
-        const routesManager =new RoutesManager(options,handlers);
+        const routesManager =new RoutesManager(options,container);
         
         expect(() => {
             routesManager.addRoutesFromMappingsFile(options.mappings);
@@ -113,7 +116,7 @@ describe ('RoutesManager', () => {
             mappings : path.join(__dirname , "app/mappings/invalid/lateStreamHandler.yaml"),
             alwaysReadRequestPayload: true
         };
-        const routesManager =new RoutesManager(options,handlers);
+        const routesManager =new RoutesManager(options,container);
         
         expect(() => {
             routesManager.addRoutesFromMappingsFile(options.mappings);
@@ -125,7 +128,7 @@ describe ('RoutesManager', () => {
         const options = {
             mappings : path.join(__dirname , "app/mappings/invalid/invalidResponseHandler.yaml")
         };
-        const routesManager =new RoutesManager(options,handlers);
+        const routesManager =new RoutesManager(options,container);
         
         expect(() => {
             routesManager.addRoutesFromMappingsFile(options.mappings);
@@ -137,10 +140,10 @@ describe ('RoutesManager', () => {
         const options = {
             mappings : path.join(__dirname , "app/mappings/")
         };
-        const routesManager =new RoutesManager(options,handlers);
+        const routesManager =new RoutesManager(options,container);
         expect(() => {
             routesManager.addRoutesFromMappingsFile(options.mappings);
-        }).toThrowError("Set alwaysReadRequestPayload if you want to read request body/payload for GET and HEAD methods");
+        }).toThrowError("Set alwaysReadRequestPayload if you want to read request body/payload for GET and HEAD methods (which is not idle)");
 
     });
 

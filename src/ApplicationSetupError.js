@@ -17,15 +17,3 @@ class ApplicationSetupError extends Error {
 } 
 
 module.exports = ApplicationSetupError;
-
-const log = require('./muneem').log;
-
-process.on('uncaughtException', function(err) {
-    if(err instanceof ApplicationSetupError){
-        log.fatal(err);
-        console.log(err);
-        process.exit(1);
-    }else{
-        log.error(err);
-    }
-})
