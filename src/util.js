@@ -21,6 +21,7 @@ function isReadableStream(obj) {
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 exports.randomId = function (len){
     len = len || 16;
+    let text = '';
     for( var i=0; i < len; i++ )
         text += charset.charAt(Math.floor(Math.random() * 62));
     return text;
