@@ -49,15 +49,12 @@ describe ('RoutesManager', () => {
             alwaysReadRequestPayload: true
         };
         const routesManager =new RoutesManager(options,container);
-
         routesManager.addRoutesFromMappingsFile(options.mappings);
         
-        expect(routesManager.router.routes.length).toEqual(14);
+        expect(routesManager.router.count).toEqual(7);
 
-        routesManager.router.routes.forEach(r => {
-            expect(r.path).not.toEqual("/in/dev");
-            expect(r.path).not.toEqual("/in/test");
-        })
+        expect(routesManager.router.find("GET", "/in/dev").name).toEqual("defaultRoute"); 
+        expect(routesManager.router.find("GET", "/in/test").name).toEqual("defaultRoute"); 
 
     });
 
@@ -67,18 +64,20 @@ describe ('RoutesManager', () => {
             alwaysReadRequestPayload: true
         };
         const routesManager =new RoutesManager(options,container);
+
         routesManager.addRoutesFromMappingsFile(options.mappings);
         routesManager.addRoute({
             uri: "/route/from/code",
             to : "main"
         });
-        expect(routesManager.router.routes.length).toEqual(16);
+        /* routesManager.handlers.add("__defaultRoute",new Handler("__defaultRoute",(req,res)=>{
+            expect(req.url).toBe("/in/dev")     
+            done();
+        })); */
+        expect(routesManager.router.count).toEqual(8);
 
-        routesManager.router.routes.forEach(r => {
-            expect(r.path).not.toEqual("/in/dev");
-            expect(r.path).not.toEqual("/in/test");
-        })
-
+        expect(routesManager.router.find("GET", "/in/dev").name).toEqual("defaultRoute"); 
+        expect(routesManager.router.find("GET", "/in/test").name).toEqual("defaultRoute"); 
     });
 
     /* it('should read mappings for the mentioned envirnment', () => {

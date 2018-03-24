@@ -14,8 +14,10 @@ Muneem.setLogger = function(logger){
 Muneem.prototype.registerDefaultHandlers = function(){
     Muneem.logger.log.info("Adding __defaultRoute Handler")
     this.addHandler("__defaultRoute" , require("./specialHandlers/defaultRoute").handle).toHandle("response");
+
     Muneem.logger.log.info("Adding __exceedContentLength handler")
     this.addHandler("__exceedContentLength" , require("./specialHandlers/exceedContentLengthHandler").handle).toHandle("response");
+
     Muneem.logger.log.info("Adding __error handler")
     this.addHandler("__error" , require("./specialHandlers/exceptionHandler").handle,{ inParallel : true});
 }
@@ -27,6 +29,7 @@ Muneem.prototype.createServer = function(serverOptions){
 
 function Muneem(options){
     if(!(this instanceof Muneem)) return new Muneem(options);
+    
     this.appContext =  options;
     this.eventEmitter = new events.EventEmitter();
     this.container = new Container();

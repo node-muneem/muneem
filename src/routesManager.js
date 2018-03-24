@@ -20,35 +20,34 @@ RoutesManager.prototype.addRoutesFromMappingsFile = function(filepath){
         for(let index in files){
             const fPath = path.join(filepath,files[index]);
             if(!fs.lstatSync(fPath).isDirectory() && fPath.endsWith(".yaml")){
-                const routes = readRoutesFromFile(fPath);
-                logger.log.info("reading "+ (routes && routes.length) +" routes from file " + fPath);
-                routes && this.addRoutes(routes);
+                const routes = this.readRoutesFromFile(fPath);
             }
         }
     }else{
-        const routes = readRoutesFromFile(filepath);
-        logger.log.info("reading "+ (routes && routes.length) +" routes from file " + filepath);
-        routes && this.addRoutes(routes);
+        const routes = this.readRoutesFromFile(filepath);
     }
 
-    /* if(this.router.count === 0){
+    if(this.router.count === 0){
         throw new ApplicationSetupError("There is no route exist. Please check the mapping file or add them from the code.");
     }else{
         logger.log.info(this.router.count + " routes are loaded.");
-    } */
+    }
 }
 
 /**
  * Read routes mapping from a yaml file
  * @param {string} filepath 
  */
-function readRoutesFromFile(filepath){
+RoutesManager.prototype.readRoutesFromFile = function(filepath){
+    let routes;
     try{
-        return YAML.parseFile(filepath);
+        routes = YAML.parseFile(filepath);
     }catch(e){
-        logger.log.error( filepath + " is an invalid Yaml file or have syntatx issues.");
+        logger.log.error( filepath + " is an invalid Yaml file or have syntax issues.");
         logger.log.error( e);
     }
+    logger.log.info("reading "+ (routes && routes.length) +" routes from file " + filepath);
+    routes && this.addRoutes(routes);
 }
 
 /**
@@ -61,8 +60,8 @@ RoutesManager.prototype.addRoutes = function(routes){
     }
 }
 
-const dontHaveBody = ["GET", "HEAD"]
-const mayHaveBody = ["POST", "PUT", "DELETE", "OPTION"]
+/* const dontHaveBody = ["GET", "HEAD"]
+const mayHaveBody = ["POST", "PUT", "DELETE", "OPTION"] */
 
 /**
  * Check a route mapping against the handlers added to muneem container.
@@ -85,7 +84,7 @@ RoutesManager.prototype.addRoute = function(route){
     let handlerToReadBodyPresents = routeHandlers.reqDataStreamHandler || routeHandlers.reqDataHandlers.length > 0 
             || (routeHandlers.mainHandler && routeHandlers.mainHandler.type === "requestData");
 
-    const bigBodyAlert = this.handlers.get("__exceedContentLength").handle;
+    
 
     this.router.on(route.when,route.uri, function(nativeRequest,nativeResponse,params){
 
@@ -124,6 +123,7 @@ RoutesManager.prototype.addRoute = function(route){
                     routeHandlers.reqDataStreamHandler.before(asked,ans, context);
                     if(ans.answered()) asked.nativeRequest.removeAllListeners();
                 }
+                const bigBodyAlert = THIS.handlers.get("__exceedContentLength").handle;
                 readRequestBody(asked, ans, routeHandlers, context, bigBodyAlert);
                 nativeRequest.on('end', function() {
 
@@ -265,7 +265,7 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
             const handler = this.handlers.get(route.after[i]);
             if(!handler) throw new ApplicationSetupError("Unregistered handler " + route.after[i]);
 
-            if(dontHaveBody[route.when] 
+            if((route.when === "GET" || route.when === "HEAD")
                 && (handler.type === "requestDataStream" || handler.type === "requestData") 
                 && !this.appContext.alwaysReadRequestPayload){
                 throw new ApplicationSetupError("Set alwaysReadRequestPayload if you want to read request body/payload for GET and HEAD methods (which is not idle)");
