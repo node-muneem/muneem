@@ -24,8 +24,27 @@ HttpAnswer.prototype.status = function(code , msg){
     msg || (this.nativeResponse.statusMessage = msg);
 }
 
+HttpAnswer.prototype.getHeader = function(name){
+    return this.nativeResponse.getHeader(name);
+}
+
+HttpAnswer.prototype.setHeader = function(name){
+    return this.nativeResponse.setHeader(name);
+}
+
 HttpAnswer.prototype.write = function(data){
     this.data = data;
+}
+
+/**
+ * @param {string} data 
+ */
+HttpAnswer.prototype.end = function(data){
+    data = data || this.data || "";
+    if (!this.nativeResponse.getHeader('Content-Length') || !this.nativeResponse.getHeader('content-length')) {
+        this.nativeResponse.setHeader('Content-Length', '' + Buffer.byteLength(data));
+    }
+    this.nativeResponse.end(data,this.encoding);
 }
 
 HttpAnswer.prototype.redirectTo = function(loc){
@@ -35,18 +54,8 @@ HttpAnswer.prototype.redirectTo = function(loc){
 
 function HttpAnswer(res){
     this.nativeResponse = res;
-
-    this.getHeaders = res.getHeaders;
-    this.getHeader = res.getHeader;
-    this.getHeaderNames = res.getHeaderNames;
-    this.hasHeader = res.hasHeader;
-    this.removeHeader = res.removeHeader;
-    this.setHeader = res.setHeader;
-    
     this.encoding = "utf8";
     this.nativeResponse.statusCode = 200;
-    //this.stream
-    //this.data
 }
 
 module.exports = HttpAnswer;
