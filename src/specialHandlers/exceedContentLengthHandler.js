@@ -5,6 +5,7 @@
  */
 exports.handle = function(asked,answer){
     answer.setHeader("rejected", "content length");
-    answer.nativeResponse.end();
+    answer.status(413, "request entity too large");
+    answer.end();
     asked.nativeRequest.connection.destroy();
 }
