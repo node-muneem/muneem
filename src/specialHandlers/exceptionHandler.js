@@ -1,4 +1,4 @@
-const log = require("./../muneem").log;
+const logger = require("./../fakeLogger");
 
 
 exports.handle = function(asked,answer){
@@ -16,5 +16,5 @@ exports.handle = function(asked,answer){
     }
     //set headers to indicate api gatway so that it can prevent further error or something
     answer.nativeResponse.end();
-    log.error(error,asked,answer.context.route);
+    logger.log.error(error,asked,answer.context.route);
 }
