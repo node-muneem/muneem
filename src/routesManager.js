@@ -94,36 +94,32 @@ RoutesManager.prototype.addRoute = function(route){
 
         nativeRequest.on('error', function(err) {
             ans.error = err;
-            THIS.handlersrs.get("__error").handle(asked,ans);
+            THIS.handlers.get("__error").handle(asked,ans,context);
         });
 
         try{
             logger.log.debug(asked," matched with ", route);
             
             //operation on request stream
-            for(let i=0; i<routeHandlers.preStreamHandlers.length;i++){
-                routeHandlers.preStreamHandlers[i].runNonStreamHandler(asked ,ans, context);
+            for(let i=0; i<routeHandlers.preStreamRunners.length;i++){
+                routeHandlers.preStreamRunners[i].runNonStreamHandler(asked ,ans, context);
                 if(ans.answered())  return;
             }
 
             if(readBody){
-                if(routeHandlers.streamHandler.before){
+                if(routeHandlers.streamRunner.handler.beforeHandle){
                     logger.log.debug(asked,"Executing request data stream handler's before()");
-                    routeHandlers.streamHandler.before(asked,ans, context);
+                    routeHandlers.streamRunner.handler.beforeHandle(asked,ans, context);
                     if(ans.answered()) asked.nativeRequest.removeAllListeners();
                 }
                 const bigBodyAlert = THIS.handlers.get("__exceedContentLength").handle;
                 readRequestBody(asked, ans, routeHandlers, context, bigBodyAlert);
                 nativeRequest.on('end', function() {
 
-                    if(routeHandlers.streamHandler.after){
+                    if(routeHandlers.streamRunner.handler.afterHandle){
                         logger.log.debug(asked,"Executing request data stream handler's after()");
-                        routeHandlers.reqDataStreamHandler.after(asked,ans, context);
+                        routeHandlers.streamRunner.handler.afterHandle(asked,ans, context);
                         if(ans.answered())  return;
-                    }else{
-                        //TODO: ask user if he wants buffer or string
-                        asked.body = asked.body || Buffer.concat(asked.body);
-                        logger.log.debug("Request " + asked.id + " Payload size: " + asked.body.length);
                     }
 
                     atEnd(asked,ans,routeHandlers,context)
@@ -134,9 +130,8 @@ RoutesManager.prototype.addRoute = function(route){
             
         }catch(e){
             ans.error = e;
-            ans.context = context;
-            THIS.handlers.get("__error").handle(asked,ans);
             //console.log(e)
+            THIS.handlers.get("__error").handle(asked,ans,context);
         }
     })//router.on ends
 }
@@ -150,8 +145,8 @@ RoutesManager.prototype.addRoute = function(route){
  */
 function atEnd(asked,ans,routeHandlers,context){
     
-    for(let i=0; i<routeHandlers.postStreamHandlers.length;i++){
-        routeHandlers.postStreamHandlers[i].runNonStreamHandler(asked,ans, context);
+    for(let i=0; i<routeHandlers.postStreamRunners.length;i++){
+        routeHandlers.postStreamRunners[i].runNonStreamHandler(asked,ans, context);
         if(ans.answered()) return;
     }
 
@@ -188,11 +183,11 @@ const readRequestBody = function(asked, ans, routeHandlers, context, bigBodyAler
 
     let contentLength = 0;
 
-    logger.log.debug(asked,"Before reading request payload/body");
+    logger.log.debug("Request " + asked.id + "Before reading request payload/body");
     asked.nativeRequest.on('data', function(chunk) {
-        if(contentLength < route.maxLength){
+        if(contentLength < context.route.maxLength){
             contentLength += chunk.length;
-            routeHandlers.reqDataStreamHandler.runStreamHandler(chunk);
+            routeHandlers.streamRunner.runStreamHandler(asked, ans, context, chunk);
         }else{
             //User may want to take multiple decisions instead of just refusing the request and closing the connection
             logger.log.debug(asked,"Calling __exceedContentLength handler");
@@ -202,10 +197,17 @@ const readRequestBody = function(asked, ans, routeHandlers, context, bigBodyAler
 
 }
 
-function defaultStreamHandler(){
-    this.before = asked => {this.asked = asked};
-    this.handle = chunk => { this.asked.body.push(chunk) };
-} 
+function defaultStreamHandler(){};
+defaultStreamHandler.prototype.beforeHandle = function(asked){this.asked = asked};
+defaultStreamHandler.prototype.handle = function(chunk){
+     this.asked.body.push(chunk) 
+};
+defaultStreamHandler.prototype.afterHandle = function(asked){
+    //TODO: ask user if he wants buffer or string
+
+    this.asked.body = Buffer.concat(this.asked.body);
+    logger.log.debug("Request " + this.asked.id + " Payload size: " + this.asked.body.length);
+};
 
 /**
  * Validate if the handlers sequence is correct. 
@@ -216,9 +218,9 @@ function defaultStreamHandler(){
  */
 RoutesManager.prototype.extractHandlersFromRoute = function(route){
     const routeHandlers = {
-        preStreamHandlers : [],
-        streamHandler: undefined,
-        postStreamHandlers : [],
+        preStreamRunners : [],
+        streamRunner: undefined,
+        postStreamRunners : [],
     }
 
     //Prepare the list of handler need to be called before
@@ -235,15 +237,15 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
             }
 
             if(handler.handlesStream){
-                if(routeHandlers.streamHandler){
+                if(routeHandlers.streamRunner){
                     throw new ApplicationSetupError("MappingError: There is only one request stream handler per mapping allowed.");
                 }else{
-                    routeHandlers.streamHandler = new Runner(handler,this.beforeEachPreHandler,this.afterEachPreHandler);
+                    routeHandlers.streamRunner = new Runner(handler,this.beforeEachPreHandler,this.afterEachPreHandler);
                 }
-            }else if(routeHandlers.streamHandler){
-                routeHandlers.postStreamHandlers.push(new Runner(handler,this.beforeEachPostHandler,this.afterEachPostHandler));
+            }else if(routeHandlers.streamRunner){
+                routeHandlers.postStreamRunners.push(new Runner(handler,this.beforeEachPostHandler,this.afterEachPostHandler));
             }else{
-                routeHandlers.preStreamHandlers.push(new Runner(handler,this.beforeEachPreHandler,this.afterEachPreHandler));
+                routeHandlers.preStreamRunners.push(new Runner(handler,this.beforeEachPreHandler,this.afterEachPreHandler));
             }
         }//end of loop
     }
@@ -251,18 +253,18 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
     if(route.to){
         const handler = this.handlers.get(route.to);
         if(handler.handlesStream){
-            if(routeHandlers.streamHandler){
+            if(routeHandlers.streamRunner){
                 throw new ApplicationSetupError("MappingError: There is only one request stream handler per mapping allowed.");
             }else{
-                routeHandlers.streamHandler = new Runner(handler,this.beforeMainHandler,this.afterMainHandler);
+                routeHandlers.streamRunner = new Runner(handler,this.beforeMainHandler,this.afterMainHandler);
             }
         }else{
-            routeHandlers.postStreamHandlers.push(new Runner(handler,this.beforeMainHandler,this.afterMainHandler));
+            routeHandlers.postStreamRunners.push(new Runner(handler,this.beforeMainHandler,this.afterMainHandler));
         }
     }
 
-    if(!routeHandlers.streamHandler){
-        routeHandlers.streamHandler = new Runner(new defaultStreamHandler());
+    if(!routeHandlers.streamRunner){
+        routeHandlers.streamRunner = new Runner(new defaultStreamHandler());
     }
 
     //Prepare the list of handler need to be called after
@@ -274,7 +276,7 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
             if(handler.handlesStream){
                 throw new ApplicationSetupError("Ah! wrong place for " + route.then[i] + ". Only response handlers are allowed.");
             }else{
-                routeHandlers.postStreamHandlers.push(new Runner(handler,this.beforeEachPostHandler,this.afterEachPostHandler));
+                routeHandlers.postStreamRunners.push(new Runner(handler,this.beforeEachPostHandler,this.afterEachPostHandler));
             }
         }
     }
