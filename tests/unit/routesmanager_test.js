@@ -5,11 +5,11 @@ const path = require("path");
 
 describe ('RoutesManager', () => {
     const container = new Container();
-    container.add("auth",new Handler("auth", () => {}).toHandle("request"))
+    container.add("auth",new Handler("auth", () => {}))
     container.add("parallel",new Handler("parallel", () => {}))
-    container.add("stream",new Handler("stream", () => {}).toHandle("requestDataStream"))
-    container.add("post",new Handler("post", () => {}).toHandle("response"))
-    container.add("main",new Handler("main", () => {}).toHandle("requestData"))
+    container.add("stream",new Handler("stream", { handle : () => {}}, { handlesStream : true}))
+    container.add("post",new Handler("post", () => {}))
+    container.add("main",new Handler("main", () => {}))
 
     let env;
     beforeEach(()=>{
@@ -123,7 +123,7 @@ describe ('RoutesManager', () => {
 
     });
 
-    it('should error when multiple stream handlers are called', () => {
+    it('should error when multiple stream handlers are added', () => {
         const options = {
             mappings : path.join(__dirname , "app/mappings/invalid/invalidResponseHandler.yaml")
         };
@@ -131,13 +131,13 @@ describe ('RoutesManager', () => {
         
         expect(() => {
             routesManager.addRoutesFromMappingsFile(options.mappings);
-        }).toThrowError("Ah! wrong place for parallel. Only response handlers are allowed here.");
+        }).toThrowError("Ah! wrong place for stream. Only response handlers are allowed.");
 
     });
 
     it('should error when handler wants to read request body for GET or HEAD method', () => {
         const options = {
-            mappings : path.join(__dirname , "app/mappings/")
+            mappings : path.join(__dirname , "app/mappings/invalid/readBodyForcefully.yaml")
         };
         const routesManager =new RoutesManager(options,container);
         expect(() => {

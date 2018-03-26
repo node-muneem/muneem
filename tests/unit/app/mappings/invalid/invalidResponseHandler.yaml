@@ -1,4 +1,5 @@
 - route: 
-    uri: /without/pre/handlers
+    uri: /multiple/stream/handlers
+    when: POST
     to: main
-    then: [ parallel ]
+    then: [ stream]

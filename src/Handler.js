@@ -1,64 +1,30 @@
 
-const types = ["request", "requestDataStream", "requestData", "response"];
-/**
- * A handler can handle request, requestDataStream, requestData, or response
- * @param {string} type 
- */
-Handler.prototype.toHandle = function(type){
-    if(types.indexOf(type) === -1){
-        throw Error("Invalid type " + type);    
-    }
-
-    /* if(type !== "request" && this.inParallel){
-        throw Error( type + " handler are not allowed to run side by side");
-    } */
-    this.type = type;
-    return this;
-}
-
 Handler.prototype.setHandler = function(handler){
-    //const beforeFn = this.beforeFn;
-    //const afterFn = this.afterFn;
-
     if(this.inParallel){
         this.handle =  function(){ 
             const args = arguments; 
             setTimeout(
                 function(){
-                    //beforeFn(...args);
                     handler(...args);  
-                    //afterFn(...args);
                 }
             ,0)
         };
     }else{
-        /* this.handle = function() {
-            beforeFn(...arguments);
-            handler(...arguments);  
-            afterFn(...arguments);
-        } */ 
         this.handle = handler
     }
 }
 
-Handler.prototype.before = function(fn){
-    this.beforeFn = fn;
-}
-
-Handler.prototype.after = function(fn){
-    this.afterFn = fn;
-}
-
 function Handler(name,handler, options){
     this.name = name;
-    this.beforeFn = () => {};
-    this.afterFn = () => {};
     if(options){
-        //this.handlesStream = options.handlesStream;
+        this.handlesStream = options.handlesStream;
         this.inParallel = options.inParallel;
     }
 
     if(typeof handler === "function" ){
+        if(this.handlesStream){
+            throw Error("A stream handler should be of object type.");
+        }
         this.setHandler(handler)
     }else if(typeof handler === "object"){
         if(handler.handle){
@@ -70,7 +36,6 @@ function Handler(name,handler, options){
         throw Error("Handler should be of object or function type only.");
     }
 
-    this.type = "requestData";
 }
 
 module.exports = Handler;

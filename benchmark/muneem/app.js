@@ -14,14 +14,15 @@ const muneem = Muneem({
     //alwaysReadRequestPayload : true
 });
 
-muneem.addHandler("preStream", (req,answer) => {
-    //console.log("preStream")
-}).toHandle("requestDataStream");
+muneem.addHandler("preStream", {
+    handle : () => {}
+}, { handlesStream : true});
+
 muneem.addHandler("parallel", (req,answer) => {
     //console.log("parallel")
 },{
     inParallel : true
-}).toHandle("request");
+});
 muneem.addHandler("main", (req,answer) => {
     //answer.data = '{ "hello" : "world" }';
     answer.write('{ "hello" : "world" }');
@@ -31,7 +32,7 @@ muneem.addHandler("main", (req,answer) => {
 });
 muneem.addHandler("post", (req,answer) => {
     //console.log("post")
-}).toHandle("response");
+});
 
 /* muneem.beforeEachHandler(() => {
     //console.log("before")

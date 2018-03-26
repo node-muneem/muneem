@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 var HttpAsked = require('./HttpAsked');
 const HttpAnswer = require('./HttpAnswer');
+const Runner = require('./HandlerRunner');
 const logger = require("./fakeLogger");
 const ApplicationSetupError = require('./ApplicationSetupError');
 const profile = process.env.NODE_ENV;
@@ -20,11 +21,11 @@ RoutesManager.prototype.addRoutesFromMappingsFile = function(filepath){
         for(let index in files){
             const fPath = path.join(filepath,files[index]);
             if(!fs.lstatSync(fPath).isDirectory() && fPath.endsWith(".yaml")){
-                const routes = this.readRoutesFromFile(fPath);
+                this.readRoutesFromFile(fPath);
             }
         }
     }else{
-        const routes = this.readRoutesFromFile(filepath);
+        this.readRoutesFromFile(filepath);
     }
 
     if(this.router.count === 0){
@@ -81,8 +82,8 @@ RoutesManager.prototype.addRoute = function(route){
     const routeHandlers = this.extractHandlersFromRoute(route);
 
     //read request body when there is at least one handler to handle it
-    let handlerToReadBodyPresents = routeHandlers.reqDataStreamHandler || routeHandlers.reqDataHandlers.length > 0 
-            || (routeHandlers.mainHandler && routeHandlers.mainHandler.type === "requestData");
+    let readBody = this.appContext.alwaysReadRequestPayload || 
+            ( routeHandlers.method !== "GET" && routeHandlers.method !== "HEAD");
 
     
 
@@ -100,59 +101,30 @@ RoutesManager.prototype.addRoute = function(route){
             logger.log.debug(asked," matched with ", route);
             
             //operation on request stream
-            //callAll(THIS.beforeAllPreHandlers,asked);
-            for(let i=0; i<routeHandlers.reqHandlers.length;i++){
-                logger.log.debug(asked,"Executing request handlers");
-                //if(routeHandlers.reqHandlers[i].inParallel !== true)  callAll(THIS.beforeEachPreHandler,asked,routeHandlers.reqHandlers[i].name);
-                routeHandlers.reqHandlers[i].handle(asked ,ans, context);
-                //callAll(THIS.afterEachPreHandler,asked,routeHandlers.reqHandlers[i].name);
+            for(let i=0; i<routeHandlers.preStreamHandlers.length;i++){
+                routeHandlers.preStreamHandlers[i].runNonStreamHandler(asked ,ans, context);
                 if(ans.answered())  return;
             }
 
-            logger.log.debug(asked,"Executing request handler");
-            
-            //if(context.route.to === routeHandlers.reqDataStreamHandler.name){
-                //callAll(THIS.afterAllPreHandlersrs,asked,context.route.to);
-                //callAll(THIS.beforeMainHandler,asked,context.route.to);
-            //}else{
-                //callAll(THIS.beforeEachPreHandler,asked,routeHandlers.reqDataStreamHandler.name);
-            //}
-
-            if(handlerToReadBodyPresents){
-                if(routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.before){
-                    routeHandlers.reqDataStreamHandler.before(asked,ans, context);
+            if(readBody){
+                if(routeHandlers.streamHandler.before){
+                    logger.log.debug(asked,"Executing request data stream handler's before()");
+                    routeHandlers.streamHandler.before(asked,ans, context);
                     if(ans.answered()) asked.nativeRequest.removeAllListeners();
                 }
                 const bigBodyAlert = THIS.handlers.get("__exceedContentLength").handle;
                 readRequestBody(asked, ans, routeHandlers, context, bigBodyAlert);
                 nativeRequest.on('end', function() {
 
-                    if(routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.after){
-                        logger.log.debug(asked,"Executing request data stream handler after()");
+                    if(routeHandlers.streamHandler.after){
+                        logger.log.debug(asked,"Executing request data stream handler's after()");
                         routeHandlers.reqDataStreamHandler.after(asked,ans, context);
-                
-                        if(context.route.to === routeHandlers.reqDataStreamHandler.name){
-                            //callAll(THIS.afterMainHandler,asked,context.route.to);
-                        }else{
-                            //callAll(THIS.afterEachPreHandler,asked,routeHandlers.reqDataStreamHandler.name);
-                        }
-                
                         if(ans.answered())  return;
                     }else{
                         //TODO: ask user if he wants buffer or string
                         asked.body = asked.body || Buffer.concat(asked.body);
-                        logger.log.debug(asked,"Payload size: " + asked.body.length);
+                        logger.log.debug("Request " + asked.id + " Payload size: " + asked.body.length);
                     }
-
-                    //operation on request body
-                    logger.log.debug(asked,"Executing request data handlers");
-                    for(let i=0; i<routeHandlers.reqDataHandlers.length;i++){
-                        //callAll(THIS.beforeEachPreHandler,asked,routeHandlers.reqDataHandlers[i].name);
-                        routeHandlers.reqDataHandlers[i].handle(asked ,ans, context);
-                        //callAll(THIS.afterEachPreHandler,asked,routeHandlers.reqDataHandlers[i].name);
-                        if(ans.answered())  return;
-                    }
-                    //callAll(THIS.afterAllPreHandlers,asked,context.route.to);
 
                     atEnd(asked,ans,routeHandlers,context)
                 })
@@ -170,7 +142,7 @@ RoutesManager.prototype.addRoute = function(route){
 }
 
 /**
- * execute main handler and response/post handlers
+ * execute post handlers
  * @param {*} asked : request wrapper
  * @param {*} ans  : response wrapper
  * @param {*} routeHandlers : handlers attached to this route
@@ -178,20 +150,8 @@ RoutesManager.prototype.addRoute = function(route){
  */
 function atEnd(asked,ans,routeHandlers,context){
     
-    if(routeHandlers.mainHandler) {
-        logger.log.debug(asked,"Executing route.to");
-        //callAll(THIS.beforeMainHandler,asked,context.route.to);
-        routeHandlers.mainHandler.handle(asked,ans, context);
-        //callAll(THIS.afterMainHandler,asked,context.route.to);
-        if(ans.answered()) return;
-    }
-
-    //operation on respoonse
-    logger.log.debug(asked,"Executing response handlers");
-    for(let i=0; i<routeHandlers.resHandlers.length;i++){
-        //callAll(THIS.beforeEachPostHandler,asked,routeHandlers.resHandlers[i].name);
-        routeHandlers.resHandlers[i].handle(asked,ans, context);
-        //callAll(THIS.afterEachPostHandler,asked,routeHandlers.resHandlers[i].name);
+    for(let i=0; i<routeHandlers.postStreamHandlers.length;i++){
+        routeHandlers.postStreamHandlers[i].runNonStreamHandler(asked,ans, context);
         if(ans.answered()) return;
     }
 
@@ -226,14 +186,13 @@ const readRequestBody = function(asked, ans, routeHandlers, context, bigBodyAler
     /* const contentLen = asked.getHeader("content-length") || 0;
     const maxLength = contentLen > route.maxLength ? contentLen : route.maxLength ; */
 
-    let streamHandler = routeHandlers.reqDataStreamHandler && routeHandlers.reqDataStreamHandler.handle || (chunk => { req.body.push(chunk)});
     let contentLength = 0;
 
     logger.log.debug(asked,"Before reading request payload/body");
     asked.nativeRequest.on('data', function(chunk) {
         if(contentLength < route.maxLength){
             contentLength += chunk.length;
-            streamHandler(chunk);
+            routeHandlers.reqDataStreamHandler.runStreamHandler(chunk);
         }else{
             //User may want to take multiple decisions instead of just refusing the request and closing the connection
             logger.log.debug(asked,"Calling __exceedContentLength handler");
@@ -242,6 +201,11 @@ const readRequestBody = function(asked, ans, routeHandlers, context, bigBodyAler
     });
 
 }
+
+function defaultStreamHandler(){
+    this.before = asked => {this.asked = asked};
+    this.handle = chunk => { this.asked.body.push(chunk) };
+} 
 
 /**
  * Validate if the handlers sequence is correct. 
@@ -252,11 +216,9 @@ const readRequestBody = function(asked, ans, routeHandlers, context, bigBodyAler
  */
 RoutesManager.prototype.extractHandlersFromRoute = function(route){
     const routeHandlers = {
-        reqHandlers : [],
-        reqDataStreamHandler: undefined,
-        reqDataHandlers : [],
-        resHandlers : [],
-        mainHandler: undefined
+        preStreamHandlers : [],
+        streamHandler: undefined,
+        postStreamHandlers : [],
     }
 
     //Prepare the list of handler need to be called before
@@ -265,26 +227,42 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
             const handler = this.handlers.get(route.after[i]);
             if(!handler) throw new ApplicationSetupError("Unregistered handler " + route.after[i]);
 
-            if((route.when === "GET" || route.when === "HEAD")
-                && (handler.type === "requestDataStream" || handler.type === "requestData") 
-                && !this.appContext.alwaysReadRequestPayload){
+            //User should not set stream handler for GET/HEAD request
+            if(!this.appContext.alwaysReadRequestPayload && handler.handlesStream
+                && (route.when === "GET" || route.when === "HEAD")
+                ){
                 throw new ApplicationSetupError("Set alwaysReadRequestPayload if you want to read request body/payload for GET and HEAD methods (which is not idle)");
             }
 
-            if(handler.type === "requestDataStream"){
-                if(routeHandlers.reqDataHandlers.length > 0){
-                    throw new ApplicationSetupError("MappingError: Request Stream handler should be called before.");
-                }else if(routeHandlers.reqDataStreamHandler){
+            if(handler.handlesStream){
+                if(routeHandlers.streamHandler){
                     throw new ApplicationSetupError("MappingError: There is only one request stream handler per mapping allowed.");
                 }else{
-                    routeHandlers.reqDataStreamHandler = handler;
+                    routeHandlers.streamHandler = new Runner(handler,this.beforeEachPreHandler,this.afterEachPreHandler);
                 }
-            }else if(handler.type === "requestData"){
-                routeHandlers.reqDataHandlers.push(handler);
-            }else/*   if(handler.type === "request") */{
-                routeHandlers.reqHandlers.push(handler);
+            }else if(routeHandlers.streamHandler){
+                routeHandlers.postStreamHandlers.push(new Runner(handler,this.beforeEachPostHandler,this.afterEachPostHandler));
+            }else{
+                routeHandlers.preStreamHandlers.push(new Runner(handler,this.beforeEachPreHandler,this.afterEachPreHandler));
             }
+        }//end of loop
+    }
+
+    if(route.to){
+        const handler = this.handlers.get(route.to);
+        if(handler.handlesStream){
+            if(routeHandlers.streamHandler){
+                throw new ApplicationSetupError("MappingError: There is only one request stream handler per mapping allowed.");
+            }else{
+                routeHandlers.streamHandler = new Runner(handler,this.beforeMainHandler,this.afterMainHandler);
+            }
+        }else{
+            routeHandlers.postStreamHandlers.push(new Runner(handler,this.beforeMainHandler,this.afterMainHandler));
         }
+    }
+
+    if(!routeHandlers.streamHandler){
+        routeHandlers.streamHandler = new Runner(new defaultStreamHandler());
     }
 
     //Prepare the list of handler need to be called after
@@ -292,27 +270,15 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
         for(let i=0;i<route.then.length;i++){
             const handler = this.handlers.get(route.then[i]);
             if(!handler) throw new ApplicationSetupError("Unregistered handler " + route.then[i]);
-            else if(handler.type !== "response"){
-                throw new ApplicationSetupError("Ah! wrong place for " + route.then[i] + ". Only response handlers are allowed here.");
+
+            if(handler.handlesStream){
+                throw new ApplicationSetupError("Ah! wrong place for " + route.then[i] + ". Only response handlers are allowed.");
+            }else{
+                routeHandlers.postStreamHandlers.push(new Runner(handler,this.beforeEachPostHandler,this.afterEachPostHandler));
             }
-            routeHandlers.resHandlers.push(handler);
         }
     }
 
-    if(route.to){
-        const mainHandler = this.handlers.get(route.to);
-        if(mainHandler.type === "requestDataStream"){
-            if(routeHandlers.reqDataStreamHandler){
-                throw new ApplicationSetupError("MappingError: There is only one request stream handler per mapping allowed.");
-            }else{
-                routeHandlers.reqDataStreamHandler = mainHandler;
-                routeHandlers.mainHandler  = undefined;
-            }
-        }else{
-            routeHandlers.mainHandler = mainHandler;
-        }
-    }
-        
     return routeHandlers;
 }
 
@@ -330,8 +296,8 @@ function RoutesManager(appContext,map){
     this.appContext = appContext;
     this.handlers = map;
 
-    this.beforeAllPreHandlers = [], this.beforeEachPreHandler = [],  this.beforeMainHandler = [], this.beforeEachPostHandler = [], this.beforeAllPostHandlers = [];
-    this.afterAllPreHandlers = [], this.afterEachPreHandler = [],  this.afterMainHandler = [], this.afterEachPostHandler = [], this.afterAllPostHandlers = [];
+    this.beforeEachPreHandler = [],  this.beforeMainHandler = [], this.beforeEachPostHandler = [];
+    this.afterEachPreHandler = [],  this.afterMainHandler = [], this.afterEachPostHandler = [];
 
     //this.router = require('find-my-way')( {
     this.router = require('anumargak')( {

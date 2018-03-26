@@ -13,10 +13,10 @@ Muneem.setLogger = function(logger){
 
 Muneem.prototype.registerDefaultHandlers = function(){
     Muneem.logger.log.info("Adding __defaultRoute Handler")
-    this.addHandler("__defaultRoute" , require("./specialHandlers/defaultRoute").handle).toHandle("response");
+    this.addHandler("__defaultRoute" , require("./specialHandlers/defaultRoute").handle);
 
     Muneem.logger.log.info("Adding __exceedContentLength handler")
-    this.addHandler("__exceedContentLength" , require("./specialHandlers/exceedContentLengthHandler").handle).toHandle("response");
+    this.addHandler("__exceedContentLength" , require("./specialHandlers/exceedContentLengthHandler").handle);
 
     Muneem.logger.log.info("Adding __error handler")
     this.addHandler("__error" , require("./specialHandlers/exceptionHandler").handle,{ inParallel : true});
@@ -76,14 +76,6 @@ Muneem.prototype.beforeEachHandler = function(fn){
     this.routesManager.beforeMainHandler.push(fn);
 }
 
-Muneem.prototype.beforeAllPreHandlers = function(fn){
-    this.routesManager.beforeAllPreHandlers.push(fn);
-}
-
-Muneem.prototype.beforeAllPostHandlers = function(fn){
-    this.routesManager.beforeAllPreHandlers.push(fn);
-}
-
 /* After */
 
 Muneem.prototype.afterEachPreHandler = function(fn){
@@ -102,14 +94,6 @@ Muneem.prototype.afterEachHandler = function(fn){
     this.routesManager.afterEachPreHandler.push(fn);
     this.routesManager.afterEachPostHandler.push(fn);
     this.routesManager.afterMainHandler.push(fn);
-}
-
-Muneem.prototype.afterAllPreHandlers = function(fn){
-    this.routesManager.afterAllPreHandlers.push(fn);
-}
-
-Muneem.prototype.afterAllPostHandlers = function(fn){
-    this.routesManager.afterAllPreHandlers.push(fn);
 }
 
 //commented until the performance of the application is analyzed

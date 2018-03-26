@@ -1,0 +1,4 @@
+- route: 
+    uri: /read/body
+    to: main
+    after: [ stream]

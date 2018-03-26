@@ -30,14 +30,23 @@ describe ('Handler', () => {
         const handler = {
             handle : (arg) => { arg.a = 56;}
         };
-        const appHandler = new Handler("valid",handler);
-        appHandler.toHandle("requestDataStream");
+        const appHandler = new Handler("valid",handler, {
+            handlesStream : true
+        });
 
         appHandler.handle(obj);
 
         expect(obj.a).toEqual(56);
-        expect(appHandler.type).toEqual("requestDataStream");
+        expect(appHandler.handlesStream).toBe(true);
         expect(appHandler.inParallel).toEqual(undefined);
+    });
+
+    it('should error when stream handler is not an object', () => {
+        expect(() => {
+            new Handler("valid",(arg) => { arg.a = 56;}, {
+                handlesStream : true
+            });
+        }).toThrowError("A stream handler should be of object type.");
     });
 
     it('should create handler from an object to run in parallel', (done) => {
