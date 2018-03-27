@@ -29,6 +29,11 @@ function Handler(name,handler, options){
     }else if(typeof handler === "object"){
         if(handler.handle){
             this.setHandler(handler.handle);
+
+            if(options.handlesStream){
+                this.before = handler.before;
+                this.after = handler.after;
+            }
         }else{
             throw Error("Handler should have 'handle' method.");    
         }

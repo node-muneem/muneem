@@ -27,10 +27,13 @@ Muneem.prototype.createServer = function(serverOptions){
     return new Server(serverOptions, this.routesManager.router, this.eventEmitter);
 }
 
+const defaultOptions = {
+    alwaysReadRequestPayload: false
+}
 function Muneem(options){
     if(!(this instanceof Muneem)) return new Muneem(options);
     
-    this.appContext =  options;
+    this.appContext =  Object.assign({},defaultOptions,options);
     this.eventEmitter = new events.EventEmitter();
     this.container = new Container();
     this.registerDefaultHandlers();

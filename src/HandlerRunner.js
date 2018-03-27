@@ -1,31 +1,32 @@
 const logger = require("./fakeLogger");
 
 Runner.prototype.runNonStreamHandler = function(asked,answer,context){
-    if(this.before){
-        logger.log.debug(asked,"Executing before of " + this.handler.name);
-        callAll(this.before,asked,context,this.handler.name);
-    }
+    this.runBefore(asked, context);
     
-    logger.log.debug(asked,"Executing handler " + this.handler.name);
+    logger.log.debug("Request" + asked.id + "Executing handler " + this.handler.name);
     this.handler.handle(asked,answer,context);
     
-    if(this.after){
-        logger.log.debug(asked,"Executing after of " + this.handler.name);
+    this.runAfter(asked, context);
+}
+
+Runner.prototype.runStreamHandler = function(asked, answer, context, chunk){
+    //this.runBefore(asked, context);
+    this.handler.handle(chunk);
+    
+    //this.runAfter(asked, context);
+}
+
+Runner.prototype.runBefore = function(asked, context) {
+    if(this.before){
+        logger.log.debug(asked,"Executing before of " + this.handler.name);
         callAll(this.before,asked,context,this.handler.name);
     }
 }
 
-Runner.prototype.runStreamHandler = function(asked, answer, context, chunk){
-    if(this.before){
-        logger.log.debug(asked,"Executing before of " + this.handler.name);
-        callAll(this.before,asked,context,this.handler.name);
-    }
-
-    this.handler.handle(chunk);
-    
+Runner.prototype.runAfter = function(asked, context) {
     if(this.after){
         logger.log.debug(asked,"Executing after of " + this.handler.name);
-        callAll(this.before,asked,context,this.handler.name);
+        callAll(this.after,asked,context,this.handler.name);
     }
 }
 
@@ -47,9 +48,12 @@ function callAll(arrayOfFunctions, ...args){
  */
 function Runner(handler,before,after){
     this.handler = handler;
-    if(!handler.isParallen){
-        this.before = before;
-        this.after = after;
+    if(!handler.inParallel){
+        if(before && Array.isArray(before) && before.length > 0)
+            this.before = before;
+            
+        if(after && Array.isArray(after) && after.length > 0)
+            this.after = after;
     }
 }
 

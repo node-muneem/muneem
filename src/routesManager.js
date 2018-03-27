@@ -83,12 +83,9 @@ RoutesManager.prototype.addRoute = function(route){
 
     //read request body when there is at least one handler to handle it
     let readBody = this.appContext.alwaysReadRequestPayload || 
-            ( routeHandlers.method !== "GET" && routeHandlers.method !== "HEAD");
-
-    
+            ( route.when !== "GET" && route.when !== "HEAD");
 
     this.router.on(route.when,route.uri, function(nativeRequest,nativeResponse,params){
-
         const ans = new HttpAnswer(nativeResponse);
         const asked = new HttpAsked(nativeRequest,params);
 
@@ -99,7 +96,6 @@ RoutesManager.prototype.addRoute = function(route){
 
         try{
             logger.log.debug(asked," matched with ", route);
-            
             //operation on request stream
             for(let i=0; i<routeHandlers.preStreamRunners.length;i++){
                 routeHandlers.preStreamRunners[i].runNonStreamHandler(asked ,ans, context);
@@ -107,18 +103,22 @@ RoutesManager.prototype.addRoute = function(route){
             }
 
             if(readBody){
-                if(routeHandlers.streamRunner.handler.beforeHandle){
+                routeHandlers.streamRunner.runBefore(asked, context);
+
+                if(routeHandlers.streamRunner.handler.before){
                     logger.log.debug(asked,"Executing request data stream handler's before()");
-                    routeHandlers.streamRunner.handler.beforeHandle(asked,ans, context);
+                    routeHandlers.streamRunner.handler.before(asked,ans, context);
                     if(ans.answered()) asked.nativeRequest.removeAllListeners();
                 }
                 const bigBodyAlert = THIS.handlers.get("__exceedContentLength").handle;
                 readRequestBody(asked, ans, routeHandlers, context, bigBodyAlert);
                 nativeRequest.on('end', function() {
 
-                    if(routeHandlers.streamRunner.handler.afterHandle){
+                    routeHandlers.streamRunner.runAfter(asked, context);
+
+                    if(routeHandlers.streamRunner.handler.after){
                         logger.log.debug(asked,"Executing request data stream handler's after()");
-                        routeHandlers.streamRunner.handler.afterHandle(asked,ans, context);
+                        routeHandlers.streamRunner.handler.after(asked,ans, context);
                         if(ans.answered())  return;
                     }
 
@@ -198,13 +198,12 @@ const readRequestBody = function(asked, ans, routeHandlers, context, bigBodyAler
 }
 
 function defaultStreamHandler(){};
-defaultStreamHandler.prototype.beforeHandle = function(asked){this.asked = asked};
+defaultStreamHandler.prototype.before = function(asked){this.asked = asked};
 defaultStreamHandler.prototype.handle = function(chunk){
      this.asked.body.push(chunk) 
 };
-defaultStreamHandler.prototype.afterHandle = function(asked){
+defaultStreamHandler.prototype.after = function(asked){
     //TODO: ask user if he wants buffer or string
-
     this.asked.body = Buffer.concat(this.asked.body);
     logger.log.debug("Request " + this.asked.id + " Payload size: " + this.asked.body.length);
 };
@@ -282,16 +281,6 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
     }
 
     return routeHandlers;
-}
-
-/**
- * 
- * @param {Array} arrayOfFunctions 
- */
-function callAll(arrayOfFunctions, ...args){
-    for(let i=0; i < arrayOfFunctions.length; i++){
-        arrayOfFunctions[i](...args);
-    }
 }
 
 function RoutesManager(appContext,map){
