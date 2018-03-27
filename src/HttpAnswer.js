@@ -21,7 +21,7 @@ HttpAnswer.prototype.answered = function(){
 
 HttpAnswer.prototype.status = function(code , msg){
     this.nativeResponse.statusCode = code;
-    msg || (this.nativeResponse.statusMessage = msg);
+    msg && (this.nativeResponse.statusMessage = msg);
 }
 
 HttpAnswer.prototype.getHeader = function(name){
