@@ -4,9 +4,9 @@
   "description": "A framework to write fast web services in easy way. Designed for developers, QAs, Maintainers, and BAs",
   "main": "src/muneem.js",
   "scripts": {
-    "test": "nyc jasmine tests/unit/*test.js",
+    "test": "jasmine tests/unit/*test.js",
     "postinstall": "node tasks/postinstall.js",
-    "coverage": "nyc report --reporter=lcov"
+    "coverage": "nyc jasmine tests/unit/*test.js; nyc report --reporter=lcov"
   },
   "author": "Amit Gupta (https://github.com/amitguptagwl)",
   "license": "MIT",
@@ -27,10 +27,17 @@
   "devDependencies": {
     "jasmine": "^3.1.0",
     "jasmine-core": "^3.1.0",
-    "nyc": "^11.6.0"
+    "node-mocks-http": "^1.5.8",
+    "fastify": "^1.1.1",
+    "find-my-way": "^1.11.1",
+    "micro": "^9.1.4",
+    "nyc": "^11.6.0",
+    "chai": "^4.1.2",
+    "chai-http": "^4.0.0"
   },
   "dependencies": {
-    "find-my-way": "^1.10.4",
+    "anumargak": "file:../fasttrack",
+    "uniqid": "^4.1.1",
     "yamljs": "^0.3.0"
   }
 }
