@@ -1,6 +1,3 @@
-//cookies, query param, headers, pre closing stream
-
-
 
 const RoutesManager = require("../../src/routesManager");
 const HandlersMap = require("../../src/Container");

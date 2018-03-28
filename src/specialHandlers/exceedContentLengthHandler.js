@@ -4,8 +4,7 @@
  * @param {HttpAnswer} answer 
  */
 exports.handle = function(asked,answer){
-    answer.setHeader("rejected", "content length");
+    answer.setHeader("rejected", "request entity too large");
     answer.status(413, "request entity too large");
     answer.end();
-    asked.nativeRequest.connection.destroy();
 }
