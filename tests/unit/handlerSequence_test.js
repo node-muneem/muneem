@@ -1,3 +1,4 @@
+//should not call handler further is answer stream is end
 const RoutesManager = require("../../src/routesManager");
 const HandlersMap = require("../../src/Container");
 const Handler = require("../../src/Handler");
@@ -379,6 +380,72 @@ describe ('Routes Manager', () => {
                "Main: before main", 'main', "Main: after main",
                'post',
                'last'
+           ]);
+        });
+        routesManager.router.lookup(request,response);
+
+        request.send("data sent in request");
+
+    });
+
+    it('should not skip next handlers when response is already ended', (done) => {
+        
+        const muneem = Muneem();
+        let blocks = [];
+
+        muneem.addHandler("auth", () => {blocks.push("auth")} ) ;
+        muneem.addHandler("parallel", () => {
+            blocks.push("parallel");
+            expect(blocks).toEqual([ 
+                 'auth' ,
+                "Main: before main", 'main', "Main: after main",
+                'post',
+                'last',
+                'parallel'
+            ]);
+            done();
+        },{inParallel : true} ) ;
+        muneem.addHandler("main", (asked,answer) => {
+            answer.write(asked.body);
+            answer.end();
+            blocks.push("main")
+        } ) ;
+        muneem.addHandler("post", () => {blocks.push("post")} );
+        muneem.addHandler("last", () => {blocks.push("last")} ) ;
+
+        const routesManager = muneem.routesManager;
+        muneem.beforeMainHandler((asked,context, handlerName) => {
+            blocks.push("Main: before " + handlerName)
+        });
+        muneem.afterMainHandler((asked,context, handlerName) => {
+            blocks.push("Main: after " + handlerName)
+        });
+
+        routesManager.addRoute({
+            uri: "/test",
+            to: "main",
+            when: ["POST"],
+            after: ["auth", "parallel"],
+            then: ["post", "last"]
+        });
+
+        var request  = httpMocks.createRequest({
+            method: "POST",
+            url: '/test'
+        });
+
+        var response = httpMocks.createResponse({
+            eventEmitter: require('events').EventEmitter
+        });
+
+        response.on('end', function() {
+            expect(response._getData() ).toEqual("data sent in request");
+            expect(response.statusCode ).toEqual(200);
+            expect(response._isEndCalled()).toBe(true);
+            console.log(blocks);
+            expect(blocks).toEqual([ 
+                'auth' ,
+               "Main: before main"
            ]);
         });
         routesManager.router.lookup(request,response);
