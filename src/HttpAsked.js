@@ -6,12 +6,12 @@ function HttpAsked(request,params){
     this.processQueryParam(request);
     this.id = request.id;
     this.params = params;
+    this.headers = request.headers;
     this.nativeRequest = request;
     this.body =[]
 }
 
- //Constructing query param will slow down throughput by .4-.5k rps
- HttpAsked.prototype.processQueryParam = function(request){
+HttpAsked.prototype.processQueryParam = function(request){
     if( request.url.indexOf("?") !== -1 ){
         var parsedURL = url.parse(request.url, true);
         this.url =parsedURL.pathname//without query param
