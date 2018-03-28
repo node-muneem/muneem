@@ -165,7 +165,7 @@ describe ('Routes Manager', () => {
 
     });
 
-    it('should call pre/post handlers but not on default stream, parallem and main handler', (done) => {
+    it('should call pre/post handlers but not on default stream, parallel and main handler', (done) => {
         
         const muneem = Muneem();
         let blocks = [];
@@ -230,6 +230,72 @@ describe ('Routes Manager', () => {
                 'main', 
                 'Post: before post' , 'post', 'Post: after post',
                 'Post: before last', 'last', 'Post: after last'
+            ]);
+        });
+        routesManager.router.lookup(request,response);
+
+        request.send("data sent in request");
+
+    });
+
+    it('should call pre/post handlers ans main handler but not on default stream, parallel handler', (done) => {
+        
+        const muneem = Muneem();
+        let blocks = [];
+
+        muneem.addHandler("auth", () => {blocks.push("auth")} ) ;
+        muneem.addHandler("parallel", () => {
+            blocks.push("parallel");
+            expect(blocks).toEqual([ 
+                "before auth", 'auth' ,"after auth",
+                'before main' ,'main', 'after main' ,
+                'before post' , 'post', 'after post',
+                'before last', 'last', 'after last',
+                'parallel'
+            ]);
+            done();
+        },{inParallel : true} ) ;
+        muneem.addHandler("main", (asked,answer) => {
+            answer.write(asked.body);
+            blocks.push("main")
+        } ) ;
+        muneem.addHandler("post", () => {blocks.push("post")} );
+        muneem.addHandler("last", () => {blocks.push("last")} ) ;
+
+        const routesManager = muneem.routesManager;
+        muneem.beforeEachHandler((asked,context, handlerName) => {
+            blocks.push("before " + handlerName)
+        });
+        muneem.afterEachHandler((asked,context, handlerName) => {
+            blocks.push("after " + handlerName)
+        });
+
+        routesManager.addRoute({
+            uri: "/test",
+            to: "main",
+            when: ["POST"],
+            after: ["auth", "parallel"],
+            then: ["post", "last"]
+        });
+
+        var request  = httpMocks.createRequest({
+            method: "POST",
+            url: '/test'
+        });
+
+        var response = httpMocks.createResponse({
+            eventEmitter: require('events').EventEmitter
+        });
+
+        response.on('end', function() {
+            expect(response._getData() ).toEqual("data sent in request");
+            expect(response.statusCode ).toEqual(200);
+            expect(response._isEndCalled()).toBe(true);
+            expect(blocks).toEqual([ 
+                "before auth", 'auth' ,"after auth",
+                'before main' ,'main', 'after main' ,
+                'before post' , 'post', 'after post',
+                'before last', 'last', 'after last'
             ]);
         });
         routesManager.router.lookup(request,response);
@@ -442,7 +508,6 @@ describe ('Routes Manager', () => {
             expect(response._getData() ).toEqual("data sent in request");
             expect(response.statusCode ).toEqual(200);
             expect(response._isEndCalled()).toBe(true);
-            console.log(blocks);
             expect(blocks).toEqual([ 
                 'auth' ,
                "Main: before main"
