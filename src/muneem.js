@@ -22,9 +22,11 @@ Muneem.prototype.registerDefaultHandlers = function(){
     this.addHandler("__error" , require("./specialHandlers/exceptionHandler").handle,{ inParallel : true});
 }
 
-Muneem.prototype.createServer = function(serverOptions){
-    this.routesManager.addRoutesFromMappingsFile(this.appContext.mappings);
-    return new Server(serverOptions, this.routesManager.router, this.eventEmitter);
+Muneem.prototype.start = function(serverOptions){
+    if(this.appContext.mappings){
+        this.routesManager.addRoutesFromMappingsFile(this.appContext.mappings);
+    }
+    new Server(serverOptions, this.routesManager.router, this.eventEmitter).start();
 }
 
 const defaultOptions = {
