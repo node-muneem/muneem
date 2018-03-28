@@ -8,7 +8,8 @@ function HttpAsked(request,params){
     this.params = params;
     this.headers = request.headers;
     this.nativeRequest = request;
-    this.body =[]
+    this.body =[];
+    this.contentLength = request.headers['content-length'] || 0;
 }
 
 HttpAsked.prototype.processQueryParam = function(request){

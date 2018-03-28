@@ -89,6 +89,12 @@ RoutesManager.prototype.addRoute = function(route){
         const ans = new HttpAnswer(nativeResponse);
         const asked = new HttpAsked(nativeRequest,params);
 
+        const bigBodyAlert = THIS.handlers.get("__exceedContentLength").handle;
+        if(asked.contentLength > route.maxLength){
+            logger.log.debug(asked,"Calling __exceedContentLength handler");
+            bigBodyAlert(asked,ans, context);
+        }
+
         nativeRequest.on('error', function(err) {
             ans.error = err;
             THIS.handlers.get("__error").handle(asked,ans,context);
@@ -99,7 +105,6 @@ RoutesManager.prototype.addRoute = function(route){
             //operation on request stream
             for(let i=0; i<routeHandlers.preStreamRunners.length;i++){
                 routeHandlers.preStreamRunners[i].runNonStreamHandler(asked ,ans, context);
-                if(ans.answered())  return;
             }
 
             if(readBody){
@@ -108,9 +113,8 @@ RoutesManager.prototype.addRoute = function(route){
                 if(routeHandlers.streamRunner.handler.before){
                     logger.log.debug(asked,"Executing request data stream handler's before()");
                     routeHandlers.streamRunner.handler.before(asked,ans, context);
-                    if(ans.answered()) asked.nativeRequest.removeAllListeners();
                 }
-                const bigBodyAlert = THIS.handlers.get("__exceedContentLength").handle;
+                
                 readRequestBody(asked, ans, routeHandlers, context, bigBodyAlert);
                 nativeRequest.on('end', function() {
 
@@ -119,7 +123,6 @@ RoutesManager.prototype.addRoute = function(route){
                     if(routeHandlers.streamRunner.handler.after){
                         logger.log.debug(asked,"Executing request data stream handler's after()");
                         routeHandlers.streamRunner.handler.after(asked,ans, context);
-                        if(ans.answered())  return;
                     }
 
                     atEnd(asked,ans,routeHandlers,context)
@@ -147,7 +150,6 @@ function atEnd(asked,ans,routeHandlers,context){
     
     for(let i=0; i<routeHandlers.postStreamRunners.length;i++){
         routeHandlers.postStreamRunners[i].runNonStreamHandler(asked,ans, context);
-        if(ans.answered()) return;
     }
 
     if(!ans.answered()){//To confirm if some naughty postHandler has already answered
@@ -181,12 +183,12 @@ const readRequestBody = function(asked, ans, routeHandlers, context, bigBodyAler
     /* const contentLen = asked.getHeader("content-length") || 0;
     const maxLength = contentLen > route.maxLength ? contentLen : route.maxLength ; */
 
-    let contentLength = 0;
+    asked.contentLength = 0;
 
     logger.log.debug("Request " + asked.id + "Before reading request payload/body");
     asked.nativeRequest.on('data', function(chunk) {
-        if(contentLength < context.route.maxLength){
-            contentLength += chunk.length;
+        asked.contentLength += chunk.length;
+        if(asked.contentLength < context.route.maxLength){
             routeHandlers.streamRunner.runStreamHandler(asked, ans, context, chunk);
         }else{
             //User may want to take multiple decisions instead of just refusing the request and closing the connection
