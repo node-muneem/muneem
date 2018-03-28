@@ -31,7 +31,7 @@ function networkErrHandler(err,port,host,server) {
 	      msg = err.message;
     }
     server.unref();
-    console.log(msg);
+    console.error(msg);
 }
 
 const defaultOptions = {
