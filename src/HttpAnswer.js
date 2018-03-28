@@ -3,18 +3,14 @@ HttpAnswer.prototype.type = function(c_type){
     this.setHeader("content-type", c_type);
 }
 
-/**
- * Set cookie value
- * @param {string} val 
- */
-HttpAnswer.prototype.setCookie = function(val){
-    this.nativeResponse.getHeader("Set-Cookie",val);
+/* HttpAnswer.prototype.setCookie = function(val){
+    this.nativeResponse.setHeader("set-cookie",val);
 }
 
 HttpAnswer.prototype.cookie = function(){
     return this.nativeResponse.getHeader("cookie");
 }
-
+ */
 HttpAnswer.prototype.answered = function(){
     return this.nativeResponse.finished;
 }
@@ -28,8 +24,12 @@ HttpAnswer.prototype.getHeader = function(name){
     return this.nativeResponse.getHeader(name);
 }
 
-HttpAnswer.prototype.setHeader = function(name){
-    return this.nativeResponse.setHeader(name);
+HttpAnswer.prototype.setHeader = function(name,val){
+    return this.nativeResponse.setHeader(name,val);
+}
+
+HttpAnswer.prototype.removeHeader = function(name){
+    return this.nativeResponse.removeHeader(name);
 }
 
 HttpAnswer.prototype.write = function(data){
@@ -41,8 +41,8 @@ HttpAnswer.prototype.write = function(data){
  */
 HttpAnswer.prototype.end = function(data){
     data = data || this.data || "";
-    if (!this.nativeResponse.getHeader('Content-Length') || !this.nativeResponse.getHeader('content-length')) {
-        this.nativeResponse.setHeader('Content-Length', '' + Buffer.byteLength(data));
+    if (!this.nativeResponse.getHeader('content-length')) {
+        this.nativeResponse.setHeader('content-length', '' + Buffer.byteLength(data));
     }
     this.nativeResponse.end(data,this.encoding);
 }
