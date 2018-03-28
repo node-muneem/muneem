@@ -10,7 +10,7 @@ class ExtendableError extends Error {
     }
 }   
   
-class ApplicationSetupError extends Error {
+class ApplicationSetupError extends ExtendableError {
     constructor(message) {
         super(message);
     }

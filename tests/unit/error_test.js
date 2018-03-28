@@ -1,12 +1,10 @@
 
 
 const RoutesManager = require("../../src/routesManager");
-const HandlersMap = require("../../src/Container");
-const Handler = require("../../src/Handler");
-const path = require("path");
 const httpMocks = require('node-mocks-http');
 const eventEmitter = require('events').EventEmitter;
 const Muneem = require("../../src/muneem")
+const ApplicationSetupError = require("../../src/ApplicationSetupError")
 
 describe ('Routes Manager', () => {
 
@@ -43,5 +41,15 @@ describe ('Routes Manager', () => {
         request.send("data sent in request");
 
     });
+    
+    it('application should set error message and stack trace', () => {
+        try{
+            throw new ApplicationSetupError("नहीं हो पायगा ।")
+        }catch(e){
+            expect(e.message).toEqual("नहीं हो पायगा ।");
+            expect(e.stack).not.toBe("");
+        }
+    });
+
 
 });
