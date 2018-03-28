@@ -224,6 +224,9 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
 
     //Prepare the list of handler need to be called before
     if(route.after){
+        if(typeof route.after === "string"){
+            route.after = [route.after];
+        }
         for(let i=0;i<route.after.length;i++){
             const handler = this.handlers.get(route.after[i]);
             if(!handler) throw new ApplicationSetupError("Unregistered handler " + route.after[i]);
@@ -268,6 +271,9 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
 
     //Prepare the list of handler need to be called after
     if(route.then){
+        if(typeof route.then === "string"){
+            route.then = [route.then];
+        }
         for(let i=0;i<route.then.length;i++){
             const handler = this.handlers.get(route.then[i]);
             if(!handler) throw new ApplicationSetupError("Unregistered handler " + route.then[i]);
