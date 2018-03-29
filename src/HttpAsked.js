@@ -7,7 +7,7 @@ function HttpAsked(request,params){
     this.id = request.id;
     this.params = params;
     this.headers = request.headers;
-    this.nativeRequest = request;
+    this._native = request;
     this.body =[];
     this.contentLength = request.headers['content-length'] || 0;
 }

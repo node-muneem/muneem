@@ -4,32 +4,32 @@ HttpAnswer.prototype.type = function(c_type){
 }
 
 /* HttpAnswer.prototype.setCookie = function(val){
-    this.nativeResponse.setHeader("set-cookie",val);
+    this._native.setHeader("set-cookie",val);
 }
 
 HttpAnswer.prototype.cookie = function(){
-    return this.nativeResponse.getHeader("cookie");
+    return this._native.getHeader("cookie");
 }
  */
 HttpAnswer.prototype.answered = function(){
-    return this.nativeResponse.finished;
+    return this._native.finished;
 }
 
 HttpAnswer.prototype.status = function(code , msg){
-    this.nativeResponse.statusCode = code;
-    msg && (this.nativeResponse.statusMessage = msg);
+    this._native.statusCode = code;
+    msg && (this._native.statusMessage = msg);
 }
 
 HttpAnswer.prototype.getHeader = function(name){
-    return this.nativeResponse.getHeader(name);
+    return this._native.getHeader(name);
 }
 
 HttpAnswer.prototype.setHeader = function(name,val){
-    return this.nativeResponse.setHeader(name,val);
+    return this._native.setHeader(name,val);
 }
 
 HttpAnswer.prototype.removeHeader = function(name){
-    return this.nativeResponse.removeHeader(name);
+    return this._native.removeHeader(name);
 }
 
 HttpAnswer.prototype.write = function(data){
@@ -39,23 +39,29 @@ HttpAnswer.prototype.write = function(data){
 /**
  * @param {string} data 
  */
-HttpAnswer.prototype.end = function(data){
-    data = data || this.data || "";
-    if (!this.nativeResponse.getHeader('content-length')) {
-        this.nativeResponse.setHeader('content-length', '' + Buffer.byteLength(data));
+HttpAnswer.prototype.end = function(data,reason){
+    if(this.answered()){
+        throw ApplicationError("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
+    }else{
+        /* this.answeredBy = arguments.callee; //TODO: test it*/
+        this.answeredReason = reason; //TODO: test it 
+        data = data || this.data || "";
+        if (!this._native.getHeader('content-length')) {
+            this._native.setHeader('content-length', '' + Buffer.byteLength(data));
+        }
+        this._native.end(data,this.encoding);
     }
-    this.nativeResponse.end(data,this.encoding);
 }
 
 HttpAnswer.prototype.redirectTo = function(loc){
-    this.nativeResponse.writeHead(302, {  'Location': loc  });
-    this.nativeResponse.end();
+    this._native.writeHead(302, {  'Location': loc  });
+    this._native.end();
 }
 
 function HttpAnswer(res){
-    this.nativeResponse = res;
+    this._native = res;
     this.encoding = "utf8";
-    this.nativeResponse.statusCode = 200;
+    this._native.statusCode = 200;
 }
 
 module.exports = HttpAnswer;

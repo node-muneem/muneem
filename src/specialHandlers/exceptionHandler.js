@@ -15,6 +15,6 @@ exports.handle = function(asked,answer,context){
         }
     }
     //set headers to indicate api gatway so that it can prevent further error or something
-    answer.nativeResponse.end();
+    answer.end();
     logger.log.error(error,asked,context.route);
 }
