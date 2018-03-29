@@ -190,17 +190,17 @@ describe ('Routes Manager', () => {
         muneem.addHandler("last", () => {blocks.push("last")} ) ;
 
         const routesManager = muneem.routesManager;
-        muneem.beforeEachPreHandler((asked,context, handlerName) => {
+        muneem.beforeEachPreHandler((asked, handlerName) => {
             blocks.push("Pre: before " + handlerName)
         });
-        muneem.afterEachPreHandler((asked,context, handlerName) => {
+        muneem.afterEachPreHandler((asked, handlerName) => {
             blocks.push("Pre: after " + handlerName)
         });
 
-        muneem.beforeEachPostHandler((asked,context, handlerName) => {
+        muneem.beforeEachPostHandler((asked, handlerName) => {
             blocks.push("Post: before " + handlerName)
         });
-        muneem.afterEachPostHandler((asked,context, handlerName) => {
+        muneem.afterEachPostHandler((asked, handlerName) => {
             blocks.push("Post: after " + handlerName)
         });
 
@@ -263,10 +263,10 @@ describe ('Routes Manager', () => {
         muneem.addHandler("last", () => {blocks.push("last")} ) ;
 
         const routesManager = muneem.routesManager;
-        muneem.beforeEachHandler((asked,context, handlerName) => {
+        muneem.beforeEachHandler((asked, handlerName) => {
             blocks.push("before " + handlerName)
         });
-        muneem.afterEachHandler((asked,context, handlerName) => {
+        muneem.afterEachHandler((asked, handlerName) => {
             blocks.push("after " + handlerName)
         });
 
@@ -339,17 +339,17 @@ describe ('Routes Manager', () => {
         muneem.addHandler("last", () => {blocks.push("last")} ) ;
 
         const routesManager = muneem.routesManager;
-        muneem.beforeEachPreHandler((asked,context, handlerName) => {
+        muneem.beforeEachPreHandler((asked, handlerName) => {
             blocks.push("Pre: before " + handlerName)
         });
-        muneem.afterEachPreHandler((asked,context, handlerName) => {
+        muneem.afterEachPreHandler((asked, handlerName) => {
             blocks.push("Pre: after " + handlerName)
         });
 
-        muneem.beforeEachPostHandler((asked,context, handlerName) => {
+        muneem.beforeEachPostHandler((asked, handlerName) => {
             blocks.push("Post: before " + handlerName)
         });
-        muneem.afterEachPostHandler((asked,context, handlerName) => {
+        muneem.afterEachPostHandler((asked, handlerName) => {
             blocks.push("Post: after " + handlerName)
         });
 
@@ -413,10 +413,10 @@ describe ('Routes Manager', () => {
         muneem.addHandler("last", () => {blocks.push("last")} ) ;
 
         const routesManager = muneem.routesManager;
-        muneem.beforeMainHandler((asked,context, handlerName) => {
+        muneem.beforeMainHandler((asked, handlerName) => {
             blocks.push("Main: before " + handlerName)
         });
-        muneem.afterMainHandler((asked,context, handlerName) => {
+        muneem.afterMainHandler((asked, handlerName) => {
             blocks.push("Main: after " + handlerName)
         });
 
@@ -480,10 +480,10 @@ describe ('Routes Manager', () => {
         muneem.addHandler("last", () => {blocks.push("last")} ) ;
 
         const routesManager = muneem.routesManager;
-        muneem.beforeMainHandler((asked,context, handlerName) => {
+        muneem.beforeMainHandler((asked, handlerName) => {
             blocks.push("Main: before " + handlerName)
         });
-        muneem.afterMainHandler((asked,context, handlerName) => {
+        muneem.afterMainHandler((asked, handlerName) => {
             blocks.push("Main: after " + handlerName)
         });
 

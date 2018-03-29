@@ -1,7 +1,7 @@
 const logger = require("./../fakeLogger");
 
 
-exports.handle = function(asked,answer,context){
+exports.handle = function(asked,answer){
     const error = answer.error;
     if(error instanceof Error){
         answer.status(500);
@@ -16,5 +16,5 @@ exports.handle = function(asked,answer,context){
     }
     //set headers to indicate api gatway so that it can prevent further error or something
     answer.end();
-    logger.log.error(error,asked,context.route);
+    logger.log.error(error,asked.route);
 }
