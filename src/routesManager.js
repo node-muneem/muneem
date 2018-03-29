@@ -70,7 +70,6 @@ const mayHaveBody = ["POST", "PUT", "DELETE", "OPTION"] */
  * @param {object} route
  */
 RoutesManager.prototype.addRoute = function(route){
-    const THIS = this;
     if(route.in && route.in.indexOf(profile) === -1) return; //skip mapping for other environments
     const context = {
         app: this.appContext,
@@ -85,11 +84,11 @@ RoutesManager.prototype.addRoute = function(route){
     let readBody = this.appContext.alwaysReadRequestPayload || 
             ( route.when !== "GET" && route.when !== "HEAD");
 
-    this.router.on(route.when,route.uri, function(nativeRequest,nativeResponse,params){
+    this.router.on(route.when,route.uri, (nativeRequest,nativeResponse,params) => {
         const ans = new HttpAnswer(nativeResponse);
         const asked = new HttpAsked(nativeRequest,params);
 
-        const bigBodyAlert = THIS.handlers.get("__exceedContentLength").handle;
+        const bigBodyAlert = this.handlers.get("__exceedContentLength").handle;
         if(asked.contentLength > route.maxLength){
             logger.log.debug(asked,"Calling __exceedContentLength handler");
             bigBodyAlert(asked,ans, context);
@@ -97,7 +96,7 @@ RoutesManager.prototype.addRoute = function(route){
 
         nativeRequest.on('error', function(err) {
             ans.error = err;
-            THIS.handlers.get("__error").handle(asked,ans,context);
+            this.handlers.get("__error").handle(asked,ans,context);
         });
 
         try{
@@ -134,7 +133,7 @@ RoutesManager.prototype.addRoute = function(route){
         }catch(e){
             ans.error = e;
             //console.log(e)
-            THIS.handlers.get("__error").handle(asked,ans,context);
+            this.handlers.get("__error").handle(asked,ans,context);
         }
     })//router.on ends
 }
@@ -186,7 +185,7 @@ const readRequestBody = function(asked, ans, routeHandlers, context, bigBodyAler
     asked.contentLength = 0;
 
     logger.log.debug("Request " + asked.id + "Before reading request payload/body");
-    asked.nativeRequest.on('data', function(chunk) {
+    asked._native.on('data', function(chunk) {
         asked.contentLength += chunk.length;
         if(asked.contentLength < context.route.maxLength){
             routeHandlers.streamRunner.runStreamHandler(asked, ans, context, chunk);
