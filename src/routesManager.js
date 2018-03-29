@@ -7,6 +7,7 @@ const Runner = require('./HandlerRunner');
 const logger = require("./fakeLogger");
 const ApplicationSetupError = require('./ApplicationSetupError');
 const profile = process.env.NODE_ENV;
+var StreamMeter = require('./streamMeter');
 
 function checkPath(filepath){
     if (!fs.existsSync(filepath)) {
@@ -76,7 +77,7 @@ RoutesManager.prototype.addRoute = function(route){
         route: route
     };
     route.when = route.when || "GET";//set default
-    route.maxLength = route.maxLength || 1e6; //set 1mb default
+    context.route.maxLength = context.route.maxLength || context.app.maxLength || 1e6 ;
 
     const routeHandlers = this.extractHandlersFromRoute(route);
 
@@ -92,6 +93,15 @@ RoutesManager.prototype.addRoute = function(route){
         if(asked.contentLength > route.maxLength){
             logger.log.debug(asked,"Calling __exceedContentLength handler");
             bigBodyAlert(asked,ans);
+        }else{
+            asked.stream = new StreamMeter({
+                maxLength : context.route.maxLength,
+                errorHandler : () => {
+                    logger.log.debug(asked,"Calling __exceedContentLength handler");
+                    bigBodyAlert(asked,ans);
+                }
+            })
+            nativeRequest.pipe(asked.stream);
         }
 
         nativeRequest.on('error', function(err) {
