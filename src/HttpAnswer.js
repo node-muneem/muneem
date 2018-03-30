@@ -58,7 +58,7 @@ HttpAnswer.prototype.end = function(data,reason){
         this.answeredReason = reason; //TODO: test it 
         data = data || this.data || "";
         if(isStream(data)){
-            data.pipe(nativeResponse);
+            data.pipe(this._native);
         }else{
             if(typeof data === "string" || Buffer.isBuffer(data)){
             }else if(typeof data === "object" || typeof data === "number"){
@@ -80,7 +80,7 @@ const isStream = function(data){
 }
 
 HttpAnswer.prototype.redirectTo = function(loc){
-    this._native.writeHead(302, {  'Location': loc  });
+    this._native.writeHead(302, {  'location': loc  });
     this._native.end();
 }
 
