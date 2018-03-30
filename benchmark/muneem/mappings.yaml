@@ -1,5 +1,6 @@
 - route: 
     uri: /sample
+    when: POST
     to: main
-    #after: [ preStream, parallel ]
-    #then: [ post ]
+    after: [ parallel ]
+    then: [ post ]
