@@ -43,13 +43,11 @@ function callAll(arrayOfFunctions, ...args){
 function Runner(name,handler,before,after){
     this.handlerName = name;
     this.handler = handler;
-    if(!handler.inParallel){
-        if(before && Array.isArray(before) && before.length > 0)
-            this.before = before;
-            
-        if(after && Array.isArray(after) && after.length > 0)
-            this.after = after;
-    }
+    if(before && Array.isArray(before) && before.length > 0)
+        this.before = before;
+        
+    if(after && Array.isArray(after) && after.length > 0)
+        this.after = after;
 }
 
 module.exports = Runner;
