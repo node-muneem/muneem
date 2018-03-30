@@ -16,7 +16,7 @@ describe ('Muneem', () => {
 
         const routesManager = muneem.routesManager;
         
-        routesManager.addRoute({
+        muneem.route({
             uri: "/test",
             to: "main"
         });
