@@ -1,5 +1,6 @@
 var url = require('url');
 
+
 HttpAsked.prototype.toString = ()  => "Request (" + this.id + ") : " + this.url;
 
 function HttpAsked(request,params,context){
@@ -10,25 +11,25 @@ function HttpAsked(request,params,context){
     this.context = context;
     this.body =[];
     this.processQueryParam(request);
-    this.contentLength = request.headers['content-length'] || 0;
+    this.contentLength = request.headers['content-length'] && Number(request.headers['content-length']) || -1;
 }
 
 HttpAsked.prototype.readBody = async function(){
-    //TODO: what if the function is called multiple times 
-    // or the body has already been read
-    // or there is no body to read (content-length === '0', method === "GET|HEAD")
-
-    this.body = [];
-    await new Promise(function(resolve, reject) {
-        this._native.on('data', (chunk)=>this.body.push(chunk));
-        this._native.on('end', ()=>{
-            this.body = Buffer.concat(this.body); 
-            resolve(this.body)
+    if(!this._hasBody || this.contentLength === 0) return;
+    else if(this.body && this.body.length > 0) return this.body;
+    else{
+        this.body = [];
+        await new Promise((resolve, reject) => {
+            this.stream.on('data', (chunk)=>this.body.push(chunk));
+            this.stream.on('end', ()=>{
+                this.body = Buffer.concat(this.body); 
+                resolve(this.body)
+            });
+            this.stream.on('error', reject); // or something like that
         });
-        this._native.on('error', reject); // or something like that
-    });
 
-    return this.body
+        return this.body
+    }
 }
 
 HttpAsked.prototype.processQueryParam = function(){

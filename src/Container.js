@@ -2,11 +2,15 @@
 const logger = require('./fakeLogger');
 
 Container.prototype.add = function(name,handler){
-    if(this.collection[name]) {
-        logger.log.warn(name + " handler have replaced old mapping");
+    if(typeof handler !== "function" && typeof handler.handle !== "function"){
+        throw Error("Handler should be a function or an object with 'handle' method");
+    }else{
+        if(this.collection[name]) {
+            logger.log.warn(name + " handler have replaced old mapping");
+        }
+        this.collection[name] = handler;
+        return this;
     }
-    this.collection[name] = handler;
-    return this.collection[name];
 }
 
 /* HandlersMap.prototype.removeIfExist = function(name){

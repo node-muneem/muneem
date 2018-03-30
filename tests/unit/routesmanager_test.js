@@ -1,16 +1,17 @@
 const RoutesManager = require("../../src/routesManager");
 const Container = require("../../src/Container");
-const Handler = require("../../src/Handler");
 const path = require("path");
 
 describe ('RoutesManager', () => {
     const container = new Container();
-    container.add("auth",new Handler("auth", () => {}))
-    container.add("parallel",new Handler("parallel", () => {}))
-    container.add("stream",new Handler("stream", { handle : () => {}}, { handlesStream : true}))
-    container.add("post",new Handler("post", () => {}))
-    container.add("main",new Handler("main", () => {}))
-
+    container.add("__exceedContentLength", () => {});
+    container.add("__error", () => {});
+    container.add("auth", () => {})
+        .add("parallel", () => {})
+        .add("stream", { handle : () => {}})
+        .add("post", () => {})
+        .add("main", () => {});
+    
     let env;
     beforeEach(()=>{
         env = process.env.NODE_ENV;
@@ -109,42 +110,5 @@ describe ('RoutesManager', () => {
         }).toThrowError("Unregistered handler unknown");
 
     });
-
-    it('should error when multiple stream handlers are called', () => {
-        const options = {
-            mappings : path.join(__dirname , "app/mappings/invalid/lateStreamHandler.yaml"),
-            alwaysReadRequestPayload: true
-        };
-        const routesManager =new RoutesManager(options,container);
-        
-        expect(() => {
-            routesManager.addRoutesFromMappingsFile(options.mappings);
-        }).toThrowError("MappingError: There is only one request stream handler per mapping allowed.");
-
-    });
-
-    it('should error when multiple stream handlers are added', () => {
-        const options = {
-            mappings : path.join(__dirname , "app/mappings/invalid/invalidResponseHandler.yaml")
-        };
-        const routesManager =new RoutesManager(options,container);
-        
-        expect(() => {
-            routesManager.addRoutesFromMappingsFile(options.mappings);
-        }).toThrowError("Ah! wrong place for stream. Only response handlers are allowed.");
-
-    });
-
-    it('should error when handler wants to read request body for GET or HEAD method', () => {
-        const options = {
-            mappings : path.join(__dirname , "app/mappings/invalid/readBodyForcefully.yaml")
-        };
-        const routesManager =new RoutesManager(options,container);
-        expect(() => {
-            routesManager.addRoutesFromMappingsFile(options.mappings);
-        }).toThrowError("Set alwaysReadRequestPayload if you want to read request body/payload for GET and HEAD methods (which is not idle)");
-
-    });
-
 
 });

@@ -1,32 +1,26 @@
 const logger = require("./fakeLogger");
 
-Runner.prototype.runNonStreamHandler = function(asked,answer){
+Runner.prototype.run = async function(asked,answer){
     this.runBefore(asked);
     
-    logger.log.debug("Request" + asked.id + "Executing handler " + this.handler.name);
-    this.handler.handle(asked,answer);
+    logger.log.debug("Request" + asked.id + "Executing handler " + this.handlerName);
+    await this.handler(asked,answer);
     
     this.runAfter(asked);
 }
 
-Runner.prototype.runStreamHandler = function(asked, answer, chunk){
-    //this.runBefore(asked);
-    this.handler.handle(chunk);
-    
-    //this.runAfter(asked);
-}
 
 Runner.prototype.runBefore = function(asked) {
     if(this.before){
-        logger.log.debug(asked,"Executing before of " + this.handler.name);
-        callAll(this.before,asked,this.handler.name);
+        logger.log.debug(asked,"Executing before of " + this.handlerName);
+        callAll(this.before,asked,this.handlerName);
     }
 }
 
 Runner.prototype.runAfter = function(asked) {
     if(this.after){
-        logger.log.debug(asked,"Executing after of " + this.handler.name);
-        callAll(this.after,asked,this.handler.name);
+        logger.log.debug(asked,"Executing after of " + this.handlerName);
+        callAll(this.after,asked,this.handlerName);
     }
 }
 
@@ -46,7 +40,8 @@ function callAll(arrayOfFunctions, ...args){
  * @param {Array} before 
  * @param {Array} after 
  */
-function Runner(handler,before,after){
+function Runner(name,handler,before,after){
+    this.handlerName = name;
     this.handler = handler;
     if(!handler.inParallel){
         if(before && Array.isArray(before) && before.length > 0)

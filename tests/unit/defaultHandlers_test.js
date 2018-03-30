@@ -1,7 +1,5 @@
 //TODO: override default handlers
 const RoutesManager = require("../../src/routesManager");
-const HandlersMap = require("../../src/Container");
-const Handler = require("../../src/Handler");
 const path = require("path");
 const httpMocks = require('node-mocks-http');
 const eventEmitter = require('events').EventEmitter;
@@ -11,16 +9,10 @@ describe ('Routes Manager', () => {
 
     it('should call default Handler when route is not registered', (done) => {
         
-        const muneem = Muneem({
-            defaultHandler : (asked,answer) => {
-                console.log("default handler")
-                answer.status(404, "Bad time");
-                answer.end();
-            }
-        });
+        const muneem = Muneem();
 
         muneem.addHandler("main", (asked,answer) => {
-            answer.write(asked.query);
+            // do nothing
         } ) ;
 
         const routesManager = muneem.routesManager;
@@ -50,6 +42,46 @@ describe ('Routes Manager', () => {
 
     });
 
+    it('should call custom default Handler when route is not registered', (done) => {
+        
+        const muneem = Muneem();
+
+        muneem.addHandler("main", (asked,answer) => {
+            // do nothing
+        } ) ;
+
+        muneem.addHandler("__defaultRoute", (asked,answer) => {
+            answer.status(404, "Bad time");
+            answer.end(null,"no router was found");
+        } ) ;
+
+        const routesManager = muneem.routesManager;
+        
+        routesManager.addRoute({
+            uri: "/test2",
+            to: "main"
+        });
+
+        var request  = httpMocks.createRequest({
+            url: '/test'
+        });
+
+        var response = httpMocks.createResponse({
+            eventEmitter: require('events').EventEmitter
+        });
+
+        response.on('end', function() {
+            expect(response.statusCode ).toEqual(404);
+            expect(response.statusMessage ).toEqual("Bad time");
+            expect(response._isEndCalled()).toBe(true);
+            done();
+        });
+        routesManager.router.lookup(request,response);
+
+        request.send("data sent in request");
+
+    });
+ 
     it('should call __exceedContentLengthHandler when content length is bigger than expected', (done) => {
         
         const muneem = Muneem();
@@ -77,7 +109,7 @@ describe ('Routes Manager', () => {
         });
 
         response.on('end', function() {
-            expect(response._getData()).toEqual("");
+            //expect(response._getData()).toEqual("");
             expect(response.statusCode ).toEqual(413);
             expect(response.statusMessage ).toEqual("request entity too large");
             expect(response._isEndCalled()).toBe(true);
@@ -171,6 +203,6 @@ describe ('Routes Manager', () => {
 
         request.send("Let's send small");
 
-    });
+    }); 
 
 });

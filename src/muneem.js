@@ -3,7 +3,6 @@ const RoutesManager = require("./routesManager");
 const Server = require("./server");
 const HttpAnswer = require("./HttpAnswer");
 var events = require('events');
-const Handler = require("./Handler");
 require("./globalErrorHandler");
 Muneem.logger = require("./fakeLogger");
 
@@ -13,13 +12,13 @@ Muneem.setLogger = function(logger){
 
 Muneem.prototype.registerDefaultHandlers = function(){
     Muneem.logger.log.info("Adding __defaultRoute Handler")
-    this.addHandler("__defaultRoute" , require("./specialHandlers/defaultRoute").handle);
+    this.addHandler("__defaultRoute" , require("./specialHandlers/defaultRoute"));
 
     Muneem.logger.log.info("Adding __exceedContentLength handler")
-    this.addHandler("__exceedContentLength" , require("./specialHandlers/exceedContentLengthHandler").handle);
+    this.addHandler("__exceedContentLength" , require("./specialHandlers/exceedContentLengthHandler"));
 
     Muneem.logger.log.info("Adding __error handler")
-    this.addHandler("__error" , require("./specialHandlers/exceptionHandler").handle,{ inParallel : true});
+    this.addHandler("__error" , require("./specialHandlers/exceptionHandler"));
 }
 
 Muneem.prototype.start = function(serverOptions){
@@ -56,9 +55,8 @@ Muneem.addToAnswer = function(methodName, fn ){
  * Add handlers to the container which should be used by each router
  */
 Muneem.prototype.addHandler = function(name,handler,options){
-    //console.log("adding", name)
-    const h = new Handler(name,handler,options);
-    return this.container.add(name,h);
+    this.container.add(name,handler);
+    return this;
 }
 
 /* Before */

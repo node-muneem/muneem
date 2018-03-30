@@ -1,8 +1,4 @@
 
-const RoutesManager = require("../../src/routesManager");
-const HandlersMap = require("../../src/Container");
-const Handler = require("../../src/Handler");
-const path = require("path");
 const httpMocks = require('node-mocks-http');
 const eventEmitter = require('events').EventEmitter;
 const Muneem = require("../../src/muneem")

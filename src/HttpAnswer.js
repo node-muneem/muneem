@@ -1,3 +1,4 @@
+const logger = require("./fakeLogger");
 
 HttpAnswer.prototype.type = function(c_type){
     this.setHeader("content-type", c_type);
@@ -33,7 +34,17 @@ HttpAnswer.prototype.removeHeader = function(name){
 }
 
 HttpAnswer.prototype.write = function(data){
+    if(!this.data)
+        this.data = data;
+}
+
+HttpAnswer.prototype.replace = function(data){
     this.data = data;
+}
+
+HttpAnswer.prototype.close = function(reason){
+    this.answeredReason = reason;
+    this._native.end();
 }
 
 /**
@@ -41,16 +52,31 @@ HttpAnswer.prototype.write = function(data){
  */
 HttpAnswer.prototype.end = function(data,reason){
     if(this.answered()){
-        throw ApplicationError("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
+        logger.log.warn("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
     }else{
         /* this.answeredBy = arguments.callee; //TODO: test it*/
         this.answeredReason = reason; //TODO: test it 
         data = data || this.data || "";
-        if (!this._native.getHeader('content-length')) {
-            this._native.setHeader('content-length', '' + Buffer.byteLength(data));
+        if(isStream(data)){
+            data.pipe(nativeResponse);
+        }else{
+            if(typeof data === "string" || Buffer.isBuffer(data)){
+            }else if(typeof data === "object" || typeof data === "number"){
+                data = JSON.stringify(data);
+            }else{
+                throw Error("Unsupported data type to send : " + typeof data);
+            }
+            if (!this._native.getHeader('content-length')) {
+                this._native.setHeader('content-length', '' + Buffer.byteLength(data));
+            }
+            this._native.end(data,this.encoding);
         }
-        this._native.end(data,this.encoding);
+        
     }
+}
+
+const isStream = function(data){
+    return data && data.pipe && typeof data.pipe === "function"
 }
 
 HttpAnswer.prototype.redirectTo = function(loc){
