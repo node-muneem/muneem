@@ -54,8 +54,13 @@ Muneem.addToAnswer = function(methodName, fn ){
 /**
  * Add handlers to the container which should be used by each router
  */
-Muneem.prototype.addHandler = function(name,handler,options){
+Muneem.prototype.addHandler = function(name,handler){
     this.container.add(name,handler);
+    return this;
+}
+
+Muneem.prototype.route = function(route){
+    this.routesManager.addRoute(route);
     return this;
 }
 
