@@ -79,7 +79,7 @@ RoutesManager.prototype.addRoute = function(route){
     };
     route.when = route.when || "GET";//set default
     context.route.maxLength = context.route.maxLength || context.app.maxLength || 1e6 ;
-
+    
     const handlerRunners = this.extractHandlersFromRoute(route);
 
     //read request body when there is at least one handler to handle it
@@ -89,7 +89,6 @@ RoutesManager.prototype.addRoute = function(route){
 
     const bigBodyAlert = this.handlers.get("__exceedContentLength").handle || this.handlers.get("__exceedContentLength");
     const errorHandler = this.handlers.get("__error").handle || this.handlers.get("__error");
-
     this.router.on(route.when,route.uri, async (nativeRequest,nativeResponse,params) => {
         const ans = new HttpAnswer(nativeResponse);
         const asked = new HttpAsked(nativeRequest,params,context);
@@ -152,13 +151,12 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
             const handler = this.handlers.get(route.after[i]);
             if(!handler) throw new ApplicationSetupError("Unregistered handler " + route.after[i]);
 
-            handlerRunners.push(new Runner(route.after[i],handler,this.beforeEachPreHandler,this.afterEachPreHandler));
+            handlerRunners.push(new Runner(route.after[i],handler.handle || handler,this.beforeEachPreHandler,this.afterEachPreHandler));
         }
     }
-
     if(route.to){
         const handler = this.handlers.get(route.to);
-        handlerRunners.push(new Runner(route.to,handler,this.beforeMainHandler,this.afterMainHandler));
+        handlerRunners.push(new Runner(route.to,handler.handle || handler,this.beforeMainHandler,this.afterMainHandler));
     }
 
     //Prepare the list of handler need to be called after
@@ -170,7 +168,7 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
             const handler = this.handlers.get(route.then[i]);
             if(!handler) throw new ApplicationSetupError("Unregistered handler " + route.then[i]);
            
-            handlerRunners.push(new Runner(route.then[i],handler,this.beforeEachPostHandler,this.afterEachPostHandler));
+            handlerRunners.push(new Runner(route.then[i],handler.handle || handler ,this.beforeEachPostHandler,this.afterEachPostHandler));
         }
     }
 
