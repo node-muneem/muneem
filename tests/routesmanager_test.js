@@ -1,5 +1,5 @@
-const RoutesManager = require("../../src/routesManager");
-const Container = require("../../src/Container");
+const RoutesManager = require("../src/routesManager");
+const Container = require("../src/Container");
 const path = require("path");
 
 describe ('RoutesManager', () => {

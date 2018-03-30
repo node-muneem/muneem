@@ -8,7 +8,7 @@ var chai = require('chai')
 
 chai.use(chaiHttp);
 
-const Muneem = require("../../src/muneem");
+const Muneem = require("../src/muneem");
 //const path = require("path");
 
 describe ('Muneem server', () => {

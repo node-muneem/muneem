@@ -1,10 +1,10 @@
 
 
-const RoutesManager = require("../../src/routesManager");
+const RoutesManager = require("../src/routesManager");
 const httpMocks = require('node-mocks-http');
 const eventEmitter = require('events').EventEmitter;
-const Muneem = require("../../src/muneem")
-const ApplicationSetupError = require("../../src/ApplicationSetupError")
+const Muneem = require("../src/muneem")
+const ApplicationSetupError = require("../src/ApplicationSetupError")
 
 describe ('Routes Manager', () => {
 

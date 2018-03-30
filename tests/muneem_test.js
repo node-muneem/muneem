@@ -1,6 +1,6 @@
 const httpMocks = require('node-mocks-http');
 const eventEmitter = require('events').EventEmitter;
-const Muneem = require("../../src/muneem")
+const Muneem = require("../src/muneem")
 
 describe ('Muneem', () => {
 

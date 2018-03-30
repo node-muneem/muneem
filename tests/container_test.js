@@ -1,4 +1,4 @@
-const Container = require("../../src/Container");
+const Container = require("../src/Container");
 
 describe ('Container', () => {
     it('should add a function', () => {
@@ -18,6 +18,16 @@ describe ('Container', () => {
 
             const handler = map.get("test");
             expect(handler()).toEqual(38);
+    });
+
+    it('should error when invalid handler is added', () => {
+        
+        const map = new Container();
+
+        expect(() => {
+            map.add("test", "() => 35");
+        }).toThrowError("Handler should be a function or an object with 'handle' method");
+
     });
 
 });

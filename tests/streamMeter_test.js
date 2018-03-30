@@ -1,6 +1,6 @@
 const httpMocks = require('node-mocks-http');
 const eventEmitter = require('events').EventEmitter;
-const StreamMeter = require("../../src/streamMeter")
+const StreamMeter = require("../src/streamMeter")
 
 describe ('Stream Meter', () => {
 

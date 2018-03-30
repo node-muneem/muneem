@@ -1,9 +1,9 @@
 //TODO: override default handlers
-const RoutesManager = require("../../src/routesManager");
+const RoutesManager = require("../src/routesManager");
 const path = require("path");
 const httpMocks = require('node-mocks-http');
 const eventEmitter = require('events').EventEmitter;
-const Muneem = require("../../src/muneem")
+const Muneem = require("../src/muneem")
 
 describe ('Routes Manager', () => {
 

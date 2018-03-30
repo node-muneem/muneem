@@ -1,0 +1,61 @@
+
+
+const RoutesManager = require("../src/routesManager");
+const HandlersMap = require("../src/Container");
+const Handler = require("../src/Handler");
+const path = require("path");
+const httpMocks = require('node-mocks-http');
+const eventEmitter = require('events').EventEmitter;
+const Muneem = require("../src/muneem")
+
+describe ('Muneem', () => {
+
+    it('should upload file', (done) => {
+        
+        const muneem = Muneem();
+        
+        muneem.addHandler("fileUploader", {
+            before: (asked,answer) => {
+                this.asked = asked;
+                this.answer = answer;
+                fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "filename"));
+                asked.nativeRequest.pipe(fileWritableStream);
+            },
+            handle : chunk => {
+
+            }, 
+            after : () => {
+
+            }
+        } ,{
+            handlesStream: true
+        }) ;
+
+        const routesManager = muneem.routesManager;
+        
+        routesManager.addRoute({
+            uri: "/test",
+            to: "fileUploader"
+        });
+
+        var request  = httpMocks.createRequest({
+            url: '/test'
+        });
+
+        var response = httpMocks.createResponse({
+            eventEmitter: require('events').EventEmitter
+        });
+
+        response.on('end', function() {
+            expect(response._getData() ).toEqual("justforTest : main");
+            expect(response.statusCode ).toEqual(200);
+            expect(response._isEndCalled()).toBe(true);
+            done();
+        });
+        routesManager.router.lookup(request,response);
+
+        request.send("data sent in request");
+
+    });
+
+});
