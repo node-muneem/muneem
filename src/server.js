@@ -44,7 +44,7 @@ function Server(options,requestResponseHandler,eventEmitter){
     var reqId = () => {};
     if(typeof this.options.generateUniqueReqId === "function"){
         reqId = this.options.generateUniqueReqId;
-    }else if(this.options.generateUniqueReqId === false){
+    }else if(this.options.generateUniqueReqId === true){
         reqId = uniqid;
     }
     options = this.options;

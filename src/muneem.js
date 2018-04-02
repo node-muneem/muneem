@@ -25,7 +25,8 @@ Muneem.prototype.start = function(serverOptions){
     if(this.appContext.mappings){
         this.routesManager.addRoutesFromMappingsFile(this.appContext.mappings);
     }
-    new Server(serverOptions, this.routesManager.router, this.eventEmitter).start();
+    this.server = new Server(serverOptions, this.routesManager.router, this.eventEmitter);
+    this.server.start();
 }
 
 const defaultOptions = {

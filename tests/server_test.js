@@ -15,6 +15,7 @@ describe ('Muneem server', () => {
 
     const muneem = Muneem();
     muneem.addHandler("main", (asked,answer) => {
+        answer.setHeader("id", asked.id);
         answer.write("I'm glad to response you back.");
     } ) ;
 
@@ -22,13 +23,24 @@ describe ('Muneem server', () => {
         uri: "/test",
         to: "main"
     })
-    muneem.start();
+
+    beforeAll(() => {
+        muneem.start({
+            //TODO: test if new id is being set
+            generateUniqueReqId : true
+        });
+    });
+
+    beforeAll(() => {
+        muneem.server.close();
+    });
 
     it('should response back politely ;)', (done) => {
         chai.request("http://localhost:3002")
             .get('/test')
             .then(res => {
                 expect(res.status).toBe(200);
+                expect(res.headers["id"]).not.toBe(undefined);
                 expect(res.text).toBe("I'm glad to response you back.");
                 done();
             }).catch( err => {
