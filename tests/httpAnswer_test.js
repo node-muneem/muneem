@@ -1,4 +1,3 @@
-const RoutesManager = require("../src/routesManager");
 const httpMocks = require('node-mocks-http');
 const MockRes = require('mock-res');
 const fs = require('fs');
@@ -145,7 +144,7 @@ describe ('HttpAnswer', () => {
         response.on('finish', function() {
             expect(response.getHeader("content-type")).toEqual(undefined);
             expect(response.getHeader("content-length")).toEqual(undefined);
-            expect(response._getString()).toEqual("This file is ready for download");
+            expect(response._responseData.toString()).toEqual("This file is ready for download");
             done();
         });
     });
@@ -176,7 +175,7 @@ describe ('HttpAnswer', () => {
         });
     });
 
-    it('should pipe multiple streams', (done) => {
+    /* it('should pipe multiple streams', (done) => {
         const response = new MockRes();
         const answer = new HttpAnswer(response);
 
@@ -191,17 +190,17 @@ describe ('HttpAnswer', () => {
        
         //when
         answer.write(fileReadableStream,"plain/text");
-        var zlib = require('zlib');
+        const zlib = require('zlib');
         answer.writeMore(zlib.createGzip());
         answer.end();
 
         //then
         response.on('finish', function() {
             expect(response.getHeader("content-type")).toEqual("plain/text");
-            expect(response._responseData.toString()).toEqual("This file is ready for download");
+            expect(response._responseData).toEqual("This file is ready for download");
             done();
         });
-    });
+    }); */
 
     it('should set and add data', () => {
         const response = new MockRes();
@@ -220,13 +219,14 @@ describe ('HttpAnswer', () => {
         const response = new MockRes();
         const answer = new HttpAnswer(response);
 
+        let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
+        fileWritableStream.end();
+
         //when
         answer.write("I'm fine.");
-        answer.writeMore(" How are you?");
-        answer.end();
-
-        //then
-        expect(response._getString()).toEqual("I'm fine. How are you?");
+        expect(() => {
+            answer.writeMore(fileWritableStream);
+        }).toThrowError("Unsupported type object.");
     });
 
     it('should not set data when already set', () => {
@@ -247,12 +247,16 @@ describe ('HttpAnswer', () => {
         const answer = new HttpAnswer(response);
 
         //when
-        answer.write("I'm fine.");
-        answer.replace(" How are you?");
+        answer.write("I'm fine.","plain/text",9);
+        answer.replace(" How are you?","application/text",10);
         answer.end();
 
         //then
         expect(response._getString()).toEqual(" How are you?");
+        expect(response._headers).toEqual({
+            "content-length" : 10,
+            "content-type" : "application/text"
+        });
     });
 
     it('should add data even if it is not set before', () => {
@@ -279,6 +283,23 @@ describe ('HttpAnswer', () => {
         expect(response._getString()).toEqual("I'm fine.");
     });
 
+    it('should ignore previously set data with data passed to end method', () => {
+        const response = new MockRes();
+        const answer = new HttpAnswer(response);
+
+        //when
+        answer.write("I'm fine." , "plain/text", 9);
+        answer.end("replaced",  "application/text", 10,"no reason" );
+
+        //then
+        expect(response._getString()).toEqual("replaced");
+        expect(response._headers).toEqual({
+            "content-length" : 10,
+            "content-type" : "application/text",
+        });
+        expect(answer.answeredReason).toEqual("no reason");
+    });
+
     it('should error when invalid data is set', () => {
         const response = new MockRes();
         const answer = new HttpAnswer(response);
@@ -302,7 +323,7 @@ describe ('HttpAnswer', () => {
         //then
         expect(() => {
             answer.writeMore(() => {});
-        }).toThrowError("Unsupported type function. writeMore method supports only string and stream");
+        }).toThrowError("Unsupported type function.");
     });
 
 

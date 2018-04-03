@@ -41,29 +41,19 @@ HttpAnswer.prototype.removeHeader = function(name){
  * Add more string data to previously added data. Or pipe the stream to previously added stream
  * Or set data if it is not set before.
  * @param {*} data 
- * @param {string} type : content-type
- * @param {number|string} length : content-length
  */
-HttpAnswer.prototype.writeMore = function(data,type,length){
-    type && this.type(type);
-    length && this.length(length);
-
-    if(!data){
-        //logger.log.warn("I hope you know what you are doing. Data given to Answer.writeMore is empty")
-        return;
-    }else{
-        if(this.data){
-            if(typeof this.data === "string" && typeof data === "string"){
-                    this.data += data;
-            }else if(isStream(this.data) && isStream(data)){
-                    this.data.pipe(data);
-            }else{
-                this.close("Unsupported type " + typeof data + " is given");
-                throw Error("Unsupported type " + typeof data + ". writeMore method supports only string and stream");
-            }
+HttpAnswer.prototype.writeMore = function(data){
+    if(this.data){
+        if(typeof this.data === "string" && typeof data === "string"){
+                this.data += data;
+        }else if(isStream(this.data) && isStream(data)){
+                this.data.pipe(data);
         }else{
-            this.data = data;
+            this.close("Unsupported type " + typeof data + " is given");
+            throw Error("Unsupported type " + typeof data + ".");
         }
+    }else{
+        this.data = data;
     }
 }
 
@@ -102,13 +92,13 @@ HttpAnswer.prototype.close = function(reason){
     this._native.end();
 }
 
-HttpAnswer.prototype.end = function(data,reason){
+HttpAnswer.prototype.end = function(){
     
     if(this.answered()){
         logger.log.warn("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
     }else{
         let data,type,length,reason;
-        if(arguments.length < 3){
+        if(arguments.length === 2){
             data = arguments[0];
             reason = arguments[1];
         }else{
