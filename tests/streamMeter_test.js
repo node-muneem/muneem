@@ -21,7 +21,7 @@ describe ('Stream Meter', () => {
             done();
         });
 
-        var stream = new StreamMeter({
+        var stream = StreamMeter({
             maxLength : 50,
         })
         request.pipe(stream);

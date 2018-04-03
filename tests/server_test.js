@@ -2,6 +2,7 @@ if (!global.Promise) {
     global.Promise = require('q');
 }
 
+var path = require('path')
 var chai = require('chai')
 , chaiHttp = require('chai-http')
 , expected = require('chai').expect;
@@ -13,11 +14,17 @@ const Muneem = require("../src/muneem");
 
 describe ('Muneem server', () => {
 
-    const muneem = Muneem();
+    const muneem = Muneem({
+        mappings : path.join(__dirname , "app/mappings/")
+    });
     muneem.addHandler("main", (asked,answer) => {
         answer.setHeader("id", asked.id);
         answer.write("I'm glad to response you back.");
     } ) ;
+    muneem.addHandler("post", (asked,answer) => {} ) ;
+    muneem.addHandler("parallel", (asked,answer) => {} ) ;
+    muneem.addHandler("auth", (asked,answer) => {} ) ;
+    muneem.addHandler("stream", (asked,answer) => {} ) ;
 
     muneem.routesManager.addRoute({
         uri: "/test",
@@ -31,7 +38,7 @@ describe ('Muneem server', () => {
         });
     });
 
-    beforeAll(() => {
+    afterAll(() => {
         muneem.server.close();
     });
 

@@ -99,7 +99,7 @@ describe ('RoutesManager', () => {
     }); */
 
 
-    it('should error when handler is not registered', () => {
+    it('should error when then handler is not registered', () => {
         const options = {
             mappings : path.join(__dirname , "app/mappings/invalid/unknownHandler.yaml")
         };
@@ -107,6 +107,16 @@ describe ('RoutesManager', () => {
         
         expect(() => {
             routesManager.addRoutesFromMappingsFile(options.mappings);
+        }).toThrowError("Unregistered handler unknown");
+
+    });
+
+    it('should error when after handler is not registered', () => {
+        const routesManager =new RoutesManager(null,container);
+        expect(() => {
+            routesManager.addRoute({
+                after: "unknown"
+            });
         }).toThrowError("Unregistered handler unknown");
 
     });

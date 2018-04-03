@@ -90,6 +90,7 @@ RoutesManager.prototype.addRoute = function(route){
     const bigBodyAlert = this.handlers.get("__exceedContentLength").handle || this.handlers.get("__exceedContentLength");
     const errorHandler = this.handlers.get("__error").handle || this.handlers.get("__error");
     this.router.on(route.when,route.uri, async (nativeRequest,nativeResponse,params) => {
+        logger.log.debug("Request matched with ", route);
         const ans = new HttpAnswer(nativeResponse);
         const asked = new HttpAsked(nativeRequest,params,context);
         asked._mayHaveBody = mayHaveBody;
@@ -115,7 +116,6 @@ RoutesManager.prototype.addRoute = function(route){
         });
 
         try{
-            logger.log.debug(asked," matched with ", route);
 
             for(let i=0; i<handlerRunners.length;i++){
                 await handlerRunners[i].run(asked ,ans);
@@ -176,7 +176,7 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
 }
 
 function RoutesManager(appContext,map){
-    this.appContext = appContext;
+    this.appContext = appContext || {};
     this.handlers = map;
 
     this.beforeEachPreHandler = [],  this.beforeMainHandler = [], this.beforeEachPostHandler = [];
