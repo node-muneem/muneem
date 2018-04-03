@@ -37,9 +37,16 @@ HttpAnswer.prototype.removeHeader = function(name){
     return this._native.removeHeader(name);
 }
 
+/**
+ * Add more string data to previously added data. Or pipe the stream to previously added stream
+ * Or set data if it is not set before.
+ * @param {*} data 
+ * @param {string} type : content-type
+ * @param {number|string} length : content-length
+ */
 HttpAnswer.prototype.writeMore = function(data,type,length){
     type && this.type(type);
-    length && this._length(length);
+    length && this.length(length);
 
     if(!data){
         //logger.log.warn("I hope you know what you are doing. Data given to Answer.writeMore is empty")
@@ -52,7 +59,7 @@ HttpAnswer.prototype.writeMore = function(data,type,length){
                     this.data.pipe(data);
             }else{
                 this.close("Unsupported type " + typeof data + " is given");
-                throw Error("Unsupported type" + typeof data + ". writeMore method supports only string and stream");
+                throw Error("Unsupported type " + typeof data + ". writeMore method supports only string and stream");
             }
         }else{
             this.data = data;
@@ -60,29 +67,41 @@ HttpAnswer.prototype.writeMore = function(data,type,length){
     }
 }
 
-
+/**
+ * Write if it is not written before
+ * @param {*} data 
+ * @param {string} type : content-type
+ * @param {number|string} length : content-length
+ */
 HttpAnswer.prototype.write = function(data,type,length){
     if(!this.data) { //Don't set if it is already set
         this.data = data;   
         type && this.type(type);
-        length && this._length(length);
+        length && this.length(length);
     } 
 }
 
+/**
+ * Replace previous data with new
+ * @param {*} data 
+ * @param {string} type : content-type
+ * @param {number|string} length : content-length
+ */
 HttpAnswer.prototype.replace = function(data,type,length){
     this.data = data;
     type && this.type(type);
-    length && this._length(length);
+    length && this.length(length);
 }
 
+/**
+ * Close and send the response with reason. It'll be logged when you try to send response again.
+ * @param {string} reason 
+ */
 HttpAnswer.prototype.close = function(reason){
     this.answeredReason = reason;
     this._native.end();
 }
 
-/**
- * @param {string} data 
- */
 HttpAnswer.prototype.end = function(data,reason){
     
     if(this.answered()){
@@ -102,7 +121,7 @@ HttpAnswer.prototype.end = function(data,reason){
         this.answeredReason = reason;
         data = data || this.data || "";
         type && this.type(type);
-        length && this._length(length);
+        length && this.length(length);
         
         if(isStream(data)){
             data.pipe(this._native);
@@ -114,8 +133,12 @@ HttpAnswer.prototype.end = function(data,reason){
                 throw Error("Unsupported data type to send : " + typeof data);
             }
             if (!this._native.getHeader('content-length')) {
-                this._native.setHeader('content-length', '' + Buffer.byteLength(data));
+                this._native.setHeader('content-length', Buffer.byteLength(data));
             }
+
+            /* if (!this._native.getHeader('content-type')) {
+                this._native.setHeader('content-type', '' + Buffer.byteLength(data));
+            } */
             this._native.end(data,this.encoding);
         }
         

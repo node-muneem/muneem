@@ -219,4 +219,52 @@ describe ('Muneem', () => {
 
 
     });
+
+    it('should download a compressed file from server', (done) => {
+        //create file to download
+        let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
+        fileWritableStream.write("This file is ready for download");
+        fileWritableStream.end();
+
+        const muneem = Muneem();
+
+        muneem.addHandler("fileUploader", 
+            (asked,answer) => {
+                const filePath = path.resolve(__dirname, "fileToDownload");
+                let fileReadableStream = fs.createReadStream(filePath);
+                var stat = fs.statSync(filePath);
+
+                answer.type("plain/text")
+                answer.write(fileReadableStream);
+        }) ;
+
+        muneem.addHandler("compress", 
+            (asked,answer) => {
+                var zlib = require('zlib');
+                answer.writeMore(zlib.createGzip());
+        }) ;
+
+        const routesManager = muneem.routesManager;
+        routesManager.addRoute({
+            uri: "/test",
+            to: "fileUploader",
+            then: "compress"
+        });
+
+        var request = new MockReq({
+            url: '/test'
+        });
+
+        var response = new MockRes();
+
+        response.on('finish', function() {
+            expect(response.getHeader("content-type")).toEqual("plain/text");
+            expect(response._getString()).toEqual("This file is ready for download");
+            expect(response.statusCode ).toEqual(200);
+            done();
+        });
+        routesManager.router.lookup(request,response); 
+
+
+    });
 });
