@@ -84,7 +84,7 @@ RoutesManager.prototype.addRoute = function(route){
 
     //read request body when there is at least one handler to handle it
     let mayHaveBody = this.appContext.alwaysReadRequestPayload || 
-            ( route.when !== "GET" && route.when !== "HEAD") ;
+            ( route.when !== "GET" && route.when !== "HEAD" && route.when !== "UNLOCK" && route.when !== "PURGE" && route.when !== "COPY") ;
 
 
     const bigBodyAlert = this.handlers.get("__exceedContentLength").handle || this.handlers.get("__exceedContentLength");
