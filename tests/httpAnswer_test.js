@@ -1,65 +1,51 @@
 const RoutesManager = require("../src/routesManager");
 const httpMocks = require('node-mocks-http');
+const MockRes = require('mock-res');
 const eventEmitter = require('events').EventEmitter;
 const Muneem = require("../src/muneem")
+const HttpAnswer = require("../src/HttpAnswer")
 const ApplicationSetupError = require("../src/ApplicationSetupError")
 
 describe ('Routes Manager', () => {
 
-    //TODO: test it properly
-    it('should handle unepected error by any handler', (done) => {
-        
-        const muneem = Muneem();
-        muneem.addHandler("main", (asked,answer) => {
-            answer.write("This is a string");
-        } ) ;
-        muneem.addHandler("toStream", (asked,answer) => {
-            var Readable = require('stream').Readable;
-            var s = new Readable();
-            s._read = function noop() {};
-            answer.replace(s);
-            s.push(answer.data);
-        } ) ;
+    it('should set Content-Type', () => {
+        const response = new MockRes();
+        const answer = new HttpAnswer(response);
 
-        const routesManager = muneem.routesManager;
-        
-        routesManager.addRoute({
-            uri: "/test",
-            to: "main",
-            then: "toStream"
-        });
+        //when
+        answer.type("application/json");
 
-        var request  = httpMocks.createRequest({
-            url: '/test'
-        });
-
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
-
-        response.on('data', function(chunk) {
-            console.log(chunk)
-            expect(response.statusCode ).toEqual(500);
-            expect(response._isEndCalled()).toBe(true);
-            done();
-        });
-        response.on('end', function() {
-            console.log(response._getData())
-            expect(response.statusCode ).toEqual(500);
-            expect(response._isEndCalled()).toBe(true);
-            done();
-        });
-        routesManager.router.lookup(request,response);
-
-        request.send("data sent in request");
-
+        //then
+        expect(response.getHeader("content-type")).toEqual("application/json");
     });
 
-    it('should Error when handle unepected error by any handler', (done) => {
+    it('should set Content-Length', () => {
+        const response = new MockRes();
+        const answer = new HttpAnswer(response);
+
+        //when
+        answer.length(35);
+
+        //then
+        expect(response.getHeader("content-length")).toEqual(35);
+    });
+
+    it('should return true when already answered', () => {
+        const response = new MockRes();
+        const answer = new HttpAnswer(response);
+
+        //when
+        response.end();
+
+        //then
+        expect(answer.answered()).toEqual(true);
+    });
+
+    it('should Error when invalid data type (function) is written to send', (done) => {
         
         const muneem = Muneem();
         muneem.addHandler("main", (asked,answer) => {
-            answer.write(() => {});
+            answer.write(() => {});//invalid
         } ) ;
 
         const routesManager = muneem.routesManager;

@@ -4,6 +4,10 @@ HttpAnswer.prototype.type = function(c_type){
     this.setHeader("content-type", c_type);
 }
 
+HttpAnswer.prototype.length = function(len){
+    this.setHeader("content-length", len);
+}
+
 /* HttpAnswer.prototype.setCookie = function(val){
     this._native.setHeader("set-cookie",val);
 }
@@ -33,13 +37,42 @@ HttpAnswer.prototype.removeHeader = function(name){
     return this._native.removeHeader(name);
 }
 
-HttpAnswer.prototype.write = function(data){
-    if(!this.data)
-        this.data = data;
+HttpAnswer.prototype.writeMore = function(data,type,length){
+    type && this.type(type);
+    length && this._length(length);
+
+    if(!data){
+        //logger.log.warn("I hope you know what you are doing. Data given to Answer.writeMore is empty")
+        return;
+    }else{
+        if(this.data){
+            if(typeof this.data === "string" && typeof data === "string"){
+                    this.data += data;
+            }else if(isStream(this.data) && isStream(data)){
+                    this.data.pipe(data);
+            }else{
+                this.close("Unsupported type " + typeof data + " is given");
+                throw Error("Unsupported type" + typeof data + ". writeMore method supports only string and stream");
+            }
+        }else{
+            this.data = data;
+        }
+    }
 }
 
-HttpAnswer.prototype.replace = function(data){
+
+HttpAnswer.prototype.write = function(data,type,length){
+    if(!this.data) { //Don't set if it is already set
+        this.data = data;   
+        type && this.type(type);
+        length && this._length(length);
+    } 
+}
+
+HttpAnswer.prototype.replace = function(data,type,length){
     this.data = data;
+    type && this.type(type);
+    length && this._length(length);
 }
 
 HttpAnswer.prototype.close = function(reason){
@@ -51,12 +84,26 @@ HttpAnswer.prototype.close = function(reason){
  * @param {string} data 
  */
 HttpAnswer.prototype.end = function(data,reason){
+    
     if(this.answered()){
         logger.log.warn("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
     }else{
-        /* this.answeredBy = arguments.callee; //TODO: test it*/
-        this.answeredReason = reason; //TODO: test it 
+        let data,type,length,reason;
+        if(arguments.length < 3){
+            data = arguments[0];
+            reason = arguments[1];
+        }else{
+            data = arguments[0];
+            type = arguments[1];
+            length = arguments[2];
+            reason = arguments[3];
+        }
+        
+        this.answeredReason = reason;
         data = data || this.data || "";
+        type && this.type(type);
+        length && this._length(length);
+        
         if(isStream(data)){
             data.pipe(this._native);
         }else{
