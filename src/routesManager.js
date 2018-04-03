@@ -83,7 +83,7 @@ RoutesManager.prototype.addRoute = function(route){
     const handlerRunners = this.extractHandlersFromRoute(route);
 
     //read request body when there is at least one handler to handle it
-    let hasBody = this.appContext.alwaysReadRequestPayload || 
+    let mayHaveBody = this.appContext.alwaysReadRequestPayload || 
             ( route.when !== "GET" && route.when !== "HEAD") ;
 
 
@@ -92,13 +92,13 @@ RoutesManager.prototype.addRoute = function(route){
     this.router.on(route.when,route.uri, async (nativeRequest,nativeResponse,params) => {
         const ans = new HttpAnswer(nativeResponse);
         const asked = new HttpAsked(nativeRequest,params,context);
-        asked._hasBody = hasBody;
+        asked._mayHaveBody = mayHaveBody;
                 
         if(asked.contentLength > route.maxLength){
             logger.log.debug(asked,"Calling __exceedContentLength handler");
             bigBodyAlert(asked,ans);
             return;
-        }else if(hasBody){//TODO: check if body should be read
+        }else if(mayHaveBody){
             asked.stream = new StreamMeter({
                 maxLength : context.route.maxLength,
                 errorHandler : () => {

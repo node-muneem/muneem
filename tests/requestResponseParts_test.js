@@ -148,7 +148,7 @@ describe ('Routes Manager', () => {
             expect(response._getData()).toEqual('hello world');
             expect(response._headers).toEqual({
                 "content-type": 'plain/text',
-                "content-length": '11'
+                "content-length": 11
             });
             expect(response.statusCode ).toEqual(200);
             expect(response._isEndCalled()).toBe(true);

@@ -175,7 +175,7 @@ describe ('HttpAnswer', () => {
         });
     });
 
-    /* it('should pipe multiple streams', (done) => {
+    it('should pipe multiple streams', (done) => {
         const response = new MockRes();
         const answer = new HttpAnswer(response);
 
@@ -197,10 +197,11 @@ describe ('HttpAnswer', () => {
         //then
         response.on('finish', function() {
             expect(response.getHeader("content-type")).toEqual("plain/text");
-            expect(response._responseData).toEqual("This file is ready for download");
+            //expect(response._responseData).toEqual("This file is ready for download");
+            expect(response._getString()).toEqual("This file is ready for download");
             done();
         });
-    }); */
+    });
 
     it('should set and add data', () => {
         const response = new MockRes();

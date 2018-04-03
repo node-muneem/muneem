@@ -1,21 +1,24 @@
 var url = require('url');
 
 
-HttpAsked.prototype.toString = ()  => "Request (" + this.id + ") : " + this.url;
-
 function HttpAsked(request,params,context){
     this.id = request.id;
     this.params = params;
     this.headers = request.headers;
     this._native = request;
+    this.stream = request;
     this.context = context;
     this.body =[];
     this.processQueryParam(request);
-    this.contentLength = request.headers['content-length'] && Number(request.headers['content-length']) || -1;
+    if(request.headers['content-length'] !== undefined){
+        this.contentLength = Number(request.headers['content-length']);
+    }else{
+        this.contentLength =  -1;
+    }
 }
 
 HttpAsked.prototype.readBody = async function(){
-    if(!this._hasBody || this.contentLength === 0) return;
+    if(this._mayHaveBody === false || this.contentLength === 0) return;
     else if(this.body && this.body.length > 0) return this.body;
     else{
         this.body = [];
@@ -25,7 +28,10 @@ HttpAsked.prototype.readBody = async function(){
                 this.body = Buffer.concat(this.body); 
                 resolve(this.body)
             });
-            this.stream.on('error', reject); // or something like that
+            this.stream.on('error', (err) => {
+                reject(err);
+                throw Error("Error in reading request stream");
+            });
         });
 
         return this.body

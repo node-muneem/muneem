@@ -176,7 +176,7 @@ describe ('Muneem', () => {
 
     });
 
-    it('should download a file from server', (done) => {
+    it('should (single stream handler) download a file from server', (done) => {
         //create file to download
         let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
         fileWritableStream.write("This file is ready for download");
@@ -220,7 +220,7 @@ describe ('Muneem', () => {
 
     });
 
-    it('should download a compressed file from server', (done) => {
+    it('should (multiple stream handlers) download a compressed file from server', (done) => {
         //create file to download
         let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
         fileWritableStream.write("This file is ready for download");
@@ -259,6 +259,7 @@ describe ('Muneem', () => {
 
         response.on('finish', function() {
             expect(response.getHeader("content-type")).toEqual("plain/text");
+            //console.log(response._responseData);
             expect(response._getString()).toEqual("This file is ready for download");
             expect(response.statusCode ).toEqual(200);
             done();
