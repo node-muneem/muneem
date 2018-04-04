@@ -9,7 +9,7 @@ function HttpAsked(request,params,context){
     this.stream = request;
     this.context = context;
     this.body =[];
-    this.processQueryParam(request);
+    this.processQueryParam();
     if(request.headers['content-length'] !== undefined){
         this.contentLength = Number(request.headers['content-length']);
     }else{
@@ -17,6 +17,7 @@ function HttpAsked(request,params,context){
     }
 }
 
+//TODO: make it pluggable with readMsgpack, readJson, readBody (as per content type)
 HttpAsked.prototype.readBody = async function(){
     if(this._mayHaveBody === false || this.contentLength === 0) return;
     else if(this.body && this.body.length > 0) return this.body;

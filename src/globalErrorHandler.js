@@ -9,3 +9,7 @@ process.on('uncaughtException', function(err) {
         logger.log.error(err);
     }
 })
+
+process.on('unhandledRejection', (reason, p) => {
+    logger.log.error(reason, 'Unhandled Rejection at Promise', p);
+});
