@@ -54,9 +54,9 @@ Muneem.addToAnswer = function(methodName, fn ){
     HttpAnswer.prototype[methodName] = fn;
 }
 
-Muneem.addObjectSerializer = function(mimeType, serializer,options ){
+Muneem.prototype.addObjectSerializer = function(mimeType, serializer ){
     Muneem.logger.log.info("Adding a serializer to handle " + mimeType);
-    this.serializerFactory.add(mimeType, serializer,options);
+    this.serializerFactory.add(mimeType, serializer);
 }
 
 /**

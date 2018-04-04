@@ -117,7 +117,7 @@ HttpAnswer.prototype.end = function(){
             this.data.pipe(this._native);
         }else{
             this.serialize = this.serialize || defaultSerializer;
-            this.serialize(this,this._for);//serialize data
+            this.serialize(this._for,this);//serialize data
 //TODO: how to set cookies from request into response
 //TODO: check if difference in content length before and after applying transfer encoding can impact performance
             this.data = this.applyTransferEncoding(this.data);
@@ -126,7 +126,7 @@ HttpAnswer.prototype.end = function(){
     }
 }
 
-const defaultSerializer = function(answer){
+const defaultSerializer = function(asked,answer){
     if(typeof answer.data === "string" || Buffer.isBuffer(answer.data)){
     }else if(typeof answer.data === "object" || typeof answer.data === "number"){
         answer.data = JSON.stringify(answer.data);

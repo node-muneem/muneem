@@ -12,13 +12,10 @@ SerializerFactory.prototype.get = function(asked){
     }
 
     if(s){
-        if(typeof s.serializer === "function"){
-            return s;
-        }else if(s.serializer.getInstnace){
-            const serialzer = s.serializer.getInstnace(s.options,asked);
-            return serialzer.serialize;
-        }else{
-            return s.serialize;
+        if(s.serializer.serialize){
+            return s.serializer.serialize;
+        }else {
+            return s.serializer;
         }
     }else{//no serializer is registered to handle given accept media type
         //return defaultSerializer;
