@@ -91,9 +91,12 @@ RoutesManager.prototype.addRoute = function(route){
     const errorHandler = this.handlers.get("__error").handle || this.handlers.get("__error");
     this.router.on(route.when,route.uri, async (nativeRequest,nativeResponse,params) => {
         logger.log.debug("Request matched with ", route);
-        const ans = new HttpAnswer(nativeResponse);
         const asked = new HttpAsked(nativeRequest,params,context);
         asked._mayHaveBody = mayHaveBody;
+
+        const ans = new HttpAnswer(nativeResponse);
+        ans.serialize = this.serializerFactory.get(asked);
+        ans._for = asked;
                 
         if(asked.contentLength > route.maxLength){
             logger.log.debug(asked,"Calling __exceedContentLength handler");
@@ -175,9 +178,10 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
     return handlerRunners;
 }
 
-function RoutesManager(appContext,map){
+function RoutesManager(appContext,map,serializerFactory){
     this.appContext = appContext || {};
     this.handlers = map;
+    this.serializerFactory = serializerFactory;
 
     this.beforeEachPreHandler = [],  this.beforeMainHandler = [], this.beforeEachPostHandler = [];
     this.afterEachPreHandler = [],  this.afterMainHandler = [], this.afterEachPostHandler = [];

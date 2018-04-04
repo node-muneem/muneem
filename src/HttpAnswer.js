@@ -92,6 +92,9 @@ HttpAnswer.prototype.close = function(reason){
     this._native.end();
 }
 
+HttpAnswer.prototype.applyTransferEncodingOnStream = a => a;
+HttpAnswer.prototype.applyTransferEncoding = a => a;
+
 HttpAnswer.prototype.end = function(){
     
     if(this.answered()){
@@ -109,29 +112,34 @@ HttpAnswer.prototype.end = function(){
         }
         
         this.answeredReason = reason;
-        data = data || this.data || "";
+        this.data = data || this.data || "";
         type && this.type(type);
         length && this.length(length);
         
-        if(isStream(data)){
-            data.pipe(this._native);
+        if(isStream(this.data)){
+            this.data = this.applyTransferEncodingOnStream(this.data);
+            this.data.pipe(this._native);
         }else{
-            if(typeof data === "string" || Buffer.isBuffer(data)){
-            }else if(typeof data === "object" || typeof data === "number"){
-                data = JSON.stringify(data);
-            }else{
-                throw Error("Unsupported data type to send : " + typeof data);
-            }
-            if (!this._native.getHeader('content-length')) {
-                this._native.setHeader('content-length', Buffer.byteLength(data));
-            }
-
-            /* if (!this._native.getHeader('content-type')) {
-                this._native.setHeader('content-type', '' + Buffer.byteLength(data));
-            } */
-            this._native.end(data,this.encoding);
+            this.serialize = this.serialize || defaultSerializer;
+            this.serialize(this,this._for);//serialize data
+//TODO: how to set cookies from request into response
+//TODO: check if difference in content length before and after applying transfer encoding can impact performance
+            this.data = this.applyTransferEncoding(this.data);
+            this._native.end(this.data,this.encoding);
         }
-        
+    }
+}
+
+const defaultSerializer = function(answer){
+    if(typeof answer.data === "string" || Buffer.isBuffer(answer.data)){
+    }else if(typeof answer.data === "object" || typeof answer.data === "number"){
+        answer.data = JSON.stringify(answer.data);
+    }else{
+        throw Error("Unsupported data type to send : " + typeof answer.data);
+    }
+
+    if (!answer.getHeader('content-length')) {
+        answer.setHeader('content-length', Buffer.byteLength(answer.data));
     }
 }
 

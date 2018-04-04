@@ -2,6 +2,7 @@ const Container = require("./Container");
 const RoutesManager = require("./routesManager");
 const Server = require("./server");
 const HttpAnswer = require("./HttpAnswer");
+const SerializerFactory = require("./SerializerFactory");
 var events = require('events');
 require("./globalErrorHandler");
 Muneem.logger = require("./fakeLogger");
@@ -39,7 +40,8 @@ function Muneem(options){
     this.eventEmitter = new events.EventEmitter();
     this.container = new Container();
     this.registerDefaultHandlers();
-    this.routesManager = new RoutesManager(this.appContext,this.container);
+    this.serializerFactory = new SerializerFactory();
+    this.routesManager = new RoutesManager(this.appContext,this.container,this.serializerFactory);
 }
 
 /**
@@ -50,6 +52,11 @@ function Muneem(options){
 Muneem.addToAnswer = function(methodName, fn ){
     Muneem.logger.log.info("Adding a methods " + methodName + " to HttpAnswer");
     HttpAnswer.prototype[methodName] = fn;
+}
+
+Muneem.addObjectSerializer = function(mimeType, serializer,options ){
+    Muneem.logger.log.info("Adding a serializer to handle " + mimeType);
+    this.serializerFactory.add(mimeType, serializer,options);
 }
 
 /**

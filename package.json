@@ -36,6 +36,7 @@
     "chai-http": "^4.0.0"
   },
   "dependencies": {
+    "accept": "^3.0.2",
     "anumargak": "file:../fasttrack",
     "mock-req": "^0.2.0",
     "mock-res": "^0.5.0",
