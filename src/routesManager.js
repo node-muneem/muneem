@@ -122,6 +122,7 @@ RoutesManager.prototype.addRoute = function(route){
 
             for(let i=0; i<handlerRunners.length;i++){
                 await handlerRunners[i].run(asked ,ans);
+                if(ans.leave) break;
             }
 
             ans.end();	

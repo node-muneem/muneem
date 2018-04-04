@@ -8,16 +8,12 @@ HttpAnswer.prototype.length = function(len){
     this.setHeader("content-length", len);
 }
 
-/* HttpAnswer.prototype.setCookie = function(val){
-    this._native.setHeader("set-cookie",val);
-}
-
-HttpAnswer.prototype.cookie = function(){
-    return this._native.getHeader("cookie");
-}
- */
 HttpAnswer.prototype.answered = function(){
     return this._native.finished;
+}
+
+HttpAnswer.prototype.skipRest = function(){
+    this.leave = true;
 }
 
 HttpAnswer.prototype.status = function(code , msg){

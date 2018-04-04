@@ -326,4 +326,72 @@ describe ('Routes Manager', () => {
 
     });
 
+
+    it('should skip next handlers when explicitly asked', (done) => {
+        
+        const muneem = Muneem();
+        let blocks = [];
+
+        muneem.addHandler("auth", () => {blocks.push("auth"); } ) ;
+        muneem.addHandler("parallel", () => {
+            setTimeout(() => {
+
+                blocks.push("parallel");
+                expect(blocks).toEqual([ 
+                     'auth' ,
+                    'Main: before main', 'main', 'Main: after main',
+                    'parallel'
+                ]);
+                done();
+            },0);
+        }) ;
+
+        muneem.addHandler("main", async (asked,answer) => {
+            answer.end(await asked.readBody());
+            blocks.push("main")
+            answer.skipRest();
+        } ) ;
+        muneem.addHandler("post", () => {blocks.push("post")} );
+        muneem.addHandler("last", () => {blocks.push("last"); } ) ;
+
+        const routesManager = muneem.routesManager;
+        muneem.beforeMainHandler((asked, handlerName) => {
+            blocks.push("Main: before " + handlerName)
+        });
+        muneem.afterMainHandler((asked, handlerName) => {
+            blocks.push("Main: after " + handlerName)
+        });
+
+        routesManager.addRoute({
+            uri: "/test",
+            to: "main",
+            when: ["POST"],
+            after: ["auth", "parallel"],
+            then: ["post", "last"]
+        });
+
+        var request  = httpMocks.createRequest({
+            method: "POST",
+            url: '/test'
+        });
+
+        var response = httpMocks.createResponse({
+            eventEmitter: require('events').EventEmitter
+        });
+
+        response.on('end', function() {
+            expect(response._getData() ).toEqual("data sent in request");
+            expect(response.statusCode ).toEqual(200);
+            expect(response._isEndCalled()).toBe(true);
+            expect(blocks).toEqual([ 
+                'auth' ,
+               "Main: before main"
+           ]);
+        });
+        routesManager.router.lookup(request,response);
+
+        request.send("data sent in request");
+
+    });
+
 });
