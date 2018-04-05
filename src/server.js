@@ -50,10 +50,25 @@ function Server(options,requestResponseHandler,eventEmitter){
     options = this.options;
     this.eventEmitter = eventEmitter;
 
-    this.server = http.createServer((req,res) => {
+    const httpHandler = (req,res) => {
         req.id = reqId();
         requestResponseHandler.lookup(req,res);
-    });
+    };
+
+    if (this.options.http2) {
+        if(this.options.https){
+            this.server = require('http2').createSecureServer(this.options.https, httpHandler)
+        }else{
+            this.server = require('http2').createServer(httpHandler)
+        }
+    } else {
+        if(this.options.https){
+            this.server = require('https').createServer(this.options.https,httpHandler);
+        }else{
+            this.server = require('http').createServer(httpHandler);
+        }
+    }
+
     const sLocal = this.server;
     //this.server.on('request', requestResponseHandler);
     this.server.on('error', function(err){
