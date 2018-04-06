@@ -93,11 +93,8 @@ RoutesManager.prototype.addRoute = function(route){
         logger.log.debug("Request matched with ", route);
         const asked = new HttpAsked(nativeRequest,params,context);
         asked._mayHaveBody = mayHaveBody;
+        const ans = new HttpAnswer(nativeResponse,asked,this.serializerFactory);
 
-        const ans = new HttpAnswer(nativeResponse);
-        ans.serialize = this.serializerFactory.get(asked);
-        ans._for = asked;
-                
         if(asked.contentLength > route.maxLength){
             logger.log.debug(asked,"Calling __exceedContentLength handler");
             bigBodyAlert(asked,ans);
@@ -129,7 +126,7 @@ RoutesManager.prototype.addRoute = function(route){
 
         }catch(e){
             ans.error = e;
-            //console.log(e)
+            console.log(e)
             errorHandler(asked,ans);
         }
     })//router.on ends

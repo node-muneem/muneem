@@ -1,13 +1,18 @@
 const httpMocks = require('node-mocks-http');
 const MockRes = require('mock-res');
+const MockReq = require('mock-req');
 const fs = require('fs');
 const path = require('path');
 const eventEmitter = require('events').EventEmitter;
 const Muneem = require("../src/muneem")
 const HttpAnswer = require("../src/HttpAnswer")
 const ApplicationSetupError = require("../src/ApplicationSetupError")
+const SerializerFactory = require("../src/SerializerFactory")
+const defaultSerializer = require("../src/specialHandlers/defaultSerializer")
 
 describe ('HttpAnswer', () => {
+    const serializerFactory = new SerializerFactory();
+    serializerFactory.add("*/*", defaultSerializer);
 
     it('should set Content-Type', () => {
         const response = new MockRes();
@@ -97,7 +102,10 @@ describe ('HttpAnswer', () => {
 
     it('should set object and it\'s length', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = new MockReq({
+            headers : {}
+        });
+        const answer = new HttpAnswer(response,request,serializerFactory);
 
         //when
         answer.write({ hello : 'world'});
@@ -111,7 +119,10 @@ describe ('HttpAnswer', () => {
 
     it('should set wrong length if given', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = new MockReq({
+            headers : {}
+        });
+        const answer = new HttpAnswer(response,request,serializerFactory);
 
         //when
         answer.write({ hello : 'world'}, "application/json",10);

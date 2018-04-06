@@ -20,7 +20,8 @@ describe ('Routes Manager', () => {
         });
 
         var request  = httpMocks.createRequest({
-            url: '/test?query=param&nd=val'
+            url: '/test?query=param&nd=val',
+            headers : {}
         });
 
         var response = httpMocks.createResponse({

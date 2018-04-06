@@ -97,11 +97,11 @@ describe ('Object Serializer', () => {
     it('Muneem should set serializer ', (done) => {
         
         const muneem = Muneem();
-        muneem.addHandler("main", async (asked,answer) => {
-            answer.write( await asked.readBody() );
+        muneem.addHandler("main", (asked,answer) => {
+            answer.write( { "key" : "value"});
         } ) ;
         muneem.addObjectSerializer("text/plain", (asked,answer) => {
-            answer.replace("serialized: " + answer.data);
+            answer.replace("serialized: " + JSON.stringify(answer.data));
         });
         const routesManager = muneem.routesManager;
         
@@ -123,7 +123,7 @@ describe ('Object Serializer', () => {
 
         response.on('finish', function() {
             expect(response.statusCode ).toEqual( 200 );
-            expect(response._getString() ).toEqual("serialized: data sent in request");
+            expect(response._getString() ).toEqual("serialized: {\"key\":\"value\"}");
             done();
         });
         routesManager.router.lookup(request,response);

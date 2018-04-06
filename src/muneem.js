@@ -11,6 +11,11 @@ Muneem.setLogger = function(logger){
     Muneem.logger.log = logger;
 }
 
+Muneem.prototype.registerDefaultSerializers = function(){
+    this.addObjectSerializer("*/*" , require("./specialHandlers/defaultSerializer"));
+    this.addObjectSerializer("application/json" , require("./specialHandlers/defaultSerializer"));
+}
+
 Muneem.prototype.registerDefaultHandlers = function(){
     Muneem.logger.log.info("Adding __defaultRoute Handler")
     this.addHandler("__defaultRoute" , require("./specialHandlers/defaultRoute"));
@@ -41,6 +46,7 @@ function Muneem(options){
     this.container = new Container();
     this.registerDefaultHandlers();
     this.serializerFactory = new SerializerFactory();
+    this.registerDefaultSerializers();
     this.routesManager = new RoutesManager(this.appContext,this.container,this.serializerFactory);
 }
 

@@ -116,26 +116,25 @@ HttpAnswer.prototype.end = function(){
             this.data = this.applyTransferEncodingOnStream(this.data);
             this.data.pipe(this._native);
         }else{
-            this.serialize = this.serialize || defaultSerializer;
-            this.serialize(this._for,this);//serialize data
+            if(typeof this.data === "string" || Buffer.isBuffer(this.data)){
+                //do nothing
+            }else  if(typeof this.data === "number"){
+                this.data += '';
+            }else if(typeof this.data === "object"){
+                let serialize = this.serializerFactory.get(this._for);
+                serialize && serialize(this._for,this);//serialize data
+            }else{
+                throw Error("Unsupported data type to send : " + typeof this.data);
+            }
 //TODO: how to set cookies from request into response
 //TODO: check if difference in content length before and after applying transfer encoding can impact performance
+
+            if (!this.getHeader('content-length')) {
+                this.setHeader('content-length', Buffer.byteLength(this.data));
+            }
             this.data = this.applyTransferEncoding(this.data);
             this._native.end(this.data,this.encoding);
         }
-    }
-}
-
-const defaultSerializer = function(asked,answer){
-    if(typeof answer.data === "string" || Buffer.isBuffer(answer.data)){
-    }else if(typeof answer.data === "object" || typeof answer.data === "number"){
-        answer.data = JSON.stringify(answer.data);
-    }else{
-        throw Error("Unsupported data type to send : " + typeof answer.data);
-    }
-
-    if (!answer.getHeader('content-length')) {
-        answer.setHeader('content-length', Buffer.byteLength(answer.data));
     }
 }
 
@@ -148,7 +147,9 @@ HttpAnswer.prototype.redirectTo = function(loc){
     this._native.end();
 }
 
-function HttpAnswer(res){
+function HttpAnswer(res,asked,serializerFactory){
+    this.serializerFactory = serializerFactory;
+    this._for = asked;
     this._native = res;
     this.encoding = "utf8";
     this._native.statusCode = 200;
