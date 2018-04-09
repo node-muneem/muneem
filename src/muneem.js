@@ -3,6 +3,8 @@ const RoutesManager = require("./routesManager");
 const Server = require("./server");
 const HttpAnswer = require("./HttpAnswer");
 const SerializerFactory = require("./SerializerFactory");
+const Compressors = require("./Compressors");
+
 var events = require('events');
 require("./globalErrorHandler");
 Muneem.logger = require("./fakeLogger");
@@ -12,19 +14,30 @@ Muneem.setLogger = function(logger){
 }
 
 Muneem.prototype.registerDefaultSerializers = function(){
-    this.addObjectSerializer("*/*" , require("./specialHandlers/defaultSerializer"));
-    this.addObjectSerializer("application/json" , require("./specialHandlers/defaultSerializer"));
+    this.addObjectSerializer("*/*" , require("./defaultHandlers/defaultSerializer"));
+    this.addObjectSerializer("application/json" , require("./defaultHandlers/defaultSerializer"));
+}
+
+Muneem.prototype.registerDefaultCompressors = function(){
+    this.addCompressor("*" , require("./defaultHandlers/compressors/gzip"));
+    this.addStreamCompressor("*" , require("./defaultHandlers/compressors/gzipStream"));
+
+    this.addCompressor("gzip" , require("./defaultHandlers/compressors/gzip"));
+    this.addStreamCompressor("gzip" , require("./defaultHandlers/compressors/gzipStream"));
+
+    this.addCompressor("deflat" , require("./defaultHandlers/compressors/deflat"));
+    this.addStreamCompressor("deflat" , require("./defaultHandlers/compressors/deflatStream"));
 }
 
 Muneem.prototype.registerDefaultHandlers = function(){
     Muneem.logger.log.info("Adding __defaultRoute Handler")
-    this.addHandler("__defaultRoute" , require("./specialHandlers/defaultRoute"));
+    this.addHandler("__defaultRoute" , require("./defaultHandlers/defaultRoute"));
 
     Muneem.logger.log.info("Adding __exceedContentLength handler")
-    this.addHandler("__exceedContentLength" , require("./specialHandlers/exceedContentLengthHandler"));
+    this.addHandler("__exceedContentLength" , require("./defaultHandlers/exceedContentLengthHandler"));
 
     Muneem.logger.log.info("Adding __error handler")
-    this.addHandler("__error" , require("./specialHandlers/exceptionHandler"));
+    this.addHandler("__error" , require("./defaultHandlers/exceptionHandler"));
 }
 
 Muneem.prototype.start = function(serverOptions){
@@ -36,7 +49,23 @@ Muneem.prototype.start = function(serverOptions){
 }
 
 const defaultOptions = {
-    alwaysReadRequestPayload: false
+    alwaysReadRequestPayload: false,
+    compress : {
+        preference : "gzip",
+        // minimum length of data to apply compression. Not applicable on stream
+        threshold : 1024,
+        filter : function(asked,answer){
+            if(asked.headers['x-no-compression'] 
+                || asked.headers['cache-control'] === 'no-transform'
+                || (this.threshold > 0 && this.threshold <= answer.data.length)
+            ){
+                return false;
+            }else{
+                return true;
+            }
+        }
+    },
+    maxLength: 1e6
 }
 function Muneem(options){
     if(!(this instanceof Muneem)) return new Muneem(options);
@@ -47,7 +76,16 @@ function Muneem(options){
     this.registerDefaultHandlers();
     this.serializerFactory = new SerializerFactory();
     this.registerDefaultSerializers();
-    this.routesManager = new RoutesManager(this.appContext,this.container,this.serializerFactory);
+    this.compressors = new Compressors();
+    this.streamCompressors = new Compressors();
+    this.registerDefaultCompressors();
+    this.containers = {
+        handlers : this.container,
+        serializers : this.serializerFactory,
+        compressors : this.compressors,
+        streamCompressors : this.streamCompressors 
+    }
+    this.routesManager = new RoutesManager(this.appContext,this.containers);
 }
 
 /**
@@ -63,6 +101,16 @@ Muneem.addToAnswer = function(methodName, fn ){
 Muneem.prototype.addObjectSerializer = function(mimeType, serializer ){
     Muneem.logger.log.info("Adding a serializer to handle " + mimeType);
     this.serializerFactory.add(mimeType, serializer);
+}
+
+Muneem.prototype.addCompressor = function(technique, compressor ){
+    Muneem.logger.log.info("Adding a compressor to handle " + technique);
+    this.compressors.add(technique, compressor);
+}
+
+Muneem.prototype.addStreamCompressor = function(technique, compressor ){
+    Muneem.logger.log.info("Adding a compressor to handle " + technique);
+    this.streamCompressors.add(technique, compressor);
 }
 
 /**

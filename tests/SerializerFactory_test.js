@@ -96,7 +96,9 @@ describe ('Object Serializer', () => {
 
     it('Muneem should set serializer ', (done) => {
         
-        const muneem = Muneem();
+        const muneem = Muneem({
+            compress : false
+        });
         muneem.addHandler("main", (asked,answer) => {
             answer.write( { "key" : "value"});
         } ) ;

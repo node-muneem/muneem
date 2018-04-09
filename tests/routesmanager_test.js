@@ -12,6 +12,9 @@ describe ('RoutesManager', () => {
         .add("post", () => {})
         .add("main", () => {});
     
+    const containers = {
+        handlers : container
+    }
     let env;
     beforeEach(()=>{
         env = process.env.NODE_ENV;
@@ -25,7 +28,7 @@ describe ('RoutesManager', () => {
         const options = {
             mappings :  path.join(__dirname , "app/mappings/invalid/invalid.yaml")
         };
-        const routesManager =new RoutesManager(options,container);
+        const routesManager =new RoutesManager(options,containers);
         
         expect(() => {
             routesManager.addRoutesFromMappingsFile(options.mappings)
@@ -36,7 +39,7 @@ describe ('RoutesManager', () => {
         const options = {
             mappings : path.join(__dirname , "app/mappings/notfound.yaml")
         };
-        const routesManager =new RoutesManager(options,container);
+        const routesManager =new RoutesManager(options,containers);
 
         expect(() => {
             routesManager.addRoutesFromMappingsFile(options.mappings)
@@ -49,7 +52,7 @@ describe ('RoutesManager', () => {
             mappings : path.join(__dirname , "app/mappings/"),
             alwaysReadRequestPayload: true
         };
-        const routesManager =new RoutesManager(options,container);
+        const routesManager =new RoutesManager(options,containers);
         routesManager.addRoutesFromMappingsFile(options.mappings);
         
         expect(routesManager.router.count).toEqual(7);
@@ -64,7 +67,7 @@ describe ('RoutesManager', () => {
             mappings : path.join(__dirname , "app/mappings/"),
             alwaysReadRequestPayload: true
         };
-        const routesManager =new RoutesManager(options,container);
+        const routesManager =new RoutesManager(options,containers);
 
         routesManager.addRoutesFromMappingsFile(options.mappings);
         routesManager.addRoute({
@@ -103,7 +106,7 @@ describe ('RoutesManager', () => {
         const options = {
             mappings : path.join(__dirname , "app/mappings/invalid/unknownHandler.yaml")
         };
-        const routesManager =new RoutesManager(options,container);
+        const routesManager =new RoutesManager(options,containers);
         
         expect(() => {
             routesManager.addRoutesFromMappingsFile(options.mappings);
@@ -112,7 +115,7 @@ describe ('RoutesManager', () => {
     });
 
     it('should error when after handler is not registered', () => {
-        const routesManager =new RoutesManager(null,container);
+        const routesManager =new RoutesManager(null,containers);
         expect(() => {
             routesManager.addRoute({
                 after: "unknown"

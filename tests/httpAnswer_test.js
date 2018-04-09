@@ -8,11 +8,14 @@ const Muneem = require("../src/muneem")
 const HttpAnswer = require("../src/HttpAnswer")
 const ApplicationSetupError = require("../src/ApplicationSetupError")
 const SerializerFactory = require("../src/SerializerFactory")
-const defaultSerializer = require("../src/specialHandlers/defaultSerializer")
+const defaultSerializer = require("../src/defaultHandlers/defaultSerializer")
 
 describe ('HttpAnswer', () => {
     const serializerFactory = new SerializerFactory();
     serializerFactory.add("*/*", defaultSerializer);
+    const containers = {
+        serializers : serializerFactory
+    }
 
     it('should set Content-Type', () => {
         const response = new MockRes();
@@ -74,7 +77,8 @@ describe ('HttpAnswer', () => {
 
     it('should set string data with content type and length', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         //when
         answer.write("I'm fine.", "plain/text", 9);
@@ -88,7 +92,8 @@ describe ('HttpAnswer', () => {
 
     it('should set number and content length', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         //when
         answer.write(420);
@@ -102,10 +107,8 @@ describe ('HttpAnswer', () => {
 
     it('should set object and it\'s length', () => {
         const response = new MockRes();
-        const request = new MockReq({
-            headers : {}
-        });
-        const answer = new HttpAnswer(response,request,serializerFactory);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request,containers);
 
         //when
         answer.write({ hello : 'world'});
@@ -119,10 +122,8 @@ describe ('HttpAnswer', () => {
 
     it('should set wrong length if given', () => {
         const response = new MockRes();
-        const request = new MockReq({
-            headers : {}
-        });
-        const answer = new HttpAnswer(response,request,serializerFactory);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request,containers);
 
         //when
         answer.write({ hello : 'world'}, "application/json",10);
@@ -136,7 +137,8 @@ describe ('HttpAnswer', () => {
 
     it('should set stream without content length', (done) => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         //create a file for test
         let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
@@ -162,7 +164,8 @@ describe ('HttpAnswer', () => {
 
     it('should set stream with content length when given', (done) => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         //create a file for test
         let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
@@ -188,7 +191,8 @@ describe ('HttpAnswer', () => {
 
     it('should pipe multiple streams', (done) => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         //create a file for test
         let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
@@ -216,7 +220,8 @@ describe ('HttpAnswer', () => {
 
     it('should set and add data', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         //when
         answer.write("I'm fine.");
@@ -229,7 +234,8 @@ describe ('HttpAnswer', () => {
 
     it('should set but not add data when different type', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
         fileWritableStream.end();
@@ -243,7 +249,8 @@ describe ('HttpAnswer', () => {
 
     it('should not set data when already set', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         //when
         answer.write("I'm fine.");
@@ -256,7 +263,8 @@ describe ('HttpAnswer', () => {
 
     it('should replace data', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         //when
         answer.write("I'm fine.","plain/text",9);
@@ -273,7 +281,8 @@ describe ('HttpAnswer', () => {
 
     it('should add data even if it is not set before', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         //when
         answer.writeMore("I'm fine.");
@@ -285,7 +294,8 @@ describe ('HttpAnswer', () => {
 
     it('should replace data even if it is not set before', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         //when
         answer.replace("I'm fine.");
@@ -297,7 +307,8 @@ describe ('HttpAnswer', () => {
 
     it('should ignore previously set data with data passed to end method', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         //when
         answer.write("I'm fine." , "plain/text", 9);
@@ -314,7 +325,8 @@ describe ('HttpAnswer', () => {
 
     it('should error when invalid data is set', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
         //when
         answer.write(() => {});
@@ -405,4 +417,18 @@ describe ('HttpAnswer', () => {
         request.send("data sent in request");
 
     });
+
+    function buildMockedRequest(){
+        return new MockReq({
+            headers : {},
+            context : {
+                route : {
+                    compress : false
+                },
+                app:{
+                    compress : false
+                }
+            }
+        });
+    }
 });

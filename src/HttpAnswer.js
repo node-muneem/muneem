@@ -112,8 +112,13 @@ HttpAnswer.prototype.end = function(){
         type && this.type(type);
         length && this.length(length);
         
+        const shouldCompress = this._for.context.route.compress;
+        const compressConfig = this._for.context.app.compress;
         if(isStream(this.data)){
-            this.data = this.applyTransferEncodingOnStream(this.data);
+            if(shouldCompress && compressConfig.filter(this._for,this)){
+                    const compress =  this.containers.streamCompressors.get(this._for);
+                    compress && compress(this._for, this);
+            }
             this.data.pipe(this._native);
         }else{
             if(typeof this.data === "string" || Buffer.isBuffer(this.data)){
@@ -121,18 +126,27 @@ HttpAnswer.prototype.end = function(){
             }else  if(typeof this.data === "number"){
                 this.data += '';
             }else if(typeof this.data === "object"){
-                let serialize = this.serializerFactory.get(this._for);
+                const serialize = this.containers.serializers.get(this._for);
                 serialize && serialize(this._for,this);//serialize data
             }else{
                 throw Error("Unsupported data type to send : " + typeof this.data);
             }
-//TODO: how to set cookies from request into response
-//TODO: check if difference in content length before and after applying transfer encoding can impact performance
 
-            if (!this.getHeader('content-length')) {
-                this.setHeader('content-length', Buffer.byteLength(this.data));
+            
+            if(shouldCompress && compressConfig.filter(this._for,this)){
+                const compress =  this.containers.compressors.get(this._for);
+                compress && compress(this._for, this);
+
+                //TODO: if there are different stratigies to set content length for different compression techniques
+                //then below code is invalid
+                if (!this.getHeader('content-length')) {
+                    this.setHeader('content-length', this.data.length);
+                }
+            }else{
+                if (!this.getHeader('content-length')) {
+                    this.setHeader('content-length', Buffer.byteLength(this.data));
+                }
             }
-            this.data = this.applyTransferEncoding(this.data);
             this._native.end(this.data,this.encoding);
         }
     }
@@ -147,8 +161,8 @@ HttpAnswer.prototype.redirectTo = function(loc){
     this._native.end();
 }
 
-function HttpAnswer(res,asked,serializerFactory){
-    this.serializerFactory = serializerFactory;
+function HttpAnswer(res,asked,containers){
+    this.containers = containers;
     this._for = asked;
     this._native = res;
     this.encoding = "utf8";

@@ -62,6 +62,11 @@ RoutesManager.prototype.addRoutes = function(routes){
     }
 }
 
+const defaultRouteConfig = {
+    //compress : true,
+    when: "GET"
+}
+
 /* const dontHaveBody = ["GET", "HEAD"]
 const mayHaveBody = ["POST", "PUT", "DELETE", "OPTION"] */
 
@@ -73,61 +78,70 @@ const mayHaveBody = ["POST", "PUT", "DELETE", "OPTION"] */
 RoutesManager.prototype.addRoute = function(route){
     if(route.in && route.in.indexOf(profile) === -1) return; //skip mapping for other environments
     
+    route =  Object.assign({},defaultRouteConfig,route);
+
     const context = {
         app: this.appContext,
         route: route
     };
-    route.when = route.when || "GET";//set default
-    context.route.maxLength = context.route.maxLength || context.app.maxLength || 1e6 ;
+    context.route.maxLength = context.route.maxLength || context.app.maxLength;
+    if(context.route.compress === 'undefined'){
+        if(context.app.compress){
+            context.route.compress = true;
+        }else{
+            context.route.compress = false;
+        }
+    }
     
+    //build the chain of handlers need to run for given route
     const handlerRunners = this.extractHandlersFromRoute(route);
 
-    //read request body when there is at least one handler to handle it
+    //read request body forcefully or as per method
     let mayHaveBody = this.appContext.alwaysReadRequestPayload || 
             ( route.when !== "GET" && route.when !== "HEAD" && route.when !== "UNLOCK" && route.when !== "PURGE" && route.when !== "COPY") ;
 
-
     const bigBodyAlert = this.handlers.get("__exceedContentLength").handle || this.handlers.get("__exceedContentLength");
     const errorHandler = this.handlers.get("__error").handle || this.handlers.get("__error");
+
     this.router.on(route.when,route.uri, async (nativeRequest,nativeResponse,params) => {
         logger.log.debug("Request matched with ", route);
         const asked = new HttpAsked(nativeRequest,params,context);
         asked._mayHaveBody = mayHaveBody;
-        const ans = new HttpAnswer(nativeResponse,asked,this.serializerFactory);
-
+        const answer = new HttpAnswer(nativeResponse,asked,this.containers);
+        
         if(asked.contentLength > route.maxLength){
             logger.log.debug(asked,"Calling __exceedContentLength handler");
-            bigBodyAlert(asked,ans);
+            bigBodyAlert(asked,answer);
             return;
         }else if(mayHaveBody){
             asked.stream = new StreamMeter({
                 maxLength : context.route.maxLength,
                 errorHandler : () => {
                     logger.log.debug(asked,"Calling __exceedContentLength handler");
-                    bigBodyAlert(asked,ans);
+                    bigBodyAlert(asked,answer);
                 }
             })
             nativeRequest.pipe(asked.stream);
         }
 
         nativeRequest.on('error', function(err) {
-            ans.error = err;
-            errorHandler(asked,ans);
+            answer.error = err;
+            errorHandler(asked,answer);
         });
 
         try{
 
             for(let i=0; i<handlerRunners.length;i++){
-                await handlerRunners[i].run(asked ,ans);
-                if(ans.leave) break;
+                await handlerRunners[i].run(asked ,answer);
+                if(answer.leave) break;
             }
 
-            ans.end();	
+            answer.end();	
 
         }catch(e){
-            ans.error = e;
-            console.log(e)
-            errorHandler(asked,ans);
+            answer.error = e;
+            //console.log(e)
+            errorHandler(asked,answer);
         }
     })//router.on ends
 }
@@ -176,10 +190,11 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
     return handlerRunners;
 }
 
-function RoutesManager(appContext,map,serializerFactory){
+function RoutesManager(appContext,containers){
     this.appContext = appContext || {};
-    this.handlers = map;
-    this.serializerFactory = serializerFactory;
+
+    this.containers = containers;
+    this.handlers = containers.handlers;
 
     this.beforeEachPreHandler = [],  this.beforeMainHandler = [], this.beforeEachPostHandler = [];
     this.afterEachPreHandler = [],  this.afterMainHandler = [], this.afterEachPostHandler = [];
@@ -189,9 +204,12 @@ function RoutesManager(appContext,map,serializerFactory){
         ignoreTrailingSlash: true,
         //maxParamLength: appContext.maxParamLength || 100,
         defaultRoute : (nativeRequest,nativeResponse) =>{
-            const answer = new HttpAnswer(nativeResponse);
-            const asked = new HttpAsked(nativeRequest);
-            const defaultHandler = map.get("__defaultRoute");
+            const asked = new HttpAsked(nativeRequest,null,{
+                route : defaultRouteConfig,
+                app : appContext
+            });
+            const answer = new HttpAnswer(nativeResponse,asked,this.containers);
+            const defaultHandler = containers.handlers.get("__defaultRoute");
             if(defaultHandler.handle){
                 defaultHandler.handle(asked,answer);
             } else {
