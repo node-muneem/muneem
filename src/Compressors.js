@@ -1,5 +1,6 @@
 const Accept = require('accept');
 const { checkIfValidHandler } = require('./appUtil');
+const ApplicationSetupError = require("./ApplicationSetupError");
 
 Compressors.prototype.add = function(mimeType, compressor){
     if(typeof compressor === "function"){
@@ -32,13 +33,9 @@ Compressors.prototype.get = function(asked,preference){
  * @param {string | Array} compressionPreference 
  */
 Compressors.prototype.checkIfAllRegistered = function(compressionPreference){
-    if(typeof compressionPreference === "string"){
-        return this.isRegistered(compressionPreference);
-    }else if(Array.isArray(compressionPreference)){
-        for(let i=0; i< compressionPreference.length;i++){
-            if(!this.isRegistered(compressionPreference[i])){
-                return false;
-            }
+    for(let i=0; i< compressionPreference.length;i++){
+        if(!this.isRegistered(compressionPreference[i])){
+            return false;
         }
     }
 }

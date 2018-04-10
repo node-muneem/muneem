@@ -2,6 +2,20 @@ const MockReq = require('mock-req');
 const Compressors = require("../src/Compressors")
 
 describe ('Compressor', () => {
+
+    it('should add valid compressors', () => {
+        const compressors = new Compressors();
+        compressors.add("gzip", () => {});
+        compressors.add("gzip", { compress : () => {}});
+    });
+
+    it('should error when invalid compressor is added', () => {
+        const compressors = new Compressors();
+        expect(() => {
+            compressors.add("gzip", { compress2 : () => {}});
+        }).toThrowError("Invalid compressor");
+    });
+
     it('should return no compressor when no header value', () => {
         const compressors = new Compressors();
 
