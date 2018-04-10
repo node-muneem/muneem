@@ -1,5 +1,4 @@
 const Accept = require('accept');
-const { checkIfValidHandler } = require('./appUtil');
 const ApplicationSetupError = require("./ApplicationSetupError");
 
 Compressors.prototype.add = function(mimeType, compressor){
