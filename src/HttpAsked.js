@@ -40,10 +40,12 @@ HttpAsked.prototype.readBody = async function(){
 }
 
 HttpAsked.prototype.processQueryParam = function(){
-    if( this._native.url.indexOf("?") !== -1 ){
+    if( this._native.url.indexOf("?") !== -1 ){//TODO: process #. move to anumargak
         var parsedURL = url.parse(this._native.url, true);
         this.url =parsedURL.pathname//without query param
         this.query = parsedURL.query//convert into map
+    }else{
+        this.url = this._native.url;
     }
 }
 

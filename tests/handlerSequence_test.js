@@ -394,4 +394,52 @@ describe ('Routes Manager', () => {
 
     });
 
+    it('should get/set headers should be available to next handler', (done) => {
+        
+        const muneem = Muneem();
+        muneem.addHandler("main", (asked,answer) => {
+            answer.type("plain/text");
+            answer.setHeader("removable","plain/text");
+        } ) ;
+        muneem.addHandler("parser", (asked,answer) => {
+            var type = answer.getHeader("content-type");
+            if(type === "application/json"){
+                answer.write("{'hello':'world'");
+            }else{
+                answer.write("hello world");
+            }
+            answer.removeHeader("removable");
+        } ) ;
+
+        const routesManager = muneem.routesManager;
+        
+        routesManager.addRoute({
+            uri: "/test/:param",
+            to: "main",
+            then: "parser"
+        });
+
+        var request  = httpMocks.createRequest({
+            url: '/test/val'
+        });
+
+        var response = httpMocks.createResponse({
+            eventEmitter: require('events').EventEmitter
+        });
+
+        response.on('end', function() {
+            expect(response._getData()).toEqual('hello world');
+            expect(response._headers).toEqual({
+                "content-type": 'plain/text',
+                "content-length": 11
+            });
+            expect(response.statusCode ).toEqual(200);
+            expect(response._isEndCalled()).toBe(true);
+            done();
+        });
+        routesManager.router.lookup(request,response);
+
+        request.send("data sent in request");
+
+    });
 });

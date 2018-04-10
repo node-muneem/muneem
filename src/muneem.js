@@ -47,44 +47,51 @@ Muneem.prototype.start = function(serverOptions){
     this.server = new Server(serverOptions, this.routesManager.router, this.eventEmitter);
     this.server.start();
 }
+const defaultCompressionOptions = {
+    //preference : ["gzip"],
+    // minimum length of data to apply compression. Not applicable on stream
+    threshold : 1024,
+    filter : function(asked,answer){
+        if(asked.headers['x-no-compression'] 
+            || asked.headers['cache-control'] === 'no-transform'
+            || (this.threshold > 0 && this.threshold <= answer.data.length)
+        ){
+            return false;
+        }else{
+            return true;
+        }
+    }
+};
 
 const defaultOptions = {
     alwaysReadRequestPayload: false,
-    compress : {
-        preference : "gzip",
-        // minimum length of data to apply compression. Not applicable on stream
-        threshold : 1024,
-        filter : function(asked,answer){
-            if(asked.headers['x-no-compression'] 
-                || asked.headers['cache-control'] === 'no-transform'
-                || (this.threshold > 0 && this.threshold <= answer.data.length)
-            ){
-                return false;
-            }else{
-                return true;
-            }
-        }
-    },
+    compress : true,
     maxLength: 1e6
 }
 function Muneem(options){
     if(!(this instanceof Muneem)) return new Muneem(options);
     
     this.appContext =  Object.assign({},defaultOptions,options);
-    this.eventEmitter = new events.EventEmitter();
-    this.container = new Container();
-    this.registerDefaultHandlers();
-    this.serializerFactory = new SerializerFactory();
-    this.registerDefaultSerializers();
-    this.compressors = new Compressors();
-    this.streamCompressors = new Compressors();
-    this.registerDefaultCompressors();
-    this.containers = {
-        handlers : this.container,
-        serializers : this.serializerFactory,
-        compressors : this.compressors,
-        streamCompressors : this.streamCompressors 
+
+    if(this.appContext.compress){
+        this.appContext.compress =  Object.assign({},defaultCompressionOptions,this.appContext.compress);
+        this.appContext.compress.shouldCompress = true;
+    }else{
+        this.appContext.compress = defaultCompressionOptions;
+        this.appContext.compress.shouldCompress = false; 
     }
+    this.eventEmitter = new events.EventEmitter();
+    this.containers = {
+        handlers : new Container(),
+        serializers : new SerializerFactory(),
+        compressors : new Compressors(),
+        streamCompressors : new Compressors()
+    }
+
+    this.registerDefaultHandlers();
+    this.registerDefaultSerializers();
+    this.registerDefaultCompressors();
+
     this.routesManager = new RoutesManager(this.appContext,this.containers);
 }
 
@@ -100,24 +107,24 @@ Muneem.addToAnswer = function(methodName, fn ){
 
 Muneem.prototype.addObjectSerializer = function(mimeType, serializer ){
     Muneem.logger.log.info("Adding a serializer to handle " + mimeType);
-    this.serializerFactory.add(mimeType, serializer);
+    this.containers.serializers.add(mimeType, serializer);
 }
 
 Muneem.prototype.addCompressor = function(technique, compressor ){
     Muneem.logger.log.info("Adding a compressor to handle " + technique);
-    this.compressors.add(technique, compressor);
+    this.containers.compressors.add(technique, compressor);
 }
 
 Muneem.prototype.addStreamCompressor = function(technique, compressor ){
     Muneem.logger.log.info("Adding a compressor to handle " + technique);
-    this.streamCompressors.add(technique, compressor);
+    this.containers.streamCompressors.add(technique, compressor);
 }
 
 /**
  * Add handlers to the container which should be used by each router
  */
 Muneem.prototype.addHandler = function(name,handler){
-    this.container.add(name,handler);
+    this.containers.handlers.add(name,handler);
     return this;
 }
 

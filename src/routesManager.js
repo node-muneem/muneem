@@ -63,7 +63,6 @@ RoutesManager.prototype.addRoutes = function(routes){
 }
 
 const defaultRouteConfig = {
-    //compress : true,
     when: "GET"
 }
 
@@ -85,14 +84,8 @@ RoutesManager.prototype.addRoute = function(route){
         route: route
     };
     context.route.maxLength = context.route.maxLength || context.app.maxLength;
-    if(context.route.compress === 'undefined'){
-        if(context.app.compress){
-            context.route.compress = true;
-        }else{
-            context.route.compress = false;
-        }
-    }
-    
+    this.updateCompressOptions(context);
+
     //build the chain of handlers need to run for given route
     const handlerRunners = this.extractHandlersFromRoute(route);
 
@@ -146,13 +139,40 @@ RoutesManager.prototype.addRoute = function(route){
     })//router.on ends
 }
 
+RoutesManager.prototype.updateCompressOptions = function (context){
+    if(context.route.compress === 'undefined'){
+        if(context.app.compress.shouldCompress){
+            context.route.compress = context.app.compress;
+        }else{
+            context.route.compress = false;
+        }
+        //TODO: need not to test for every route
+        
+        checkIfRegistered(this.containers,context.app.compress.preference);
+    }else if(context.route.compress === false){
+        //let it be false
+    }else{
+        context.route.compress =  Object.assign({},context.app.compress,context.route.compress);
+
+        checkIfRegistered(this.containers,context.route.compress.preference);
+    }
+}
+
+function checkIfRegistered(containers,preference){
+    if(preference){
+        const compressorPreference = containers.compressors.checkIfAllRegistered(preference);
+        const streamCompressorPreference = containers.streamCompressors.checkIfAllRegistered(preference);
+    
+        if(!compressorPreference && !streamCompressorPreference){
+            throw new ApplicationSetupError("Unregistered compression type is set in preference : " + preference);
+        }
+    }
+}
 
 /**
  * Validate if the handlers sequence is correct. 
  * Find the handler's implementation against their name
  * @param {*} route 
- * @param {*} handlers 
- * @param {*} appContext 
  */
 RoutesManager.prototype.extractHandlersFromRoute = function(route){
     const handlerRunners = [];
@@ -199,7 +219,6 @@ function RoutesManager(appContext,containers){
     this.beforeEachPreHandler = [],  this.beforeMainHandler = [], this.beforeEachPostHandler = [];
     this.afterEachPreHandler = [],  this.afterMainHandler = [], this.afterEachPostHandler = [];
 
-    //this.router = require('find-my-way')( {
     this.router = require('anumargak')( {
         ignoreTrailingSlash: true,
         //maxParamLength: appContext.maxParamLength || 100,

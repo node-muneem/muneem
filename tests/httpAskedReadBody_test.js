@@ -7,7 +7,7 @@ const ApplicationSetupError = require("../src/ApplicationSetupError")
 
 describe ('HttpAsked', () => {
 
-    it('should return undefined when content length is 0', async () => {
+    it('should not read body when content length is 0', async () => {
         const request = new MockReq({
             headers : {
                 "content-length" : 0
@@ -26,7 +26,7 @@ describe ('HttpAsked', () => {
         expect(data).toEqual(undefined);
     });
 
-    it('should return empty array when request has no body', async () => {
+    it('should not read request body when _mayHaveBody is set to false', async () => {
         const request = new MockReq();
         const asked = new HttpAsked(request,undefined,{
             route: {

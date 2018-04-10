@@ -185,6 +185,8 @@ describe ('HttpAnswer', () => {
             expect(response.getHeader("content-type")).toEqual("plain/text");
             expect(response.getHeader("content-length")).toEqual(2);
             expect(response._getString()).toEqual("This file is ready for download");
+            //expect(response._responseData).toEqual("This file is ready for download");
+
             done();
         });
     });
@@ -350,72 +352,18 @@ describe ('HttpAnswer', () => {
         }).toThrowError("Unsupported type function.");
     });
 
-
-    it('should Error when invalid data type (function) is written to send', (done) => {
+    it('should set location header and 302 status code on redirect ', () => {
         
-        const muneem = Muneem();
-        muneem.addHandler("main", (asked,answer) => {
-            answer.write(() => {});//invalid
-        } ) ;
+        const response = new MockRes();
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request);
 
-        const routesManager = muneem.routesManager;
-        
-        routesManager.addRoute({
-            uri: "/test",
-            to: "main",
-        });
+        //when
+        answer.redirectTo("http:/google.com");
 
-        var request  = httpMocks.createRequest({
-            url: '/test'
-        });
-
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
-
-        response.on('end', function() {
-            expect(response.statusCode ).toEqual(500);
-            expect(response._isEndCalled()).toBe(true);
-            done();
-        });
-        routesManager.router.lookup(request,response);
-
-        request.send("data sent in request");
-
-    });
-
-    it('should set location header and 302 status code on redirect ', (done) => {
-        
-        const muneem = Muneem();
-        muneem.addHandler("main", (asked,answer) => {
-            answer.redirectTo("http:/google.com");
-        } ) ;
-
-        const routesManager = muneem.routesManager;
-        
-        routesManager.addRoute({
-            uri: "/test",
-            to: "main",
-        });
-
-        var request  = httpMocks.createRequest({
-            url: '/test'
-        });
-
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
-
-        response.on('end', function() {
-            expect(response.statusCode ).toEqual(302);
-            expect(response.getHeader("location")).toEqual("http:/google.com");
-            expect(response._isEndCalled()).toBe(true);
-            done();
-        });
-        routesManager.router.lookup(request,response);
-
-        request.send("data sent in request");
-
+        //then
+        expect(response.statusCode ).toEqual(302);
+        expect(response.getHeader("location")).toEqual("http:/google.com");
     });
 
     function buildMockedRequest(){

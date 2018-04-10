@@ -25,10 +25,18 @@ describe ('Muneem server', () => {
     muneem.addHandler("parallel", (asked,answer) => {} ) ;
     muneem.addHandler("auth", (asked,answer) => {} ) ;
     muneem.addHandler("stream", (asked,answer) => {} ) ;
+    muneem.addHandler("invalid", (asked,answer) => {
+        asked.invalid();
+    } ) ;
 
     muneem.routesManager.addRoute({
         uri: "/test",
         to: "main"
+    })
+
+    muneem.routesManager.addRoute({
+        uri: "/invalid",
+        to: "invalid"
     })
 
     beforeAll(() => {
@@ -55,6 +63,17 @@ describe ('Muneem server', () => {
             });
     });
 
+    it('should response back harshly with 500.', (done) => {
+        chai.request("http://localhost:3002")
+            .get('/invalid')
+            .then(res => {
+                expect(res.status).toBe(500);
+                done();
+            }).catch( err => {
+                done.fail("not expected " + err);
+            });
+    });
+
     it('should error back when port is busy', () => {
 
        /* const  fakelogger = {
@@ -73,17 +92,6 @@ describe ('Muneem server', () => {
 
     it('should error back when invalid host', () => {
         muneem.start({host: "invalid"});//ENOTFOUNDEADDRNOTAVAILD: Host "invalid" is not available.
-    });
-
-    it('should response back politely ;)', (done) => {
-        chai.request("http://localhost:3000")
-            .get('/test')
-            .then(res => {
-                done().fail();
-            }).catch( err => {
-                expect(err.message).toEqual("connect ECONNREFUSED 127.0.0.1:3000");
-                done();
-            });
     });
 
 });

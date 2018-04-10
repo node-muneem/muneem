@@ -112,11 +112,12 @@ HttpAnswer.prototype.end = function(){
         type && this.type(type);
         length && this.length(length);
         
-        const shouldCompress = this._for.context.route.compress;
-        const compressConfig = this._for.context.app.compress;
+        //TODO:
+        //const shouldCompress = this._for.context.route.compress && compressConfig.filter(this._for,this);
+        const compressionConfig = this._for.context.route.compress;
         if(isStream(this.data)){
-            if(shouldCompress && compressConfig.filter(this._for,this)){
-                    const compress =  this.containers.streamCompressors.get(this._for);
+            if(compressionConfig && compressionConfig.filter(this._for,this)){
+                    const compress =  this.containers.streamCompressors.get(this._for,compressionConfig.preference);
                     compress && compress(this._for, this);
             }
             this.data.pipe(this._native);
@@ -133,8 +134,8 @@ HttpAnswer.prototype.end = function(){
             }
 
             
-            if(shouldCompress && compressConfig.filter(this._for,this)){
-                const compress =  this.containers.compressors.get(this._for);
+            if(compressionConfig && compressionConfig.filter(this._for,this)){
+                const compress =  this.containers.compressors.get(this._for,compressionConfig.preference);
                 compress && compress(this._for, this);
 
                 //TODO: if there are different stratigies to set content length for different compression techniques

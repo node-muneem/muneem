@@ -1,5 +1,6 @@
 const RoutesManager = require("../src/routesManager");
 const Container = require("../src/Container");
+const Compressors = require("../src/Compressors");
 const path = require("path");
 
 describe ('RoutesManager', () => {
@@ -13,7 +14,9 @@ describe ('RoutesManager', () => {
         .add("main", () => {});
     
     const containers = {
-        handlers : container
+        handlers : container,
+        compressors : new Compressors(),
+        streamCompressors : new Compressors()
     }
     let env;
     beforeEach(()=>{
@@ -124,4 +127,16 @@ describe ('RoutesManager', () => {
 
     });
 
+    it('should error when preferred compression type is not registered', async () => {
+
+        const routesManager =new RoutesManager(null,containers);
+        expect(() => {
+            routesManager.addRoute({
+                compress : {
+                    preference : ["br"]
+                }
+            });
+        }).toThrowError("Unregistered compression type is set in preference : br");
+
+    });
 });
