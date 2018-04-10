@@ -44,6 +44,7 @@ HttpAnswer.prototype.writeMore = function(data){
                 this.data += data;
         }else if(isStream(this.data) && isStream(data)){
                 this.data.pipe(data);
+                this.data = data;
         }else{
             this.close("Unsupported type " + typeof data + " is given");
             throw Error("Unsupported type " + typeof data + ".");
@@ -108,6 +109,7 @@ HttpAnswer.prototype.end = function(){
         }
         
         this.answeredReason = reason;
+        //writeMore("abc"), writeMore("def"), end("ghi")
         this.data = data || this.data || "";
         type && this.type(type);
         length && this.length(length);

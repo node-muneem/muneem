@@ -1,5 +1,6 @@
 const path = require("path");
 const fs = require("fs");
+const zlib = require("zlib");
 const MockReq = require('mock-req');
 const MockRes = require('mock-res');
 const eventEmitter = require('events').EventEmitter;
@@ -240,7 +241,6 @@ describe ('Muneem', () => {
 
         muneem.addHandler("compress", 
             (asked,answer) => {
-                var zlib = require('zlib');
                 answer.writeMore(zlib.createGzip());
         }) ;
 
@@ -251,16 +251,20 @@ describe ('Muneem', () => {
             then: "compress"
         });
 
-        var request = new MockReq({
+        const request = new MockReq({
             url: '/test'
         });
 
-        var response = new MockRes();
+        const response = new MockRes();
 
+        let chunks = [];        
+        response.on('data', chunk => {
+            chunks.push(chunk);
+        });
         response.on('finish', function() {
+            chunks = Buffer.concat(chunks);
             expect(response.getHeader("content-type")).toEqual("plain/text");
-            //console.log(response._responseData);
-            expect(response._getString()).toEqual("This file is ready for download");
+            expect(zlib.gunzipSync(chunks).toString()).toEqual("This file is ready for download");
             expect(response.statusCode ).toEqual(200);
             done();
         });

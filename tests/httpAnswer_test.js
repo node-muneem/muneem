@@ -212,12 +212,19 @@ describe ('HttpAnswer', () => {
         answer.end();
 
         //then
+        let chunks = [];   
+        response.on('data', chunk => {
+            chunks.push(chunk);
+        });
         response.on('finish', function() {
+            chunks = Buffer.concat(chunks);
             expect(response.getHeader("content-type")).toEqual("plain/text");
-            //expect(response._responseData).toEqual("This file is ready for download");
-            expect(response._getString()).toEqual("This file is ready for download");
+            expect(zlib.gunzipSync(chunks).toString()).toEqual("This file is ready for download");
+            expect(response.statusCode ).toEqual(200);
             done();
         });
+
+        
     });
 
     it('should set and add data', () => {
