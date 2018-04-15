@@ -1,5 +1,5 @@
 const MockReq = require('mock-req');
-const Compressors = require("../src/Compressors")
+const Compressors = require("../src/CompressorsContainer")
 
 describe ('Compressor', () => {
 
@@ -13,7 +13,7 @@ describe ('Compressor', () => {
         const compressors = new Compressors();
         expect(() => {
             compressors.add("gzip", { compress2 : () => {}});
-        }).toThrowError("Invalid compressor");
+        }).toThrowError("Handler should be a function or an object with 'compress' method");
     });
 
     it('should return no compressor when no header value', () => {

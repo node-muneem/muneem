@@ -2,23 +2,23 @@ const ApplicationSetupError = require("./ApplicationSetupError");
 const logger = require('./fakeLogger');
 
 class HandlersContainer {
-    constructor(){
+    constructor(methodName){
         this.collection = {};
+        this.methodName = methodName || "handle";
     }
 
-    add(name,handler,methodName){
+    add(name,handler){
 
         if(this.collection[name]) {
             logger.log.warn(name + " handler have replaced old mapping");
         }
 
-        methodName = methodName || "handle";
         if(typeof handler === "function"){
             this.collection[name] = handler;
-        }else if(typeof handler[methodName] === "function"){
-            this.collection[name] = handler[methodName];
+        }else if(typeof handler[this.methodName] === "function"){
+            this.collection[name] = handler[this.methodName];
         }else{
-            throw new ApplicationSetupError("Handler should be a function or an object with 'handle' method");
+            throw new ApplicationSetupError(`Handler should be a function or an object with '${this.methodName}' method`);
         }
 
         return this;

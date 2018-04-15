@@ -1,6 +1,6 @@
 const RoutesManager = require("../src/routesManager");
 const Container = require("../src/HandlersContainer");
-const Compressors = require("../src/Compressors");
+const Compressors = require("../src/CompressorsContainer");
 const path = require("path");
 
 describe ('RoutesManager', () => {

@@ -3,7 +3,7 @@ const RoutesManager = require("./routesManager");
 const Server = require("./server");
 const HttpAnswer = require("./HttpAnswer");
 const SerializerFactory = require("./SerializerFactory");
-const Compressors = require("./Compressors");
+const Compressors = require("./CompressorsContainer");
 
 var events = require('events');
 require("./globalErrorHandler");
