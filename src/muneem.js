@@ -1,4 +1,4 @@
-const Container = require("./Container");
+const Container = require("./HandlersContainer");
 const RoutesManager = require("./routesManager");
 const Server = require("./server");
 const HttpAnswer = require("./HttpAnswer");

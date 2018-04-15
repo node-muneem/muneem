@@ -1,5 +1,5 @@
 const RoutesManager = require("../src/routesManager");
-const Container = require("../src/Container");
+const Container = require("../src/HandlersContainer");
 const Compressors = require("../src/Compressors");
 const path = require("path");
 

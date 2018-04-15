@@ -1,6 +1,6 @@
-const Container = require("../src/Container");
+const Container = require("../src/HandlersContainer");
 
-describe ('Container', () => {
+describe ('HandlersContainer', () => {
     it('should add a function', () => {
         
         const map = new Container();

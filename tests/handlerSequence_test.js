@@ -1,7 +1,7 @@
 
 //should not call handler further is answer stream is end
 const RoutesManager = require("../src/routesManager");
-const HandlersMap = require("../src/Container");
+const HandlersMap = require("../src/HandlersContainer");
 //const Handler = require("../src/Handler");
 const path = require("path");
 const httpMocks = require('node-mocks-http');
