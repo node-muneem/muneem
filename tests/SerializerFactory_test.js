@@ -5,7 +5,7 @@
 const HttpAsked = require("../src/HttpAsked")
 const MockReq = require('mock-req');
 const MockRes = require('mock-res');
-const SerializerFactory = require("../src/SerializerFactory")
+const SerializerFactory = require("../src/SerializersContainer")
 const Muneem = require("../src/muneem")
 
 describe ('Object Serializer', () => {

@@ -7,7 +7,7 @@ const eventEmitter = require('events').EventEmitter;
 const Muneem = require("../src/muneem")
 const HttpAnswer = require("../src/HttpAnswer")
 const ApplicationSetupError = require("../src/ApplicationSetupError")
-const SerializerFactory = require("../src/SerializerFactory")
+const SerializerFactory = require("../src/SerializersContainer")
 const defaultSerializer = require("../src/defaultHandlers/defaultSerializer")
 
 describe ('HttpAnswer', () => {

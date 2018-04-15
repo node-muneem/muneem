@@ -2,7 +2,7 @@ const Container = require("./HandlersContainer");
 const RoutesManager = require("./routesManager");
 const Server = require("./server");
 const HttpAnswer = require("./HttpAnswer");
-const SerializerFactory = require("./SerializerFactory");
+const Serializers = require("./SerializersContainer");
 const Compressors = require("./CompressorsContainer");
 
 var events = require('events');
@@ -83,7 +83,7 @@ function Muneem(options){
     this.eventEmitter = new events.EventEmitter();
     this.containers = {
         handlers : new Container(),
-        serializers : new SerializerFactory(),
+        serializers : new Serializers(),
         compressors : new Compressors(),
         streamCompressors : new Compressors()
     }
