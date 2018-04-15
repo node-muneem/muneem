@@ -57,9 +57,9 @@ function Server(options,requestResponseHandler,eventEmitter){
 
     if (this.options.http2) {
         if(this.options.https){
-            this.server = require('http2').createSecureServer(this.options.https, httpHandler)
+            this.server = http2().createSecureServer(this.options.https, httpHandler)
         }else{
-            this.server = require('http2').createServer(httpHandler)
+            this.server = http2().createServer(httpHandler)
         }
     } else {
         if(this.options.https){
@@ -75,6 +75,14 @@ function Server(options,requestResponseHandler,eventEmitter){
 		eventEmitter.emit('onServerError');
 		networkErrHandler(err,options.port,options.host,sLocal);
 	});
+}
+
+function http2(){
+    try {
+        return require('http2')
+      } catch (err) {
+        throw Error('Current version of node doesn\'t supports http2.');
+      }
 }
 
 module.exports = Server;
