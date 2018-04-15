@@ -18,6 +18,7 @@ describe ('Muneem server', () => {
         mappings : path.join(__dirname , "app/mappings/")
     });
     muneem.addHandler("main", (asked,answer) => {
+        if(asked.headers["header6"]) throw Error("Not expected");
         answer.setHeader("id", asked.id);
         answer.write("I'm glad to response you back.");
     } ) ;
@@ -42,7 +43,8 @@ describe ('Muneem server', () => {
     beforeAll(() => {
         muneem.start({
             //TODO: test if new id is being set
-            generateUniqueReqId : true
+            generateUniqueReqId : true,
+            maxHeadersCount : 5
         });
     });
 
@@ -68,6 +70,23 @@ describe ('Muneem server', () => {
             .get('/invalid')
             .then(res => {
                 expect(res.status).toBe(500);
+                done();
+            }).catch( err => {
+                done.fail("not expected " + err);
+            });
+    });
+
+    it('should not allow more than 5 headers', () => {
+        chai.request("http://localhost:3002")
+            .get('/test')
+            .set("header1","value1")
+            .set("header2","value2")
+            .set("header3","value3")
+            .set("header4","value4")
+            .set("header5","value5")
+            .set("header6","value6")
+            .then(res => {
+                expect(res.status).toBe(200);
                 done();
             }).catch( err => {
                 done.fail("not expected " + err);

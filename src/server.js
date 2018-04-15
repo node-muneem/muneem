@@ -69,6 +69,11 @@ function Server(options,requestResponseHandler,eventEmitter){
         }
     }
 
+    //Will not read headers after defined count
+    this.server.maxHeadersCount = this.options.maxHeadersCount;//default is 2000
+    //TODO: to test
+    this.options.setTimeout && this.server.setTimeout(this.options.timeout);
+
     const sLocal = this.server;
     //this.server.on('request', requestResponseHandler);
     this.server.on('error', function(err){
