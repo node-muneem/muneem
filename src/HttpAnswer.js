@@ -1,4 +1,5 @@
 const logger = require("./fakeLogger");
+var pump = require('pump')
 
 HttpAnswer.prototype.type = function(c_type){
     this.setHeader("content-type", c_type);
@@ -43,7 +44,8 @@ HttpAnswer.prototype.writeMore = function(data){
         if(typeof this.data === "string" && typeof data === "string"){
                 this.data += data;
         }else if(isStream(this.data) && isStream(data)){
-                this.data.pipe(data);
+                //this.data.pipe(data);
+                pump(this.data,data);
                 this.data = data;
         }else{
             this.close("Unsupported type " + typeof data + " is given");
@@ -122,7 +124,8 @@ HttpAnswer.prototype.end = function(){
                     const compress =  this.containers.streamCompressors.get(this._for,compressionConfig.preference);
                     compress && compress(this._for, this);
             }
-            this.data.pipe(this._native);
+            //this.data.pipe(this._native);
+            pump(this.data,this._native);
         }else{
             if(typeof this.data === "string" || Buffer.isBuffer(this.data)){
                 //do nothing

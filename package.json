@@ -40,6 +40,7 @@
     "anumargak": "^1.2.0",
     "mock-req": "^0.2.0",
     "mock-res": "^0.5.0",
+    "pump": "^3.0.0",
     "uniqid": "^4.1.1",
     "yamljs": "^0.3.0"
   }
