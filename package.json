@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "accept": "^3.0.2",
-    "anumargak": "file:../fasttrack",
+    "anumargak": "^1.2.0",
     "mock-req": "^0.2.0",
     "mock-res": "^0.5.0",
     "uniqid": "^4.1.1",
