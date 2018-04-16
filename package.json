@@ -25,15 +25,17 @@
     "server"
   ],
   "devDependencies": {
-    "jasmine": "^3.1.0",
-    "jasmine-core": "^3.1.0",
-    "node-mocks-http": "^1.5.8",
+    "chai": "^4.1.2",
+    "chai-http": "^4.0.0",
     "fastify": "^1.1.1",
     "find-my-way": "^1.11.1",
+    "jasmine": "^3.1.0",
+    "jasmine-core": "^3.1.0",
     "micro": "^9.1.4",
+    "node-mocks-http": "^1.5.8",
     "nyc": "^11.6.0",
-    "chai": "^4.1.2",
-    "chai-http": "^4.0.0"
+    "pino": "^4.16.1",
+    "winston": "^3.0.0-rc4"
   },
   "dependencies": {
     "accept": "^3.0.2",

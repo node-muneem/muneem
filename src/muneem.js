@@ -10,7 +10,16 @@ require("./globalErrorHandler");
 Muneem.logger = require("./fakeLogger");
 
 Muneem.setLogger = function(logger){
-    Muneem.logger.log = logger;
+    if(logger 
+        && typeof logger.info === "function" 
+        && typeof logger.debug === "function" 
+        && typeof logger.error === "function" 
+        && typeof logger.warn === "function" 
+    ){
+        Muneem.logger.log = logger;
+    }else{
+        throw Error("Given logger doesn't support all standard logging methods.");
+    }
 }
 
 Muneem.prototype.registerDefaultSerializers = function(){

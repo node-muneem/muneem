@@ -3,7 +3,7 @@ const logger = require("./fakeLogger");
 Runner.prototype.run = async function(asked,answer){
     this.runBefore(asked);
     
-    logger.log.debug("Request" + asked.id + "Executing handler " + this.handlerName);
+    logger.log.debug(`Request Id:${asked.id} Executing handler ${this.handlerName}`);
     await this.handler(asked,answer);
     
     this.runAfter(asked);
@@ -12,14 +12,14 @@ Runner.prototype.run = async function(asked,answer){
 
 Runner.prototype.runBefore = function(asked) {
     if(this.before){
-        logger.log.debug(asked,"Executing before of " + this.handlerName);
+        logger.log.debug(`Request Id:${asked.id} Executing before of ${this.handlerName}`);
         callAll(this.before,asked,this.handlerName);
     }
 }
 
 Runner.prototype.runAfter = function(asked) {
     if(this.after){
-        logger.log.debug(asked,"Executing after of " + this.handlerName);
+        logger.log.debug(`Request Id:${asked.id} Executing after of ${this.handlerName}`);
         callAll(this.after,asked,this.handlerName);
     }
 }

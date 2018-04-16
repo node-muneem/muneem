@@ -32,7 +32,7 @@ RoutesManager.prototype.addRoutesFromMappingsFile = function(filepath){
     if(this.router.count === 0){
         throw new ApplicationSetupError("There is no route exist. Please check the mapping file or add them from the code.");
     }else{
-        logger.log.info(this.router.count + " routes are loaded.");
+        logger.log.info(`${this.router.count}  routes are loaded.`);
     }
 }
 
@@ -97,20 +97,20 @@ RoutesManager.prototype.addRoute = function(route){
     const errorHandler = this.handlers.get("__error").handle || this.handlers.get("__error");
 
     this.router.on(route.when,route.uri, async (nativeRequest,nativeResponse,params) => {
-        logger.log.debug("Request matched with ", route);
+        logger.log.debug(`Request Id:${nativeRequest.id}`, route);
         const asked = new HttpAsked(nativeRequest,params,context);
         asked._mayHaveBody = mayHaveBody;
         const answer = new HttpAnswer(nativeResponse,asked,this.containers);
         
         if(asked.contentLength > route.maxLength){
-            logger.log.debug(asked,"Calling __exceedContentLength handler");
+            logger.log.debug(`Request Id:${asked.id} Calling __exceedContentLength handler`);
             bigBodyAlert(asked,answer);
             return;
         }else if(mayHaveBody){
             asked.stream = new StreamMeter({
                 maxLength : context.route.maxLength,
                 errorHandler : () => {
-                    logger.log.debug(asked,"Calling __exceedContentLength handler");
+                    logger.log.debug(`Request Id:${asked.id} Calling __exceedContentLength handler`);
                     bigBodyAlert(asked,answer);
                 }
             })
@@ -158,13 +158,18 @@ RoutesManager.prototype.updateCompressOptions = function (context){
     }
 }
 
+/**
+ * Check if given compression preference is registered
+ * @param {*} containers 
+ * @param {*} preference 
+ */
 function checkIfRegistered(containers,preference){
     if(preference){
         const compressorPreference = containers.compressors.checkIfAllRegistered(preference);
         const streamCompressorPreference = containers.streamCompressors.checkIfAllRegistered(preference);
     
         if(!compressorPreference && !streamCompressorPreference){
-            throw new ApplicationSetupError("Unregistered compression type is set in preference : " + preference);
+            throw new ApplicationSetupError(`Unregistered compression type is set in preference : ${preference}`);
         }
     }
 }
@@ -184,7 +189,7 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
         }
         for(let i=0;i<route.after.length;i++){
             const handler = this.handlers.get(route.after[i]);
-            if(!handler) throw new ApplicationSetupError("Unregistered handler " + route.after[i]);
+            if(!handler) throw new ApplicationSetupError(`Unregistered handler ${route.after[i]}`);
 
             handlerRunners.push(new Runner(route.after[i],handler.handle || handler,this.beforeEachPreHandler,this.afterEachPreHandler));
         }
@@ -201,7 +206,7 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
         }
         for(let i=0;i<route.then.length;i++){
             const handler = this.handlers.get(route.then[i]);
-            if(!handler) throw new ApplicationSetupError("Unregistered handler " + route.then[i]);
+            if(!handler) throw new ApplicationSetupError(`Unregistered handler ${route.then[i]}`);
            
             handlerRunners.push(new Runner(route.then[i],handler.handle || handler ,this.beforeEachPostHandler,this.afterEachPostHandler));
         }
