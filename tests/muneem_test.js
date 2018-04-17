@@ -1,5 +1,5 @@
-const httpMocks = require('node-mocks-http');
-const eventEmitter = require('events').EventEmitter;
+const MockReq = require('mock-req');
+const MockRes = require('mock-res');
 const Muneem = require("../src/muneem")
 
 describe ('Muneem', () => {
@@ -21,24 +21,18 @@ describe ('Muneem', () => {
             to: "main"
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
             url: '/test'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
-            expect(response._getData() ).toEqual("justforTest : main");
+        response.on('finish', function() {
+            expect(response._getString() ).toEqual("justforTest : main");
             expect(response.statusCode ).toEqual(200);
-            expect(response._isEndCalled()).toBe(true);
             done();
         });
         routesManager.router.lookup(request,response);
-
-        request.send("data sent in request");
-
     });
 
 });
