@@ -12,7 +12,7 @@ const defaultSerializer = require("../src/defaultHandlers/defaultSerializer")
 
 describe ('HttpAnswer', () => {
     const serializerFactory = new SerializerFactory();
-    serializerFactory.add("*/*", defaultSerializer);
+    serializerFactory.add("application/json", defaultSerializer);
     const containers = {
         serializers : serializerFactory
     }
@@ -78,7 +78,7 @@ describe ('HttpAnswer', () => {
     it('should set string data with content type and length', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,containers);
 
         //when
         answer.write("I'm fine.", "plain/text", 9);
@@ -93,7 +93,7 @@ describe ('HttpAnswer', () => {
     it('should set number and content length', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,containers);
 
         //when
         answer.write(420);
@@ -101,13 +101,13 @@ describe ('HttpAnswer', () => {
 
         //then
         expect(response._getString()).toEqual("420");
-        expect(response.getHeader("content-type")).toEqual(undefined);
+        expect(response.getHeader("content-type")).toEqual("text/plain");
         expect(response.getHeader("content-length")).toEqual(3);
     });
 
     it('should set object and it\'s length', () => {
         const response = new MockRes();
-        const request = buildMockedRequest();
+        const request = buildMockedRequest("application/json");
         const answer = new HttpAnswer(response,request,containers);
 
         //when
@@ -122,7 +122,7 @@ describe ('HttpAnswer', () => {
 
     it('should set wrong length if given', () => {
         const response = new MockRes();
-        const request = buildMockedRequest();
+        const request = buildMockedRequest("application/json");
         const answer = new HttpAnswer(response,request,containers);
 
         //when
@@ -138,7 +138,7 @@ describe ('HttpAnswer', () => {
     it('should set stream without content length', (done) => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,containers);
 
         //create a file for test
         let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
@@ -231,7 +231,7 @@ describe ('HttpAnswer', () => {
     it('should set and add data', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,containers);
 
         //when
         answer.write("I'm fine.");
@@ -245,7 +245,7 @@ describe ('HttpAnswer', () => {
     it('should set but not add data when different type', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,containers);
 
         let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
         fileWritableStream.end();
@@ -260,7 +260,7 @@ describe ('HttpAnswer', () => {
     it('should not set data when already set', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,containers);
 
         //when
         answer.write("I'm fine.");
@@ -274,7 +274,7 @@ describe ('HttpAnswer', () => {
     it('should replace data', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,containers);
 
         //when
         answer.write("I'm fine.","plain/text",9);
@@ -292,7 +292,7 @@ describe ('HttpAnswer', () => {
     it('should add data even if it is not set before', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,containers);
 
         //when
         answer.writeMore("I'm fine.");
@@ -305,7 +305,7 @@ describe ('HttpAnswer', () => {
     it('should replace data even if it is not set before', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,containers);
 
         //when
         answer.replace("I'm fine.");
@@ -318,7 +318,7 @@ describe ('HttpAnswer', () => {
     it('should ignore previously set data with data passed to end method', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,containers);
 
         //when
         answer.write("I'm fine." , "plain/text", 9);
@@ -333,18 +333,69 @@ describe ('HttpAnswer', () => {
         expect(answer.answeredReason).toEqual("no reason");
     });
 
-    it('should error when invalid data is set', () => {
+    it('should response with 406 when data type can\'t be serialized', (done) => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,containers);
 
         //when
         answer.write(() => {});
+        answer.end();
 
         //then
-        expect(() => {
-            answer.end();
-        }).toThrowError("Unsupported data type to send : function");
+        response.on('finish', function() {
+            expect(response.statusCode ).toEqual(406);
+            done();
+        });
+
+    });
+
+    it('should not set content length for status 204', (done) => {
+        const response = new MockRes();
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request,containers);
+
+        //when
+        answer.status(204);
+        answer.end();
+
+        //then
+        response.on('finish', function() {
+            expect(response._headers["content-length"] ).toEqual(undefined);
+            done();
+        });
+    });
+
+    it('should not set content length for status < 200', (done) => {
+        const response = new MockRes();
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request,containers);
+
+        //when
+        answer.status(111);
+        answer.end();
+
+        //then
+        response.on('finish', function() {
+            expect(response._headers["content-length"] ).toEqual(undefined);
+            done();
+        });
+    });
+
+    it('should not set content length for status 2xx and method CONNECT', (done) => {
+        const response = new MockRes();
+        const request = buildMockedRequest(null,"CONNECT");
+        const answer = new HttpAnswer(response,request,containers);
+
+        //when
+        answer.status(200);
+        answer.end();
+
+        //then
+        response.on('finish', function() {
+            expect(response._headers["content-length"] ).toEqual(undefined);
+            done();
+        });
     });
 
     it('should error when invalid data is to add', () => {
@@ -364,7 +415,7 @@ describe ('HttpAnswer', () => {
         
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,containers);
 
         //when
         answer.redirectTo("http:/google.com");
@@ -374,9 +425,13 @@ describe ('HttpAnswer', () => {
         expect(response.getHeader("location")).toEqual("http:/google.com");
     });
 
-    function buildMockedRequest(){
+    function buildMockedRequest(acceptType,method){
+        method || (method = "GET");
         return new MockReq({
-            headers : {},
+            headers : {
+                "accept" : acceptType,
+            },
+            "method" : method,
             context : {
                 route : {
                     compress : false

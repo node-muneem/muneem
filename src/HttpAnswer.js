@@ -23,11 +23,13 @@ HttpAnswer.prototype.status = function(code , msg){
 }
 
 HttpAnswer.prototype.getHeader = function(name){
-    return this._native.getHeader(name);
+    return this._native.getHeader(name.toLowerCase());
 }
 
+//TODO: lower case the header name before set
+//TODO: if name is set-cookie add is array when already exists
 HttpAnswer.prototype.setHeader = function(name,val){
-    return this._native.setHeader(name,val);
+    return this._native.setHeader(name.toLowerCase(),val);
 }
 
 HttpAnswer.prototype.removeHeader = function(name){
@@ -95,7 +97,6 @@ HttpAnswer.prototype.applyTransferEncodingOnStream = a => a;
 HttpAnswer.prototype.applyTransferEncoding = a => a;
 
 HttpAnswer.prototype.end = function(){
-    
     if(this.answered()){
         logger.log.warn("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
     }else{
@@ -111,7 +112,6 @@ HttpAnswer.prototype.end = function(){
         }
         
         this.answeredReason = reason;
-        //writeMore("abc"), writeMore("def"), end("ghi")
         this.data = data || this.data || "";
         type && this.type(type);
         length && this.length(length);
@@ -127,15 +127,24 @@ HttpAnswer.prototype.end = function(){
             //this.data.pipe(this._native);
             pump(this.data,this._native);
         }else{
-            if(typeof this.data === "string" || Buffer.isBuffer(this.data)){
-                //do nothing
-            }else  if(typeof this.data === "number"){
+            //TODO: performance improvement scope
+            const serialize = this.containers.serializers.get(this._for);
+            if(serialize){
+                serialize(this._for,this);
+            }else if(typeof this.data === "string"){
+                if(!this.getHeader('content-type') ) this.setHeader('content-type', 'text/plain');
+                Number(this.data);
+            }else if(Buffer.isBuffer(this.data) ){
+                if(!this.getHeader('content-type') ) this.setHeader('content-type', 'application/octet-stream');
+            }else  if(typeof this.data === "number" && !this.getHeader('content-type')){
                 this.data += '';
-            }else if(typeof this.data === "object"){
-                const serialize = this.containers.serializers.get(this._for);
-                serialize && serialize(this._for,this);//serialize data
+                this.setHeader('content-type', 'text/plain');
             }else{
-                throw Error("Unsupported data type to send : " + typeof this.data);
+                this.status(406);
+                this._setContentLength(0);
+                this._native.end("");
+                logger.log.error("Unsupported data type to send : " + typeof this.data);
+                return;
             }
 
             
@@ -145,19 +154,32 @@ HttpAnswer.prototype.end = function(){
 
                 //TODO: if there are different stratigies to set content length for different compression techniques
                 //then below code is invalid
-                if (!this.getHeader('content-length')) {
-                    this.setHeader('content-length', this.data.length);
-                }
+                this._setContentLength(this.data.length);
             }else{
-                if (!this.getHeader('content-length')) {
-                    this.setHeader('content-length', Buffer.byteLength(this.data));
-                }
+                this._setContentLength(Buffer.byteLength(this.data));
             }
             this._native.end(this.data,this.encoding);
         }
     }
 }
 
+//TODO: test
+// Check section https://tools.ietf.org/html/rfc7230#section-3.3.2
+// we should not send content-length for status code < 200, 204.
+// or status code === 2xx and method === CONNECT
+HttpAnswer.prototype._setContentLength = function(len){
+    if (!this.getHeader('content-length') && !this.getHeader('transfer-encoding')){
+        const statusCode = this._native.statusCode;
+        if(statusCode < 200 || statusCode === 204 || 
+            (this._for.method === "CONNECT" && statusCode > 199 &&  statusCode < 300)) 
+        {
+            //don't send content length
+        }else{
+            this.setHeader('content-length', len);
+        }
+    } 
+
+}
 const isStream = function(data){
     return data && data.pipe && typeof data.pipe === "function"
 }

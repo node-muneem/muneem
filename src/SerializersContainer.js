@@ -9,7 +9,7 @@ class SerializersContainer extends HandlersContainer{
     get(asked){
         const acceptHeader = asked.headers["accept"];
     
-        if(!acceptHeader) return this.collection["*/*"];
+        if(!acceptHeader) return;
         let s = this.collection[acceptHeader];
         
         if(!s && acceptHeader.indexOf(",") !== -1){//multiple accept type

@@ -23,7 +23,7 @@ Muneem.setLogger = function(logger){
 }
 
 Muneem.prototype.registerDefaultSerializers = function(){
-    this.addObjectSerializer("*/*" , require("./defaultHandlers/defaultSerializer"));
+    //this.addObjectSerializer("*/*" , require("./defaultHandlers/defaultSerializer"));
     this.addObjectSerializer("application/json" , require("./defaultHandlers/defaultSerializer"));
 }
 
