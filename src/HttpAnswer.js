@@ -116,8 +116,6 @@ HttpAnswer.prototype.end = function(){
         type && this.type(type);
         length && this.length(length);
         
-        //TODO:
-        //const shouldCompress = this._for.context.route.compress && compressConfig.filter(this._for,this);
         const compressionConfig = this._for.context.route.compress;
         if(isStream(this.data)){
             if(compressionConfig && compressionConfig.filter(this._for,this)){
@@ -148,13 +146,12 @@ HttpAnswer.prototype.end = function(){
             }
 
             
-            if(compressionConfig && compressionConfig.filter(this._for,this)){
+            if(compressionConfig && compressionConfig.threshold <= this.data.length && compressionConfig.filter(this._for,this)){
                 const compress =  this.containers.compressors.get(this._for,compressionConfig.preference);
                 compress && compress(this._for, this);
 
-                //TODO: if there are different stratigies to set content length for different compression techniques
-                //then below code is invalid
-                this._setContentLength(this.data.length);
+                //TODO: check if transfer-encoding is set in case of compression
+                //this._setContentLength(this.data.length);
             }else{
                 this._setContentLength(Buffer.byteLength(this.data));
             }

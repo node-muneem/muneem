@@ -198,13 +198,14 @@ describe ('HttpAnswer', () => {
         const answer = new HttpAnswer(response,request);
 
         //create a file for test
-        let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
+        /* let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
         fileWritableStream.write("This file is ready for download");
-        fileWritableStream.end();
+        fileWritableStream.end(); */
+        fs.writeFileSync(path.resolve(__dirname, "fileToDownload"), "This file is ready for download");
 
         //create a stream
-        const filePath = path.resolve(__dirname, "fileToDownload");
-        let fileReadableStream = fs.createReadStream(filePath);
+        /* const filePath = path.resolve(__dirname, "fileToDownload"); */
+        const fileReadableStream = fs.createReadStream(path.resolve(__dirname, "fileToDownload"));
        
         //when
         answer.write(fileReadableStream,"plain/text");

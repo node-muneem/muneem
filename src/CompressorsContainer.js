@@ -24,7 +24,7 @@ class CompressorsContainer extends HandlersContainer{
 
     /**
      * Check ig given preference is registered before registering the route
-     * @param {string | Array} compressionPreference 
+     * @param {Array} compressionPreference 
      */
     checkIfAllRegistered(compressionPreference){
         for(let i=0; i< compressionPreference.length;i++){
@@ -32,6 +32,7 @@ class CompressorsContainer extends HandlersContainer{
                 return false;
             }
         }
+        return true;
     }
 
     

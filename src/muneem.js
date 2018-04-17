@@ -63,7 +63,6 @@ const defaultCompressionOptions = {
     filter : function(asked,answer){
         if(asked.headers['x-no-compression'] 
             || asked.headers['cache-control'] === 'no-transform'
-            || (this.threshold > 0 && this.threshold <= answer.data.length)
         ){
             return false;
         }else{
@@ -89,6 +88,10 @@ function Muneem(options){
         this.appContext.compress = defaultCompressionOptions;
         this.appContext.compress.shouldCompress = false; 
     }
+    if(typeof this.appContext.compress.preference === "string"){
+        this.appContext.compress.preference = [ this.appContext.compress.preference ];
+    }
+
     this.eventEmitter = new events.EventEmitter();
     this.containers = {
         handlers : new Container(),
@@ -125,7 +128,7 @@ Muneem.prototype.addCompressor = function(technique, compressor ){
 }
 
 Muneem.prototype.addStreamCompressor = function(technique, compressor ){
-    Muneem.logger.log.info("Adding a compressor to handle " + technique);
+    Muneem.logger.log.info("Adding a stream compressor to handle " + technique);
     this.containers.streamCompressors.add(technique, compressor);
 }
 

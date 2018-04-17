@@ -153,7 +153,9 @@ RoutesManager.prototype.updateCompressOptions = function (context){
         //let it be false
     }else{
         context.route.compress =  Object.assign({},context.app.compress,context.route.compress);
-
+        if(typeof context.route.compress.preference === "string"){
+            context.route.compress.preference = [ context.route.compress.preference ];
+        }
         checkIfRegistered(this.containers,context.route.compress.preference);
     }
 }
