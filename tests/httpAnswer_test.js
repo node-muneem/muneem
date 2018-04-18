@@ -65,8 +65,23 @@ describe ('HttpAnswer', () => {
         answer.setHeader("name", "muneem")
         expect(answer.getHeader("Name")).toEqual("muneem");
 
+        answer.setHeader("name", "accountant")
+        expect(answer.getHeader("name")).toEqual("accountant");
+
         answer.removeHeader("name")
         expect(answer.getHeader("name")).toEqual(undefined);
+    });
+
+    it('should set,get, cookie headers', () => {
+        const answer = new HttpAnswer();
+
+        expect(answer.getHeader("set-cookie")).toEqual(undefined);
+
+        answer.setHeader("Set-Cookie", "choco-flavoured")
+        expect(answer.getHeader("set-cookie")).toEqual("choco-flavoured");
+        
+        answer.setHeader("set-cookie", "vanilla-flavoured")
+        expect(answer.getHeader("set-cookie")).toEqual(["choco-flavoured","vanilla-flavoured"]);
     });
 
     it('should set string data with content type and length', () => {

@@ -26,14 +26,21 @@ HttpAnswer.prototype.getHeader = function(name){
     return this._headers[name.toLowerCase()];
 }
 
-//TODO: test
+/* HttpAnswer.prototype.setCookie = function(val){
+    if (this._headers['set-cookie']) {
+        this._headers['set-cookie'] = [this._headers['set-cookie']].concat(val);
+      } else {
+        this._headers['set-cookie'] = val
+      }
+} */
+
 HttpAnswer.prototype.setHeader = function(name,val){
     name = name.toLowerCase();
     if (this._headers[name] && name === 'set-cookie') {
         this._headers[name] = [this._headers[name]].concat(val);
-      } else {
+    } else {
         this._headers[name] = val
-      }
+    }
 }
 
 HttpAnswer.prototype.removeHeader = function(name){
@@ -99,9 +106,6 @@ HttpAnswer.prototype.close = function(reason){
     //logger.log.debug("response stream has been closed");
     logger.log.debug(`Request Id:${this._for.id},response stream has been closed`);
 }
-
-HttpAnswer.prototype.applyTransferEncodingOnStream = a => a;
-HttpAnswer.prototype.applyTransferEncoding = a => a;
 
 HttpAnswer.prototype.end = function(){
     if(this.answered()){

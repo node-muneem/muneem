@@ -29,7 +29,10 @@ describe ('RoutesManager', () => {
 
     it('should skip if invalid yaml file is given', () => {
         const options = {
-            mappings :  path.join(__dirname , "app/mappings/invalid/invalid.yaml")
+            mappings :  path.join(__dirname , "app/mappings/invalid/invalid.yaml"),
+            compress : {
+                shouldCompress : false
+            }
         };
         const routesManager =new RoutesManager(options,containers);
         
@@ -40,7 +43,10 @@ describe ('RoutesManager', () => {
 
     it('should error when not exist file is given', () => {
         const options = {
-            mappings : path.join(__dirname , "app/mappings/notfound.yaml")
+            mappings : path.join(__dirname , "app/mappings/notfound.yaml"),
+            compress : {
+                shouldCompress : false
+            }
         };
         const routesManager =new RoutesManager(options,containers);
 
@@ -53,7 +59,10 @@ describe ('RoutesManager', () => {
     it('should skip non-yaml file and mappings for different environment', () => {
         const options = {
             mappings : path.join(__dirname , "app/mappings/"),
-            alwaysReadRequestPayload: true
+            alwaysReadRequestPayload: true,
+            compress : {
+                shouldCompress : false
+            }
         };
         const routesManager =new RoutesManager(options,containers);
         routesManager.addRoutesFromMappingsFile(options.mappings);
@@ -68,7 +77,10 @@ describe ('RoutesManager', () => {
     it('should let user add route through code', () => {
         const options = {
             mappings : path.join(__dirname , "app/mappings/"),
-            alwaysReadRequestPayload: true
+            alwaysReadRequestPayload: true,
+            compress : {
+                shouldCompress : false
+            }
         };
         const routesManager =new RoutesManager(options,containers);
 
@@ -107,7 +119,10 @@ describe ('RoutesManager', () => {
 
     it('should error when then handler is not registered', () => {
         const options = {
-            mappings : path.join(__dirname , "app/mappings/invalid/unknownHandler.yaml")
+            mappings : path.join(__dirname , "app/mappings/invalid/unknownHandler.yaml"),
+            compress : {
+                shouldCompress : false
+            }
         };
         const routesManager =new RoutesManager(options,containers);
         
@@ -118,7 +133,11 @@ describe ('RoutesManager', () => {
     });
 
     it('should error when after handler is not registered', () => {
-        const routesManager =new RoutesManager(null,containers);
+        const routesManager =new RoutesManager({
+            compress : {
+                shouldCompress : false
+            }
+        },containers);
         expect(() => {
             routesManager.addRoute({
                 after: "unknown"

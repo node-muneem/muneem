@@ -354,5 +354,138 @@ describe ('Muneem', () => {
            
         });
 
+        it('should not compress particular route if set', (done) => {
+
+            const muneem = Muneem({
+                compress : {
+                    threshold : 10
+                }
+            });
+            
+            muneem.addHandler("compressable", (asked,answer) => {
+                answer.write("this data should be compressed.");
+            } ) ;
+
+            muneem.addHandler("non-compressable", (asked,answer) => {
+                answer.write("this data should not be compressed.");
+            } ) ;
+
+            const routesManager = muneem.routesManager;
+            
+            muneem.route({
+                uri: "/test",
+                to: "compressable"
+            });
+
+            muneem.route({
+                uri: "/test2",
+                to: "non-compressable",
+                compress : false
+            });
+
+            var request1  = new MockReq({
+                url: '/test',
+                headers : {
+                    "accept-encoding" : "gzip"
+                }
+            });
+
+            var response1 = new MockRes();
+
+            response1.on('finish', function() {
+                expect(zlib.gunzipSync( Buffer.concat(response1._responseData) ).toString() ).toEqual("this data should be compressed.");
+                expect(response1.statusCode ).toEqual(200);
+                done();
+            });
+
+            routesManager.router.lookup(request1,response1);
+
+
+            var request2  = new MockReq({
+                url: '/test2',
+                headers : {
+                    "accept-encoding" : "gzip"
+                }
+            });
+
+            var response2 = new MockRes();
+
+            response2.on('finish', function() {
+                expect(response2._getString() ).toEqual("this data should not be compressed.");
+                expect(response2.statusCode ).toEqual(200);
+                done();
+            });
+
+            routesManager.router.lookup(request2,response2);
+           
+        });
+
+        it('should compress particular route if set', (done) => {
+
+            const muneem = Muneem({
+                compress : false
+            });
+            
+            muneem.addHandler("compressable", (asked,answer) => {
+                answer.write("this data should be compressed.");
+            } ) ;
+
+            muneem.addHandler("non-compressable", (asked,answer) => {
+                answer.write("this data should not be compressed.");
+            } ) ;
+
+            const routesManager = muneem.routesManager;
+            
+            muneem.route({
+                uri: "/test",
+                to: "non-compressable"
+            });
+
+            muneem.route({
+                uri: "/test2",
+                to: "compressable",
+                compress : {
+                    threshold : 10,
+                    preference : "gzip"
+                }
+            });
+
+            var request1  = new MockReq({
+                url: '/test',
+                headers : {
+                    "accept-encoding" : "gzip"
+                }
+            });
+
+            var response1 = new MockRes();
+
+            response1.on('finish', function() {
+                expect(response1._getString() ).toEqual("this data should not be compressed.");
+                expect(response1.statusCode ).toEqual(200);
+                //done();
+            });
+
+            routesManager.router.lookup(request1,response1);
+
+
+            var request2  = new MockReq({
+                url: '/test2',
+                headers : {
+                    "accept-encoding" : "deflate, gzip"
+                }
+            });
+
+            var response2 = new MockRes();
+
+            response2.on('finish', function() {
+                expect(zlib.gunzipSync( Buffer.concat(response2._responseData) ).toString() ).toEqual("this data should be compressed.");
+                expect(response2.statusCode ).toEqual(200);
+                done();
+            });
+
+            routesManager.router.lookup(request2,response2);
+           
+        });
+
     });
 });

@@ -140,7 +140,7 @@ RoutesManager.prototype.addRoute = function(route){
 }
 
 RoutesManager.prototype.updateCompressOptions = function (context){
-    if(context.route.compress === 'undefined'){
+    if(context.route.compress === undefined){
         if(context.app.compress.shouldCompress){
             context.route.compress = context.app.compress;
         }else{
