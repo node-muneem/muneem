@@ -95,7 +95,8 @@ HttpAnswer.prototype.replace = function(data,type,length){
 HttpAnswer.prototype.close = function(reason){
     this.answeredReason = reason;
     this._native.writeHead(this._statusCode, this._headers);
-    this._native.end();
+    this._native.end("",this.encoding);
+    logger.log.debug("response stream has been closed");
 }
 
 HttpAnswer.prototype.applyTransferEncodingOnStream = a => a;
@@ -130,6 +131,7 @@ HttpAnswer.prototype.end = function(){
             this._native.writeHead(this._statusCode, this._headers);
             //this.data.pipe(this._native);
             pump(this.data,this._native);
+            logger.log.debug("response has been piped");
         }else{
             //TODO: performance improvement scope
             const serialize = this.containers.serializers.get(this._for);
@@ -163,7 +165,7 @@ HttpAnswer.prototype.end = function(){
             }
             this._native.writeHead(this._statusCode, this._headers);
             this._native.end(this.data,this.encoding);
-
+            logger.log.debug("response has been sent");
             //TODO: Even afterSend
         }
     }
