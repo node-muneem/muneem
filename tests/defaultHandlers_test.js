@@ -1,8 +1,8 @@
 //TODO: override default handlers
 const RoutesManager = require("../src/routesManager");
 const path = require("path");
-const httpMocks = require('node-mocks-http');
-const eventEmitter = require('events').EventEmitter;
+const MockReq = require('mock-req');
+const MockRes = require('mock-res');
 const Muneem = require("../src/muneem")
 
 describe ('Routes Manager', () => {
@@ -22,23 +22,18 @@ describe ('Routes Manager', () => {
             to: "main"
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
             url: '/test'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
+        response.on('finish', function() {
             expect(response.statusCode ).toEqual(500);
             //expect(response.statusMessage ).toEqual("There is something wrong. Please check the request URL and method again. So I can respond properly.");
-            expect(response._isEndCalled()).toBe(true);
             done();
         });
         routesManager.router.lookup(request,response);
-
-        request.send("data sent in request");
 
     });
 
@@ -62,23 +57,18 @@ describe ('Routes Manager', () => {
             to: "main"
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
             url: '/test'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
+        response.on('finish', function() {
             expect(response.statusCode ).toEqual(404);
             //expect(response.statusMessage ).toEqual("Bad time");
-            expect(response._isEndCalled()).toBe(true);
             done();
         });
         routesManager.router.lookup(request,response);
-
-        request.send("data sent in request");
 
     });
  
@@ -99,26 +89,23 @@ describe ('Routes Manager', () => {
             maxLength: 30
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
             url: '/test',
             method: "POST"
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
-            //expect(response._getData()).toEqual("");
+        response.on('finish', function() {
+            //expect(response._getString()).toEqual("");
             expect(response.statusCode ).toEqual(413);
             //expect(response.statusMessage ).toEqual("request entity too large");
-            expect(response._isEndCalled()).toBe(true);
             done();
         });
         routesManager.router.lookup(request,response);
 
-        request.send("Let's send some big request that the server denies.");
-
+        request.write("Let's send some big request that the server denies.");
+        request.end();
     });
 
     it('should call __exceedContentLengthHandler when wrong content length is given but bigger than expected', (done) => {
@@ -138,7 +125,7 @@ describe ('Routes Manager', () => {
             maxLength: 30
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
             url: '/test',
             method: "POST",
             headers : {
@@ -146,21 +133,18 @@ describe ('Routes Manager', () => {
             }
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
-            expect(response._getData()).toEqual("");
+        response.on('finish', function() {
+            expect(response._getString()).toEqual("");
             expect(response.statusCode ).toEqual(413);
             //expect(response.statusMessage ).toEqual("request entity too large");
-            expect(response._isEndCalled()).toBe(true);
             done();
         });
         routesManager.router.lookup(request,response);
 
-        request.send("Let's send some big request that the server denies.");
-
+        request.write("Let's send some big request that the server denies.");
+        request.end();
     });
 
     it('should call __exceedContentLengthHandler when content length is given and bigger than expected', (done) => {
@@ -180,7 +164,7 @@ describe ('Routes Manager', () => {
             maxLength: 30
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
             url: '/test',
             method: "POST",
             headers : {
@@ -188,21 +172,18 @@ describe ('Routes Manager', () => {
             }
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
-            expect(response._getData()).toEqual("");
+        response.on('finish', function() {
+            expect(response._getString()).toEqual("");
             expect(response.statusCode ).toEqual(413);
             //expect(response.statusMessage ).toEqual("request entity too large");
-            expect(response._isEndCalled()).toBe(true);
             done();
         });
         routesManager.router.lookup(request,response);
 
-        request.send("Let's send small");
-
+        request.write("Let's send small");
+        request.end();
     }); 
 
 });

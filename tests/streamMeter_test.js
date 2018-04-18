@@ -1,23 +1,21 @@
-const httpMocks = require('node-mocks-http');
-const eventEmitter = require('events').EventEmitter;
+const MockRes = require('mock-res');
+const MockReq = require('mock-req');
 const StreamMeter = require("../src/streamMeter")
 
 describe ('Stream Meter', () => {
 
     it('should allow request with small body', (done) => {
         
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
+            method: "POST",
             url: '/test'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
-            expect(response._getData() ).toEqual("data sent in request");
+        response.on('finish', function() {
+            expect(response._getString() ).toEqual("data sent in request");
             expect(response.statusCode ).toEqual(200);
-            expect(response._isEndCalled()).toBe(true);
             done();
         });
 
@@ -36,20 +34,19 @@ describe ('Stream Meter', () => {
         stream.on('end', (err)=>{
         });
 
-        request.send("data sent in request");
-
+        request.write("data sent in request");
+        request.end();
     });
     
 
     it('should not allow request with big body', (done) => {
         
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
+            method: "POST",
             url: '/test'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
         var stream = new StreamMeter({
             maxLength : 5,
@@ -71,7 +68,7 @@ describe ('Stream Meter', () => {
         });
 
         //expect( () => {
-            request.send("data sent in request");
+            request.write("data sent in request");
         //}).toThrowError("Unhandled error. (exceeded maxlength)");
 
     });

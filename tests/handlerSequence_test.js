@@ -4,8 +4,8 @@ const RoutesManager = require("../src/routesManager");
 const HandlersMap = require("../src/HandlersContainer");
 //const Handler = require("../src/Handler");
 const path = require("path");
-const httpMocks = require('node-mocks-http');
-const eventEmitter = require('events').EventEmitter;
+const MockReq = require('mock-req');
+const MockRes = require('mock-res');
 const Muneem = require("../src/muneem")
 
 describe ('Routes Manager', () => {
@@ -24,11 +24,9 @@ describe ('Routes Manager', () => {
                 blocks.push("parallel");
                 expect(blocks).toEqual([ 'auth', 'main', 'post', 'last', 'parallel' ]);
                 done();
-            })
+            });
         }) ;
         muneem.addHandler("main", async (asked,answer) => {
-            await asked.readBody();
-            answer.write(asked.body);
             blocks.push("main")
         } ) ;
         muneem.addHandler("post", () => {blocks.push("post")} );
@@ -37,29 +35,25 @@ describe ('Routes Manager', () => {
         const routesManager = muneem.routesManager;
         
         routesManager.addRoute({
+            when : "POST",
             uri: "/test",
             to: "main",
             after: ["auth", "parallel"],
             then: ["post", "last"]
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
+            method: "POST",
             url: '/test'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
-            expect(response._getData() ).toEqual("data sent in request");
+        response.on('finish', function() {
             expect(response.statusCode ).toEqual(200);
-            expect(response._isEndCalled()).toBe(true);
             expect(blocks).toEqual([ 'auth',  'main', 'post', 'last']);
         });
         routesManager.router.lookup(request,response);
-
-        request.send("data sent in request");
 
     });
 
@@ -96,31 +90,30 @@ describe ('Routes Manager', () => {
         const routesManager = muneem.routesManager;
         
         routesManager.addRoute({
+            when : "POST",
             uri: "/test",
             to: "main",
             after: ["auth", "stream"],
             then: ["post", "last"]
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
+            method : "POST",
             url: '/test'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
+        response.on('finish', function() {
             expect(blocks).toEqual([ 'auth', 'stream', 'main', 'post', 'last']);
-            expect(response._getData() ).toEqual("data sent in request");
+            expect(response._getString() ).toEqual("data sent in request");
             expect(response.statusCode ).toEqual(200);
-            expect(response._isEndCalled()).toBe(true);
             done();
         });
         routesManager.router.lookup(request,response);
 
-        request.send("data sent in request");
-
+        request.write("data sent in request");
+        request.end();
     });
 
     it('should call pre/post handlers but not on main handler', (done) => {
@@ -174,16 +167,14 @@ describe ('Routes Manager', () => {
             then: ["post", "last"]
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
             method: "POST",
             url: '/test'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
+        response.on('finish', function() {
             expect(blocks).toEqual([ 
                 "Pre: before auth", 'auth' ,"Pre: after auth",
                 'Pre: before parallel', 'Pre: after parallel',
@@ -191,13 +182,13 @@ describe ('Routes Manager', () => {
                 'Post: before post' , 'post', 'Post: after post',
                 'Post: before last', 'last', 'Post: after last'
             ]);
-            expect(response._getData() ).toEqual("data sent in request");
+            expect(response._getString() ).toEqual("data sent in request");
             expect(response.statusCode ).toEqual(200);
-            expect(response._isEndCalled()).toBe(true);
         });
         routesManager.router.lookup(request,response);
 
-        request.send("data sent in request");
+        request.write("data sent in request");
+        request.end();
 
     });
 
@@ -231,19 +222,16 @@ describe ('Routes Manager', () => {
             then: ["post", "last"]
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
             method: "POST",
             url: '/test'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
-            expect(response._getData() ).toEqual("data sent in request");
+        response.on('finish', function() {
+            expect(response._getString() ).toEqual("data sent in request");
             expect(response.statusCode ).toEqual(200);
-            expect(response._isEndCalled()).toBe(true);
             expect(blocks).toEqual([ 
                 "before auth", 'auth' ,"after auth",
                 'before main' ,'main', 'after main' ,
@@ -254,7 +242,8 @@ describe ('Routes Manager', () => {
         });
         routesManager.router.lookup(request,response);
 
-        request.send("data sent in request");
+        request.write("data sent in request");
+        request.end();
 
     });
 
@@ -302,27 +291,27 @@ describe ('Routes Manager', () => {
             then: ["post", "last"]
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
             method: "POST",
             url: '/test'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
-            expect(response._getData() ).toEqual("data sent in request");
+        response.on('finish', function() {
+            expect(response._getString() ).toEqual("data sent in request");
             expect(response.statusCode ).toEqual(200);
-            expect(response._isEndCalled()).toBe(true);
             expect(blocks).toEqual([ 
                 'auth' ,
-               "Main: before main"
+               "Main: before main", 'main', 'Main: after main',
+               'post',
+               'last',
            ]);
         });
         routesManager.router.lookup(request,response);
 
-        request.send("data sent in request");
+        request.write("data sent in request");
+        request.end();
 
     });
 
@@ -370,27 +359,25 @@ describe ('Routes Manager', () => {
             then: ["post", "last"]
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
             method: "POST",
             url: '/test'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
-            expect(response._getData() ).toEqual("data sent in request");
+        response.on('finish', function() {
+            expect(response._getString() ).toEqual("data sent in request");
             expect(response.statusCode ).toEqual(200);
-            expect(response._isEndCalled()).toBe(true);
             expect(blocks).toEqual([ 
                 'auth' ,
-               "Main: before main"
+               "Main: before main", 'main', 'Main: after main'
            ]);
         });
         routesManager.router.lookup(request,response);
 
-        request.send("data sent in request");
+        request.write("data sent in request");
+        request.end();
 
     });
 
@@ -419,27 +406,24 @@ describe ('Routes Manager', () => {
             then: "parser"
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
             url: '/test/val'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
-            expect(response._getData()).toEqual('hello world');
+        response.on('finish', function() {
+            expect(response._getString()).toEqual('hello world');
             expect(response._headers).toEqual({
                 "content-type": 'plain/text',
                 "content-length": 11
             });
             expect(response.statusCode ).toEqual(200);
-            expect(response._isEndCalled()).toBe(true);
             done();
         });
         routesManager.router.lookup(request,response);
 
-        request.send("data sent in request");
+        request._read("data sent in request");
 
     });
 });

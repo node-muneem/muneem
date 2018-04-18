@@ -1,8 +1,6 @@
-
-
 const RoutesManager = require("../src/routesManager");
-const httpMocks = require('node-mocks-http');
-const eventEmitter = require('events').EventEmitter;
+const MockReq = require('mock-req');
+const MockRes = require('mock-res');
 const Muneem = require("../src/muneem")
 const ApplicationSetupError = require("../src/ApplicationSetupError")
 
@@ -13,7 +11,6 @@ describe ('Routes Manager', () => {
         const muneem = Muneem();
         muneem.addHandler("main", (asked,answer) => {
             throw Error("युं ही।");
-            answer.write(asked.query);
         } ) ;
 
         const routesManager = muneem.routesManager;
@@ -23,22 +20,17 @@ describe ('Routes Manager', () => {
             to: "main"
         });
 
-        var request  = httpMocks.createRequest({
+        var request  = new MockReq({
             url: '/test'
         });
 
-        var response = httpMocks.createResponse({
-            eventEmitter: require('events').EventEmitter
-        });
+        var response = new MockRes();
 
-        response.on('end', function() {
+        response.on('finish', function() {
             expect(response.statusCode ).toEqual(500);
-            expect(response._isEndCalled()).toBe(true);
             done();
         });
         routesManager.router.lookup(request,response);
-
-        request.send("data sent in request");
 
     });
     

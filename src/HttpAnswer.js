@@ -96,7 +96,8 @@ HttpAnswer.prototype.close = function(reason){
     this.answeredReason = reason;
     this._native.writeHead(this._statusCode, this._headers);
     this._native.end("",this.encoding);
-    logger.log.debug("response stream has been closed");
+    //logger.log.debug("response stream has been closed");
+    logger.log.debug(`Request Id:${this._for.id},response stream has been closed`);
 }
 
 HttpAnswer.prototype.applyTransferEncodingOnStream = a => a;
@@ -131,7 +132,7 @@ HttpAnswer.prototype.end = function(){
             this._native.writeHead(this._statusCode, this._headers);
             //this.data.pipe(this._native);
             pump(this.data,this._native);
-            logger.log.debug("response has been piped");
+            logger.log.debug(`Request Id:${this._for.id} has been answered as stream`);
         }else{
             //TODO: performance improvement scope
             const serialize = this.containers.serializers.get(this._for);
@@ -149,23 +150,27 @@ HttpAnswer.prototype.end = function(){
                 this._setContentLength(0);
                 this._native.writeHead(406, this._headers);
                 this._native.end("");
-                logger.log.error("Unsupported data type to send : " + typeof this.data);
+                //logger.log.error("Unsupported data type to send : " + typeof this.data);
+                logger.log.debug(`Request Id:${this._for.id}; Unsupported data type to send :  ${typeof this.data}`);
                 return;
             }
 
-            
             if(compressionConfig && compressionConfig.threshold <= this.data.length && compressionConfig.filter(this._for,this)){
                 const compress =  this.containers.compressors.get(this._for,compressionConfig.preference);
-                compress && compress(this._for, this);
-
-                //TODO: check if transfer-encoding is set in case of compression
-                //this._setContentLength(this.data.length);
+                if(compress){
+                    compress(this._for, this);
+                    //Transfer-Encoding →chunked
+                    //content-encoding →gzip
+                    //this._setContentLength(this.data.length);//Don't send content length
+                    logger.log.debug(`Request Id:${this._for.id}; answer has been compressed`);
+                }
+                
             }else{
                 this._setContentLength(Buffer.byteLength(this.data));
             }
             this._native.writeHead(this._statusCode, this._headers);
             this._native.end(this.data,this.encoding);
-            logger.log.debug("response has been sent");
+            logger.log.debug(`Request Id:${this._for.id} has been answered`);
             //TODO: Even afterSend
         }
     }

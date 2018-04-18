@@ -1,9 +1,7 @@
-const httpMocks = require('node-mocks-http');
 const MockRes = require('mock-res');
 const MockReq = require('mock-req');
 const fs = require('fs');
 const path = require('path');
-const eventEmitter = require('events').EventEmitter;
 const Muneem = require("../src/muneem")
 const HttpAnswer = require("../src/HttpAnswer")
 const ApplicationSetupError = require("../src/ApplicationSetupError")
@@ -394,7 +392,7 @@ describe ('HttpAnswer', () => {
 
     it('should error when invalid data is to add', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const answer = new HttpAnswer(response,buildMockedRequest());
 
         //when
         answer.write("I'm fine.");
