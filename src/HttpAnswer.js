@@ -2,11 +2,11 @@ const logger = require("./fakeLogger");
 var pump = require('pump')
 
 HttpAnswer.prototype.type = function(c_type){
-    this.setHeader("content-type", c_type);
+    this._headers["content-type"] = c_type;
 }
 
 HttpAnswer.prototype.length = function(len){
-    this.setHeader("content-length", len);
+    this._headers["content-length"] = len;
 }
 
 HttpAnswer.prototype.answered = function(){
@@ -17,23 +17,27 @@ HttpAnswer.prototype.skipRest = function(){
     this.leave = true;
 }
 
-HttpAnswer.prototype.status = function(code , msg){
-    this._native.statusCode = code;
-    msg && (this._native.statusMessage = msg);
+HttpAnswer.prototype.status = function(code){
+    this._statusCode = code;
+    //msg && (this._native.statusMessage = msg);
 }
 
 HttpAnswer.prototype.getHeader = function(name){
-    return this._native.getHeader(name.toLowerCase());
+    return this._headers[name.toLowerCase()];
 }
 
-//TODO: lower case the header name before set
-//TODO: if name is set-cookie add is array when already exists
+//TODO: test
 HttpAnswer.prototype.setHeader = function(name,val){
-    return this._native.setHeader(name.toLowerCase(),val);
+    name = name.toLowerCase();
+    if (this._headers[name] && name === 'set-cookie') {
+        this._headers[name] = [this._headers[name]].concat(val);
+      } else {
+        this._headers[name] = val
+      }
 }
 
 HttpAnswer.prototype.removeHeader = function(name){
-    return this._native.removeHeader(name);
+    delete this._headers[name];
 }
 
 /**
@@ -90,6 +94,7 @@ HttpAnswer.prototype.replace = function(data,type,length){
  */
 HttpAnswer.prototype.close = function(reason){
     this.answeredReason = reason;
+    this._native.writeHead(this._statusCode, this._headers);
     this._native.end();
 }
 
@@ -122,6 +127,7 @@ HttpAnswer.prototype.end = function(){
                     const compress =  this.containers.streamCompressors.get(this._for,compressionConfig.preference);
                     compress && compress(this._for, this);
             }
+            this._native.writeHead(this._statusCode, this._headers);
             //this.data.pipe(this._native);
             pump(this.data,this._native);
         }else{
@@ -130,16 +136,16 @@ HttpAnswer.prototype.end = function(){
             if(serialize){
                 serialize(this._for,this);
             }else if(typeof this.data === "string"){
-                if(!this.getHeader('content-type') ) this.setHeader('content-type', 'text/plain');
+                if( !this._headers['content-type'] ) this.type('text/plain');
                 Number(this.data);
             }else if(Buffer.isBuffer(this.data) ){
-                if(!this.getHeader('content-type') ) this.setHeader('content-type', 'application/octet-stream');
-            }else  if(typeof this.data === "number" && !this.getHeader('content-type')){
+                if( !this._headers['content-type'] ) this.type('application/octet-stream');
+            }else  if(typeof this.data === "number" && !this._headers['content-type'] ){
                 this.data += '';
-                this.setHeader('content-type', 'text/plain');
+                this.type('text/plain');
             }else{
-                this.status(406);
                 this._setContentLength(0);
+                this._native.writeHead(406, this._headers);
                 this._native.end("");
                 logger.log.error("Unsupported data type to send : " + typeof this.data);
                 return;
@@ -155,7 +161,10 @@ HttpAnswer.prototype.end = function(){
             }else{
                 this._setContentLength(Buffer.byteLength(this.data));
             }
+            this._native.writeHead(this._statusCode, this._headers);
             this._native.end(this.data,this.encoding);
+
+            //TODO: Even afterSend
         }
     }
 }
@@ -165,14 +174,13 @@ HttpAnswer.prototype.end = function(){
 // we should not send content-length for status code < 200, 204.
 // or status code === 2xx and method === CONNECT
 HttpAnswer.prototype._setContentLength = function(len){
-    if (!this.getHeader('content-length') && !this.getHeader('transfer-encoding')){
-        const statusCode = this._native.statusCode;
-        if(statusCode < 200 || statusCode === 204 || 
-            (this._for.method === "CONNECT" && statusCode > 199 &&  statusCode < 300)) 
+    if ( !this._headers['content-length'] && !this._headers['transfer-encoding'] ){
+        if(this._statusCode < 200 || this._statusCode === 204 || 
+            (this._for.method === "CONNECT" && this._statusCode > 199 &&  this._statusCode < 300)) 
         {
             //don't send content length
         }else{
-            this.setHeader('content-length', len);
+            this.length(len);
         }
     } 
 
@@ -182,8 +190,9 @@ const isStream = function(data){
 }
 
 HttpAnswer.prototype.redirectTo = function(loc){
-    this._native.writeHead(302, {  'location': loc  });
-    this._native.end();
+    this._headers['location'] = loc;
+    this._native.writeHead(302, this._headers);
+    this._native.end("");
 }
 
 function HttpAnswer(res,asked,containers){
@@ -191,7 +200,8 @@ function HttpAnswer(res,asked,containers){
     this._for = asked;
     this._native = res;
     this.encoding = "utf8";
-    this._native.statusCode = 200;
+    this._statusCode = 200;
+    this._headers = {};
 }
 
 module.exports = HttpAnswer;

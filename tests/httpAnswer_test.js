@@ -18,25 +18,23 @@ describe ('HttpAnswer', () => {
     }
 
     it('should set Content-Type', () => {
-        const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const answer = new HttpAnswer();
 
         //when
         answer.type("application/json");
 
         //then
-        expect(response.getHeader("content-type")).toEqual("application/json");
+        expect(answer.getHeader("content-type")).toEqual("application/json");
     });
 
     it('should set Content-Length', () => {
-        const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const answer = new HttpAnswer();
 
         //when
         answer.length(35);
 
         //then
-        expect(response.getHeader("content-length")).toEqual(35);
+        expect(answer.getHeader("content-length")).toEqual(35);
     });
 
     it('should return true when already answered', () => {
@@ -51,25 +49,23 @@ describe ('HttpAnswer', () => {
     });
 
     it('should set status code and message', () => {
-        const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const answer = new HttpAnswer();
 
         //when
         answer.status(200,"I'm fine");
 
         //then
-        expect(response.statusCode).toEqual(200);
-        expect(response.statusMessage).toEqual("I'm fine");
+        expect(answer._statusCode).toEqual(200);
+        //expect(response.statusMessage).toEqual("I'm fine");
     });
 
     it('should set,get,remove headers', () => {
-        const response = new MockRes();
-        const answer = new HttpAnswer(response);
+        const answer = new HttpAnswer();
 
         expect(answer.getHeader("name")).toEqual(undefined);
 
         answer.setHeader("name", "muneem")
-        expect(answer.getHeader("name")).toEqual("muneem");
+        expect(answer.getHeader("Name")).toEqual("muneem");
 
         answer.removeHeader("name")
         expect(answer.getHeader("name")).toEqual(undefined);
@@ -168,13 +164,10 @@ describe ('HttpAnswer', () => {
         const answer = new HttpAnswer(response,request);
 
         //create a file for test
-        let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
-        fileWritableStream.write("This file is ready for download");
-        fileWritableStream.end();
+        fs.writeFileSync(path.resolve(__dirname, "fileToDownload"), "This file is ready for download");
 
         //create a stream
-        const filePath = path.resolve(__dirname, "fileToDownload");
-        let fileReadableStream = fs.createReadStream(filePath);
+        let fileReadableStream = fs.createReadStream(path.resolve(__dirname, "fileToDownload"));
        
         //when
         answer.write(fileReadableStream,"plain/text",2);
