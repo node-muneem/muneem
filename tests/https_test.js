@@ -41,7 +41,7 @@ describe ('Muneem server', () => {
     beforeAll(() => {
         muneem.start({
             https : buildSecureServerConfig(),
-            port: 3003
+            port: 3005
         });
    });
 
@@ -50,7 +50,7 @@ describe ('Muneem server', () => {
      });
 
     it('should response back politely ;)', (done) => {
-        chai.request("https://localhost:3003")
+        chai.request("https://localhost:3005")
             .get('/test')
             .ca(fs.readFileSync(path.join(__dirname, "truststore/ca.crt") ) )
             .then(res => {

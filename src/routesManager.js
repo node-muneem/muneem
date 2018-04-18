@@ -133,7 +133,7 @@ RoutesManager.prototype.addRoute = function(route){
 
         }catch(e){
             answer.error = e;
-            //console.log(e)
+            //console.log(e);
             errorHandler(asked,answer);
         }
     })//router.on ends

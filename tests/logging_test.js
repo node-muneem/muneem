@@ -25,6 +25,7 @@ info : Adding a stream compressor to handle deflat
 info : Adding a methods justForTest to HttpAnswer
 debug : Request Id:undefined {"when":"GET","uri":"/test","to":"main","maxLength":1000000,"compress":{"threshold":1024,"shouldCompress":true}}
 debug : Request Id:undefined Executing handler main
+debug : response has been sent
 `;
         var logger = new mylogger();
         Muneem.setLogger(logger); 

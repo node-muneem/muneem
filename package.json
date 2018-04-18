@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jasmine tests/*test.js",
     "postinstall": "node tasks/postinstall.js",
-    "coverage": "nyc jasmine tests/*test.js; nyc report --reporter=lcov"
+    "coverage": "nyc jasmine tests/*test.js; nyc report --reporter=lcov",
+    "iCoverage": "istanbul cover -x 'tests/*test.js' --dir './coverage' jasmine --captureExceptions tests/*test.js"
   },
   "author": "Amit Gupta (https://github.com/amitguptagwl)",
   "license": "MIT",
@@ -29,19 +30,20 @@
     "chai-http": "^4.0.0",
     "fastify": "^1.1.1",
     "find-my-way": "^1.11.1",
+    "get-stream": "^3.0.0",
+    "h2url": "^0.1.2",
     "jasmine": "^3.1.0",
     "jasmine-core": "^3.1.0",
     "micro": "^9.1.4",
+    "mock-req": "^0.2.0",
+    "mock-res": "^0.5.0",
     "node-mocks-http": "^1.5.8",
     "nyc": "^11.6.0",
-    "pino": "^4.16.1",
-    "winston": "^3.0.0-rc4"
+    "istanbul": "^0.4.5"
   },
   "dependencies": {
     "accept": "^3.0.2",
     "anumargak": "^1.2.0",
-    "mock-req": "^0.2.0",
-    "mock-res": "^0.5.0",
     "pump": "^3.0.0",
     "uniqid": "^4.1.1",
     "yamljs": "^0.3.0"
