@@ -10,7 +10,7 @@ class HandlersContainer {
     add(name,handler){
 
         if(this.collection[name]) {
-            logger.log.warn(name + " handler have replaced old mapping");
+            logger.log.warn(name + " have replaced old mapping");
         }
 
         if(typeof handler === "function"){

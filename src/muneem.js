@@ -4,6 +4,9 @@ const Server = require("./server");
 const HttpAnswer = require("./HttpAnswer");
 const Serializers = require("./SerializersContainer");
 const Compressors = require("./CompressorsContainer");
+const ApplicationSetupError = require("./ApplicationSetupError");
+const fs = require("fs");
+const path = require("path");
 
 var events = require('events');
 require("./globalErrorHandler");
@@ -23,8 +26,8 @@ Muneem.setLogger = function(logger){
 }
 
 Muneem.prototype.registerDefaultSerializers = function(){
-    //this.addObjectSerializer("*/*" , require("./defaultHandlers/defaultSerializer"));
-    this.addObjectSerializer("application/json" , require("./defaultHandlers/defaultSerializer"));
+    //this.addSerializer("*/*" , require("./defaultHandlers/defaultSerializer"));
+    this.addSerializer("application/json" , require("./defaultHandlers/defaultSerializer"));
 }
 
 Muneem.prototype.registerDefaultCompressors = function(){
@@ -92,12 +95,24 @@ function Muneem(options){
         this.appContext.compress.preference = [ this.appContext.compress.preference ];
     }
 
+    
+
     this.eventEmitter = new events.EventEmitter();
     this.containers = {
         handlers : new Container(),
         serializers : new Serializers(),
         compressors : new Compressors(),
         streamCompressors : new Compressors()
+    }
+
+    if(this.appContext.handlers){
+        if(Array.isArray(this.appContext.handlers)){
+            this.appContext.handlers.forEach(dir => {
+                this._addHandlers(dir);    
+            })
+        }else{
+            this._addHandlers(this.appContext.handlers);
+        }
     }
 
     this.registerDefaultHandlers();
@@ -117,7 +132,7 @@ Muneem.addToAnswer = function(methodName, fn ){
     HttpAnswer.prototype[methodName] = fn;
 }
 
-Muneem.prototype.addObjectSerializer = function(mimeType, serializer ){
+Muneem.prototype.addSerializer = function(mimeType, serializer ){
     Muneem.logger.log.info("Adding a serializer to handle " + mimeType);
     this.containers.serializers.add(mimeType, serializer);
 }
@@ -138,6 +153,60 @@ Muneem.prototype.addStreamCompressor = function(technique, compressor ){
 Muneem.prototype.addHandler = function(name,handler){
     this.containers.handlers.add(name,handler);
     return this;
+}
+
+/*
+/ - Handlers
+  - Serializers
+  - Compressors
+
+/ - mixed.js
+
+Handler should have name,
+serializers must have type,serialize/handle, 
+compressors must have type, compress/handler
+*/
+Muneem.prototype._addHandlers = function(dir) {
+    var aret = [];
+    fs.readdirSync(dir).forEach( library => {
+
+        const fullPath = path.join(dir, library);
+        if(fs.lstatSync(fullPath).isDirectory()){
+            this._addHandlers(fullPath);
+            return;
+        }
+        var isLibrary = library.split(".").length > 0 && library.split(".")[1] === 'js',
+        libName = library.split(".")[0].toLowerCase();
+        if (isLibrary) {
+            aret[libName] = require(fullPath);
+            //TODO: call an event; onHandlerLoad or something
+
+            if(typeof aret[libName] === 'object'){
+                if(aret[libName].handle){
+                    if(!aret[libName].name){
+                        throw new ApplicationSetupError("A handler should have property 'name'.");
+                    }
+                    this.addHandler(aret[libName].name, aret[libName].handle);
+
+                }else if(aret[libName].compress){
+                    if(!aret[libName].type){
+                        throw new ApplicationSetupError("A compressor should have property 'type'.");
+                    }
+                    this.addCompressor(aret[libName].type, aret[libName].compress);
+
+                }else if(aret[libName].serialize){
+                    if(!aret[libName].type){
+                        throw new ApplicationSetupError("A serializer should have property 'type'.");
+                    }
+                    this.addSerializer(aret[libName].type, aret[libName].serialize);
+                }
+            }else{
+                throw new ApplicationSetupError(`Invalid handler ${libName}`);
+            }
+            
+        }
+    });
+    return  aret;
 }
 
 Muneem.prototype.route = function(route){

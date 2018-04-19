@@ -102,7 +102,7 @@ describe ('Object Serializer', () => {
         muneem.addHandler("main", (asked,answer) => {
             answer.write( { "key" : "value"});
         } ) ;
-        muneem.addObjectSerializer("text/plain", (asked,answer) => {
+        muneem.addSerializer("text/plain", (asked,answer) => {
             answer.replace("serialized: " + JSON.stringify(answer.data));
         });
         const routesManager = muneem.routesManager;
