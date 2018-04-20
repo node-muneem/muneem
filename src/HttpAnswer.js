@@ -99,12 +99,14 @@ HttpAnswer.prototype.replace = function(data,type,length){
  * Close and send the response with reason. It'll be logged when you try to send response again.
  * @param {string} reason 
  */
-HttpAnswer.prototype.close = function(reason){
+HttpAnswer.prototype.close = function(reason,code){
+    code && (this._statusCode = code);
+
     this.answeredReason = reason;
     this._native.writeHead(this._statusCode, this._headers);
     this._native.end("",this.encoding);
     //logger.log.debug("response stream has been closed");
-    logger.log.debug(`Request Id:${this._for.id},response stream has been closed`);
+    logger.log.debug(`Request Id:${this._for.id}, response stream has been closed. Reason: ${reason}`);
 }
 
 HttpAnswer.prototype.end = function(){
