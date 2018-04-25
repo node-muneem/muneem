@@ -140,25 +140,33 @@ HttpAnswer.prototype.end = function(){
         if(isStream(this.data)){
             if(compressionConfig && compressionConfig.filter(this._for,this)){
                     const compress =  this.containers.streamCompressors.get(this._for,compressionConfig.preference);
-                    compress && compress(this._for, this);
+                    if(compress){
+                        this.eventEmitter.emit("beforeCompress",this._for,this);
+                        compress(this._for, this);
+                        this.eventEmitter.emit("afterCompress",this._for,this);  
+                    } 
             }
             this._native.writeHead(this._statusCode, this._headers);
-            //this.data.pipe(this._native);
+            this.eventEmitter.emit("beforeAnswer",this._for,this,true);
             pump(this.data,this._native);
+            this.eventEmitter.emit("afterAnswer",this._for,this,true);
             logger.log.debug(`Request Id:${this._for.id} has been answered as stream`);
         }else{
-            //TODO: performance improvement scope
             if(this.data instanceof Error){
                 logger.log.error(this.data);
                 this._statusCode = 500;
                 this.length(0);
             }else if(this.data){
+                this.eventEmitter.emit("beforeSerialize",this._for,this);
                 if(this._serialize() === false) return;
+                this.eventEmitter.emit("afterSerialize",this._for,this);
     
                 if(compressionConfig && this.data.length > 0 && this.data.length > compressionConfig.threshold && compressionConfig.filter(this._for,this)){
                     const compress =  this.containers.compressors.get(this._for,compressionConfig.preference);
                     if(compress){
+                        this.eventEmitter.emit("beforeCompress",this._for,this);
                         compress(this._for, this);
+                        this.eventEmitter.emit("afterCompress",this._for,this);
                         //When data is compressed, Transfer-Encoding →chunked, and content-encoding → compression type. So don't set content length
                         logger.log.debug(`Request Id:${this._for.id}; answer has been compressed`);
                     }
@@ -197,11 +205,11 @@ HttpAnswer.prototype._serialize = function(){
     return true;
 }
 HttpAnswer.prototype._send = function(data, statusCode){
-    //TODO: Event before Send
     this._native.writeHead(statusCode || this._statusCode, this._headers);
+    this.eventEmitter.emit("beforeAnswer",this._for,this,false);
     this._native.end(data || "",this.encoding);
+    this.eventEmitter.emit("afterAnswer",this._for,this,false);
     logger.log.debug(`Request Id:${this._for.id} has been answered`);
-    //TODO: Event after Send
 }
 
 //TODO: test

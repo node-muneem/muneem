@@ -29,7 +29,7 @@ describe ('Routes Manager', () => {
         var response = new MockRes();
 
         response.on('finish', function() {
-            expect(response.statusCode ).toEqual(500);
+            expect(response.statusCode ).toEqual(404);
             done();
         });
         routesManager.router.lookup(request,response);

@@ -12,9 +12,9 @@ describe ('Muneem', () => {
     });
 
     it('should log as per set logger', (done) => {
-        var expctedLogs = `info : Adding __defaultRoute Handler
-info : Adding __exceedContentLength handler
-info : Adding __error handler
+        var expctedLogs = `info : Adding event defaultRoute
+info : Adding event fatBody
+info : Adding event error
 info : Adding a serializer to handle application/json
 info : Adding a compressor to handle *
 info : Adding a stream compressor to handle *
@@ -63,8 +63,9 @@ debug : Request Id:undefined has been answered
 });
 
 class mylogger {
-    constructor(){
+    constructor(level){
         this.logs = "";
+        this.level = level || 3;
     }
 
     log(type, args){

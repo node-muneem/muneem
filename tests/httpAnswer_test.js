@@ -1,6 +1,7 @@
 const MockRes = require('mock-res');
 const MockReq = require('mock-req');
 const fs = require('fs');
+const eventEmitter = require('events').EventEmitter;
 const path = require('path');
 const Muneem = require("../src/muneem")
 const HttpAnswer = require("../src/HttpAnswer")
@@ -87,7 +88,7 @@ describe ('HttpAnswer', () => {
     it('should set string data with content type and length', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.write("I'm fine.", "plain/text", 9);
@@ -102,7 +103,7 @@ describe ('HttpAnswer', () => {
     it('should set number and content length', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.write(420);
@@ -117,7 +118,7 @@ describe ('HttpAnswer', () => {
     it('should set object and it\'s length', () => {
         const response = new MockRes();
         const request = buildMockedRequest("application/json");
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.write({ hello : 'world'});
@@ -132,7 +133,7 @@ describe ('HttpAnswer', () => {
     it('should set wrong length if given', () => {
         const response = new MockRes();
         const request = buildMockedRequest("application/json");
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.write({ hello : 'world'}, "application/json",10);
@@ -147,7 +148,7 @@ describe ('HttpAnswer', () => {
     it('should set stream without content length', (done) => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //create a file for test
         let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
@@ -174,7 +175,7 @@ describe ('HttpAnswer', () => {
     it('should set stream with content length when given', (done) => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,null,new eventEmitter());
 
         //create a file for test
         fs.writeFileSync(path.resolve(__dirname, "fileToDownload"), "This file is ready for download");
@@ -201,7 +202,7 @@ describe ('HttpAnswer', () => {
     it('should pipe multiple streams', (done) => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request);
+        const answer = new HttpAnswer(response,request,null,new eventEmitter());
 
         //create a file for test
         /* let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
@@ -238,7 +239,7 @@ describe ('HttpAnswer', () => {
     it('should set and add data', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.write("I'm fine.");
@@ -252,7 +253,7 @@ describe ('HttpAnswer', () => {
     it('should set but not add data when different type', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
         fileWritableStream.end();
@@ -267,7 +268,7 @@ describe ('HttpAnswer', () => {
     it('should not set data when already set', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.write("I'm fine.");
@@ -281,7 +282,7 @@ describe ('HttpAnswer', () => {
     it('should replace data', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.write("I'm fine.","plain/text",9);
@@ -299,7 +300,7 @@ describe ('HttpAnswer', () => {
     it('should add data even if it is not set before', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.writeMore("I'm fine.");
@@ -312,7 +313,7 @@ describe ('HttpAnswer', () => {
     it('should replace data even if it is not set before', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.replace("I'm fine.");
@@ -325,7 +326,7 @@ describe ('HttpAnswer', () => {
     it('should response with 406 when data type can\'t be serialized', (done) => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.write(() => {});
@@ -342,7 +343,7 @@ describe ('HttpAnswer', () => {
     it('should not set content length for status 204', (done) => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.status(204);
@@ -358,7 +359,7 @@ describe ('HttpAnswer', () => {
     it('should not set content length for status < 200', (done) => {
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.status(111);
@@ -374,7 +375,7 @@ describe ('HttpAnswer', () => {
     it('should not set content length for status 2xx and method CONNECT', (done) => {
         const response = new MockRes();
         const request = buildMockedRequest(null,"CONNECT");
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.status(200);
@@ -389,7 +390,7 @@ describe ('HttpAnswer', () => {
 
     it('should error when invalid data is to add', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response,buildMockedRequest(),containers);
+        const answer = new HttpAnswer(response,buildMockedRequest(),containers,new eventEmitter());
 
         //when
         answer.write("I'm fine.");
@@ -404,7 +405,7 @@ describe ('HttpAnswer', () => {
         
         const response = new MockRes();
         const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.redirectTo("http:/google.com");

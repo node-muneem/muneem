@@ -2,17 +2,21 @@ var http = require('http');
 var uniqid = require('uniqid');
 
 Server.prototype.start = function(){
-    const eventEmitter = this.eventEmitter 
-    const options = this.options;
-
-    this.server.listen(options.port,options.host, function(){
-        eventEmitter.emit('onServerStart');
-        console.log("Cool DOWN server is UP: http://" + options.host + ":" + options.port);
+    this.eventEmitter.emit('beforeServerStart', {
+        host : this.options.host,
+        port: this.options.port,
+        http2 : this.options.http2
+    });
+    this.server.listen(this.options.port,this.options.host, () => {
+        this.eventEmitter.emit('afterServerStart');
+        console.log("Cool DOWN server is UP: http://" + this.options.host + ":" + this.options.port);
     });
 }
 
 Server.prototype.close = function(){
+    this.eventEmitter.emit('serverClose');
     this.server.close();
+    this.eventEmitter.emit('afterServerClose');
 }
 
 function networkErrHandler(err,port,host,server) {
@@ -52,6 +56,7 @@ function Server(options,requestResponseHandler,eventEmitter){
 
     const httpHandler = (req,res) => {
         req.id = reqId();
+        this.eventEmitter.emit('request', req,res);
         requestResponseHandler.lookup(req,res);
     };
 
@@ -69,7 +74,7 @@ function Server(options,requestResponseHandler,eventEmitter){
         }
     }
 
-    //Will not read headers after defined count
+    //Will skip headers after defined count
     this.server.maxHeadersCount = this.options.maxHeadersCount;//default is 2000
     //TODO: to test
     this.options.setTimeout && this.server.setTimeout(this.options.timeout);

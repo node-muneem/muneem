@@ -93,9 +93,6 @@ RoutesManager.prototype.addRoute = function(route){
     let mayHaveBody = this.appContext.alwaysReadRequestPayload || 
             ( route.when !== "GET" && route.when !== "HEAD" && route.when !== "UNLOCK" && route.when !== "PURGE" && route.when !== "COPY") ;
 
-    const bigBodyAlert = this.handlers.get("__exceedContentLength").handle || this.handlers.get("__exceedContentLength");
-    const errorHandler = this.handlers.get("__error").handle || this.handlers.get("__error");
-
     this.eventEmitter.emit("addRoute",context.route);
     this.router.on(route.when,route.uri, async (nativeRequest,nativeResponse,params) => {
         logger.log.debug(`Request Id:${nativeRequest.id}`, route);
@@ -105,14 +102,14 @@ RoutesManager.prototype.addRoute = function(route){
         
         if(asked.contentLength > route.maxLength){
             logger.log.debug(`Request Id:${asked.id} Calling __exceedContentLength handler`);
-            bigBodyAlert(asked,answer);
+            this.eventEmitter.emit("fatBody",asked,answer);
             return;
         }else if(mayHaveBody){
             asked.stream = new StreamMeter({
                 maxLength : context.route.maxLength,
                 errorHandler : () => {
                     logger.log.debug(`Request Id:${asked.id} Calling __exceedContentLength handler`);
-                    bigBodyAlert(asked,answer);
+                    this.eventEmitter.emit("fatBody",asked,answer);
                 }
             })
             nativeRequest.pipe(asked.stream);
@@ -120,9 +117,10 @@ RoutesManager.prototype.addRoute = function(route){
 
         nativeRequest.on('error', function(err) {
             answer.error = err;
-            errorHandler(asked,answer);
+            this.eventEmitter.emit("error",asked,answer);
         });
 
+        this.eventEmitter.emit("route",asked,answer);
         try{
 
             for(let i=0; i<handlerRunners.length;i++){
@@ -135,11 +133,11 @@ RoutesManager.prototype.addRoute = function(route){
         }catch(e){
             answer.error = e;
             //console.log(e);
-            errorHandler(asked,answer);
+            this.eventEmitter.emit("error",asked,answer);
         }
     })//router.on ends
 
-    this.eventEmitter.emit("afterAddRoute",context.route);
+    //this.eventEmitter.emit("afterAddRoute",context.route);
 }
 
 RoutesManager.prototype.updateCompressOptions = function (context){
@@ -238,13 +236,8 @@ function RoutesManager(appContext,containers,eventEmitter){
                 route : defaultRouteConfig,
                 app : appContext
             });
-            const answer = new HttpAnswer(nativeResponse,asked,this.containers);
-            const defaultHandler = containers.handlers.get("__defaultRoute");
-            if(defaultHandler.handle){
-                defaultHandler.handle(asked,answer);
-            } else {
-                defaultHandler(asked,answer);
-            }
+            const answer = new HttpAnswer(nativeResponse,asked,this.containers,this.eventEmitter);
+            this.eventEmitter.emit("defaultRoute",asked,answer);
         }
     } );
 }

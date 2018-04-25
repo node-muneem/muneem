@@ -42,17 +42,17 @@ Muneem.prototype.registerDefaultCompressors = function(){
 }
 
 Muneem.prototype.registerDefaultHandlers = function(){
-    Muneem.logger.log.info("Adding __defaultRoute Handler")
-    this.addHandler("__defaultRoute" , require("./defaultHandlers/defaultRoute"));
-
-    Muneem.logger.log.info("Adding __exceedContentLength handler")
-    this.addHandler("__exceedContentLength" , require("./defaultHandlers/exceedContentLengthHandler"));
-
-    Muneem.logger.log.info("Adding __error handler")
-    this.addHandler("__error" , require("./defaultHandlers/exceptionHandler"));
+    this.on("defaultRoute", require("./defaultHandlers/defaultRoute") );
+    this.on("fatBody", require("./defaultHandlers/exceedContentLengthHandler") );
+    this.on("error", require("./defaultHandlers/exceptionHandler") );
 }
 
 Muneem.prototype.start = function(serverOptions){
+    if(serverOptions){
+        this.appContext.http2 = serverOptions.http2;
+        this.appContext.https = serverOptions.https !== undefined ? true : false;
+    }
+
     if(this.appContext.mappings){
         this.routesManager.addRoutesFromMappingsFile(this.appContext.mappings);
     }
@@ -119,7 +119,7 @@ function Muneem(options){
     this.registerDefaultSerializers();
     this.registerDefaultCompressors();
 
-    this.routesManager = new RoutesManager(this.appContext,this.containers);
+    this.routesManager = new RoutesManager(this.appContext,this.containers,this.eventEmitter);
 }
 
 /**
@@ -156,11 +156,7 @@ Muneem.prototype.addHandler = function(name,handler){
 }
 
 /*
-/ - Handlers
-  - Serializers
-  - Compressors
-
-/ - mixed.js
+Add handlers, serializers, and compressors from a directory.
 
 Handler should have name,
 serializers must have type,serialize/handle, 
@@ -262,5 +258,88 @@ Muneem.prototype.afterEachHandler = function(fn){
 Muneem.prototype.afterHandler = function(name,fn){
     this.routesManager.afterHandler.add(name,fn);
 } */
+/**
+ * Supported Events
+ * 
+ * addRoute : just after the route is added; args: route context
+ * serverStart, start, afterServerStart, afterStart : just after server starts; 
+ * request, question, asked : before route; raw request, raw response
+ * route : beforeAll handlers; asked, answer
+ * exceedContentLengthn, fatBody; asked, answer
+ * handle : before any handler executes; asked, answer
+ * afterHandle: after any handler executes; asked, answer
+ * serialize : before Serialization happens; asked, answer
+ * compress : before Compression happens; asked, answer
+ * send, answer, response, afterSend, afterAnswer, afterResponse : After sending the response; asked, answer, isStream
+ * 
+ * serverClose, close : just before server's close is triggered
+ * error
+ * defaultRoute, missingMapping, routeNotFound
+ * @param {string} eventName 
+ * @param {function} callback 
+ */
+Muneem.prototype.on = function(eventName, callback){
+    Muneem.logger.log.info(`Adding event ${eventName}`);
+    if( eventName === "addRoute"){
+        Muneem.logger.log.warn(`Handler registered for '${eventName}' event can know the name and sequence of handlers for any route.`);
+    }else if( eventName === "serverStart" || eventName === "start" || eventName === "afterServerStart" || eventName === "afterStart"){
+        Muneem.logger.log.warn(`Handler registered for '${eventName}' event can read server's host, and port.`);
+        eventName = "afterServerStart"
+    }else if( eventName === "request"){
+        Muneem.logger.log.warn("Handler registered for 'request' event can read raw request which may contain sensitive information.");
+    }else if( eventName === "route"){
+        Muneem.logger.log.warn("Handler registered for 'route' event can read request before any other handler which may contain sensitive information.");
+    }else if( eventName === "exceedContentLength" || eventName === "fatBody"){
+        eventName = "fatBody"
+        this.eventEmitter.removeAllListeners(eventName);
+    }else if( eventName === "serialize" || eventName === "afterSerialize"){
+        eventName = "afterSerialize";
+    }else if( eventName === "compress" || eventName === "afterCompress"){
+        eventName = "afterCompress";
+    }else if( eventName === "send" || eventName === "answer" || eventName === "response" || eventName === "afterAnswer" || eventName === "afterResponse"){
+        eventName = "afterAnswer";
+    }else if( eventName === "close" || eventName === "serverClose"){
+        eventName = "afterServerClose";
+    }else if( eventName === "routeNotFound" || eventName === "missingMapping"){
+        eventName = "defaultRoute";
+    }else if(eventName.toLowerCase() === "error"){
+        this.eventEmitter.removeAllListeners("error");    
+    }
+    this.eventEmitter.on(eventName,callback);
+}
+
+/**
+ * Supported Events
+ * 
+ * addRoute : just before the route is added; args: route context
+ * serverStart, start : just before server starts; 
+ * handle : before any handler executes
+ * afterHandle: after any handler executes
+ * serialize : before Serialization happens
+ * compress : before Compression happens
+ * send, answer, response : Before sending the response
+ * serverClose, close : just before server's close is triggered
+ * 
+ * @param {string} eventName 
+ * @param {function} callback 
+ */
+Muneem.prototype.before = function(eventName, callback){
+    Muneem.logger.log.info(`Adding event before ${eventName}`);
+    if( eventName === "route"){//request event is triggered before route
+        eventName = "request";
+    }else if( eventName === "serverStart" || eventName === "start"){
+        eventName = "beforeServerStart";
+    }else if( eventName === "serialize"){
+        eventName = "beforeSerialize";
+    }else if( eventName === "compress"){
+        eventName = "beforeCompress";
+    }else if( eventName === "send" || eventName === "answer" || eventName === "response"){
+        eventName = "beforeAnswer";
+    }else if( eventName === "close" || eventName === "serverClose"){
+        eventName = "beforeServerClose";
+    }
+
+    this.eventEmitter.on(eventName,callback);
+}
 
 module.exports = Muneem
