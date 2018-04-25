@@ -269,7 +269,8 @@ describe ('Routes Manager', () => {
         }) ;
 
         muneem.addHandler("main", async (asked,answer) => {
-            answer.end(await asked.readBody());
+            answer.write(await asked.readBody());
+            answer.end();
             blocks.push("main")
         } ) ;
         muneem.addHandler("post", () => {blocks.push("post")} );
@@ -336,7 +337,8 @@ describe ('Routes Manager', () => {
         }) ;
 
         muneem.addHandler("main", async (asked,answer) => {
-            answer.end(await asked.readBody());
+            answer.write(await asked.readBody());
+            answer.end();
             blocks.push("main")
             answer.skipRest();
         } ) ;

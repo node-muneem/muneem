@@ -61,7 +61,7 @@ HttpAnswer.prototype.writeMore = function(data){
                 pump(this.data,data);
                 this.data = data;
         }else{
-            this.close("Unsupported type " + typeof data + " is given");
+            this.end(null,500,"Unsupported type " + typeof data + " is given");
             throw Error("Unsupported type " + typeof data + ".");
         }
     }else{
@@ -96,36 +96,43 @@ HttpAnswer.prototype.replace = function(data,type,length){
 }
 
 /**
- * Close and send the response with reason. It'll be logged when you try to send response again.
+ * Serialize -> compress -> set length -> send
+ * if data parametre is null, undefined then it'll read data from this.data
+ * otherwise it'll overwrite this.data
+ 
  * @param {string} reason 
+ * 
+ * @param {number} code 
+ * @param {string} reason 
+ * 
+ * @param {string} type
+ * @param {number} length
+ * @param {string} reason 
+ * 
+ * 
  */
-HttpAnswer.prototype.close = function(reason,code){
-    code && (this._statusCode = code);
-
-    this.answeredReason = reason;
-    this._native.writeHead(this._statusCode, this._headers);
-    this._native.end("",this.encoding);
-    //logger.log.debug("response stream has been closed");
-    logger.log.debug(`Request Id:${this._for.id}, response stream has been closed. Reason: ${reason}`);
-}
-
 HttpAnswer.prototype.end = function(){
     if(this.answered()){
         logger.log.warn("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
     }else{
-        let data,type,length,reason;
-        if(arguments.length === 2){
-            data = arguments[0];
+        let code,type,length,reason;
+
+        if(typeof arguments[0] === "string" && typeof arguments[1] === "number"){
+            type = arguments[0];
+            length = arguments[1];
+            reason = arguments[2];
+        }else if(typeof arguments[0] === "number"){
+            this._statusCode = arguments[0];
             reason = arguments[1];
         }else{
-            data = arguments[0];
-            type = arguments[1];
-            length = arguments[2];
-            reason = arguments[3];
+            reason = arguments[0];
         }
-        
+
         this.answeredReason = reason;
-        this.data = data || this.data || "";
+        if(this.data === null || this.data === undefined){
+            this.data = "";
+        }
+
         type && this.type(type);
         length && this.length(length);
         
@@ -141,27 +148,9 @@ HttpAnswer.prototype.end = function(){
             logger.log.debug(`Request Id:${this._for.id} has been answered as stream`);
         }else{
             //TODO: performance improvement scope
-            const serialize = this.containers.serializers.get(this._for);
-            if(serialize){
-                serialize(this._for,this);
-            }else if(typeof this.data === "string"){
-                if( !this._headers['content-type'] ) this.type('text/plain');
-                Number(this.data);
-            }else if(Buffer.isBuffer(this.data) ){
-                if( !this._headers['content-type'] ) this.type('application/octet-stream');
-            }else  if(typeof this.data === "number" && !this._headers['content-type'] ){
-                this.data += '';
-                this.type('text/plain');
-            }else{
-                this._setContentLength(0);
-                this._native.writeHead(406, this._headers);
-                this._native.end("");
-                //logger.log.error("Unsupported data type to send : " + typeof this.data);
-                logger.log.debug(`Request Id:${this._for.id}; Unsupported data type to send :  ${typeof this.data}`);
-                return;
-            }
+            if(this._serialize() === false) return;
 
-            if(compressionConfig && compressionConfig.threshold <= this.data.length && compressionConfig.filter(this._for,this)){
+            if(compressionConfig && this.data.length > 0 && this.data.length > compressionConfig.threshold && compressionConfig.filter(this._for,this)){
                 const compress =  this.containers.compressors.get(this._for,compressionConfig.preference);
                 if(compress){
                     compress(this._for, this);
@@ -174,12 +163,39 @@ HttpAnswer.prototype.end = function(){
             }else{
                 this._setContentLength(Buffer.byteLength(this.data));
             }
-            this._native.writeHead(this._statusCode, this._headers);
-            this._native.end(this.data,this.encoding);
-            logger.log.debug(`Request Id:${this._for.id} has been answered`);
-            //TODO: Even afterSend
+
+            this._send(this.data);
         }
     }
+}
+
+
+HttpAnswer.prototype._serialize = function(){
+    const serialize = this.containers.serializers.get(this._for);
+    if(serialize){
+        serialize(this._for,this);
+    }else if(typeof this.data === "string"){
+        if( !this._headers['content-type'] ) this.type('text/plain');
+        Number(this.data);
+    }else if(Buffer.isBuffer(this.data) ){
+        if( !this._headers['content-type'] ) this.type('application/octet-stream');
+    }else  if(typeof this.data === "number" && !this._headers['content-type'] ){
+        this.data += '';
+        this.type('text/plain');
+    }else{
+        logger.log.debug(`Request Id:${this._for.id}; Unsupported data type to send :  ${typeof this.data}`);
+        this.length(0);
+        this._send("", 406)
+        return false;
+    }
+    return true;
+}
+HttpAnswer.prototype._send = function(data, statusCode){
+    //TODO: Event before Send
+    this._native.writeHead(statusCode || this._statusCode, this._headers);
+    this._native.end(data || "",this.encoding);
+    logger.log.debug(`Request Id:${this._for.id} has been answered`);
+    //TODO: Event after Send
 }
 
 //TODO: test

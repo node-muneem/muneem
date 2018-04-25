@@ -322,24 +322,6 @@ describe ('HttpAnswer', () => {
         expect(response._getString()).toEqual("I'm fine.");
     });
 
-    it('should ignore previously set data with data passed to end method', () => {
-        const response = new MockRes();
-        const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers);
-
-        //when
-        answer.write("I'm fine." , "plain/text", 9);
-        answer.end("replaced",  "application/text", 10,"no reason" );
-
-        //then
-        expect(response._getString()).toEqual("replaced");
-        expect(response._headers).toEqual({
-            "content-length" : 10,
-            "content-type" : "application/text",
-        });
-        expect(answer.answeredReason).toEqual("no reason");
-    });
-
     it('should response with 406 when data type can\'t be serialized', (done) => {
         const response = new MockRes();
         const request = buildMockedRequest();
@@ -407,7 +389,7 @@ describe ('HttpAnswer', () => {
 
     it('should error when invalid data is to add', () => {
         const response = new MockRes();
-        const answer = new HttpAnswer(response,buildMockedRequest());
+        const answer = new HttpAnswer(response,buildMockedRequest(),containers);
 
         //when
         answer.write("I'm fine.");

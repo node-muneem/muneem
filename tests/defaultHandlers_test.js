@@ -30,7 +30,6 @@ describe ('Routes Manager', () => {
 
         response.on('finish', function() {
             expect(response.statusCode ).toEqual(500);
-            //expect(response.statusMessage ).toEqual("There is something wrong. Please check the request URL and method again. So I can respond properly.");
             done();
         });
         routesManager.router.lookup(request,response);
@@ -65,7 +64,6 @@ describe ('Routes Manager', () => {
 
         response.on('finish', function() {
             expect(response.statusCode ).toEqual(404);
-            //expect(response.statusMessage ).toEqual("Bad time");
             done();
         });
         routesManager.router.lookup(request,response);
@@ -97,9 +95,7 @@ describe ('Routes Manager', () => {
         var response = new MockRes();
 
         response.on('finish', function() {
-            //expect(response._getString()).toEqual("");
             expect(response.statusCode ).toEqual(413);
-            //expect(response.statusMessage ).toEqual("request entity too large");
             done();
         });
         routesManager.router.lookup(request,response);
@@ -122,14 +118,14 @@ describe ('Routes Manager', () => {
             uri: "/test",
             when: "POST",
             to: "main",
-            maxLength: 30
+            maxLength: 29
         });
 
         var request  = new MockReq({
             url: '/test',
             method: "POST",
             headers : {
-                "content-length" : 29
+                "content-length" : 30
             }
         });
 
@@ -138,7 +134,6 @@ describe ('Routes Manager', () => {
         response.on('finish', function() {
             expect(response._getString()).toEqual("");
             expect(response.statusCode ).toEqual(413);
-            //expect(response.statusMessage ).toEqual("request entity too large");
             done();
         });
         routesManager.router.lookup(request,response);
@@ -177,7 +172,6 @@ describe ('Routes Manager', () => {
         response.on('finish', function() {
             expect(response._getString()).toEqual("");
             expect(response.statusCode ).toEqual(413);
-            //expect(response.statusMessage ).toEqual("request entity too large");
             done();
         });
         routesManager.router.lookup(request,response);

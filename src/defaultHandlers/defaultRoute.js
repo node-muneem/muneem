@@ -1,5 +1,4 @@
 
 exports.handle = function(asked,answer){
-    answer.status(500);
-    answer.close("route was not found");
+    answer.end(500, "route was not found");
 }
