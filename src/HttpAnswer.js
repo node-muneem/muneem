@@ -148,20 +148,26 @@ HttpAnswer.prototype.end = function(){
             logger.log.debug(`Request Id:${this._for.id} has been answered as stream`);
         }else{
             //TODO: performance improvement scope
-            if(this._serialize() === false) return;
-
-            if(compressionConfig && this.data.length > 0 && this.data.length > compressionConfig.threshold && compressionConfig.filter(this._for,this)){
-                const compress =  this.containers.compressors.get(this._for,compressionConfig.preference);
-                if(compress){
-                    compress(this._for, this);
-                    //Transfer-Encoding →chunked
-                    //content-encoding →gzip
-                    //this._setContentLength(this.data.length);//Don't send content length
-                    logger.log.debug(`Request Id:${this._for.id}; answer has been compressed`);
+            if(this.data instanceof Error){
+                logger.log.error(this.data);
+                this._statusCode = 500;
+                this.length(0);
+            }else if(this.data){
+                if(this._serialize() === false) return;
+    
+                if(compressionConfig && this.data.length > 0 && this.data.length > compressionConfig.threshold && compressionConfig.filter(this._for,this)){
+                    const compress =  this.containers.compressors.get(this._for,compressionConfig.preference);
+                    if(compress){
+                        compress(this._for, this);
+                        //When data is compressed, Transfer-Encoding →chunked, and content-encoding → compression type. So don't set content length
+                        logger.log.debug(`Request Id:${this._for.id}; answer has been compressed`);
+                    }
+                    
+                }else{
+                    this._setContentLength(Buffer.byteLength(this.data));
                 }
-                
-            }else{
-                this._setContentLength(Buffer.byteLength(this.data));
+            }else {
+                //this.length(0);
             }
 
             this._send(this.data);
