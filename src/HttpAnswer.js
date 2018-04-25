@@ -224,13 +224,14 @@ HttpAnswer.prototype.redirectTo = function(loc){
     this._native.end("");
 }
 
-function HttpAnswer(res,asked,containers){
+function HttpAnswer(res,asked,containers,eventEmitter){
     this.containers = containers;
     this._for = asked;
     this._native = res;
     this.encoding = "utf8";
     this._statusCode = 200;
     this._headers = {};
+    this.eventEmitter = eventEmitter;
 }
 
 module.exports = HttpAnswer;

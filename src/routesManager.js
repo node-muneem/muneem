@@ -96,11 +96,12 @@ RoutesManager.prototype.addRoute = function(route){
     const bigBodyAlert = this.handlers.get("__exceedContentLength").handle || this.handlers.get("__exceedContentLength");
     const errorHandler = this.handlers.get("__error").handle || this.handlers.get("__error");
 
+    this.eventEmitter.emit("addRoute",context.route);
     this.router.on(route.when,route.uri, async (nativeRequest,nativeResponse,params) => {
         logger.log.debug(`Request Id:${nativeRequest.id}`, route);
         const asked = new HttpAsked(nativeRequest,params,context);
         asked._mayHaveBody = mayHaveBody;
-        const answer = new HttpAnswer(nativeResponse,asked,this.containers);
+        const answer = new HttpAnswer(nativeResponse,asked,this.containers,this.eventEmitter);
         
         if(asked.contentLength > route.maxLength){
             logger.log.debug(`Request Id:${asked.id} Calling __exceedContentLength handler`);
@@ -137,6 +138,8 @@ RoutesManager.prototype.addRoute = function(route){
             errorHandler(asked,answer);
         }
     })//router.on ends
+
+    this.eventEmitter.emit("afterAddRoute",context.route);
 }
 
 RoutesManager.prototype.updateCompressOptions = function (context){
@@ -217,9 +220,10 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
     return handlerRunners;
 }
 
-function RoutesManager(appContext,containers){
+function RoutesManager(appContext,containers,eventEmitter){
     this.appContext = appContext || {};
 
+    this.eventEmitter = eventEmitter;
     this.containers = containers;
     this.handlers = containers.handlers;
 

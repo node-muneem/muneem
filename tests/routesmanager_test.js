@@ -2,6 +2,7 @@ const RoutesManager = require("../src/routesManager");
 const Container = require("../src/HandlersContainer");
 const Compressors = require("../src/CompressorsContainer");
 const path = require("path");
+var events = require('events');
 
 describe ('RoutesManager', () => {
     const container = new Container();
@@ -64,7 +65,7 @@ describe ('RoutesManager', () => {
                 shouldCompress : false
             }
         };
-        const routesManager =new RoutesManager(options,containers);
+        const routesManager =new RoutesManager(options,containers,new events.EventEmitter());
         routesManager.addRoutesFromMappingsFile(options.mappings);
         
         expect(routesManager.router.count).toEqual(7);
@@ -82,7 +83,7 @@ describe ('RoutesManager', () => {
                 shouldCompress : false
             }
         };
-        const routesManager =new RoutesManager(options,containers);
+        const routesManager =new RoutesManager(options,containers,new events.EventEmitter());
 
         routesManager.addRoutesFromMappingsFile(options.mappings);
         routesManager.addRoute({
