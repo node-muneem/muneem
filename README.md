@@ -5,6 +5,16 @@ A framework to write fast web services in easy way. Designed for developers, QAs
 
 मुनीम (Muneem) is the web framework developed in nodejs. It is designed with the aim of easy & rapid delopment, small learning curve, distributed development, fast services, proper documentation, easy bug discovery and providing the best solution not only for developers but all the team members.
 
+> This project is under development. Your contribution will be appreciated.
+
+## Aim
+* Distributed Development
+* Small Learning curve
+* Fast fault detection
+* Rich documentation APIs
+* Security
+* Non-developer friendly
+
 ## Usages
 Muneem can be used in multiple ways. Here is the quick overview. Please read the full documentation or watch video tutorials for complete detail.
 
