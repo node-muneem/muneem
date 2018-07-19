@@ -49,7 +49,7 @@ HttpAnswer.prototype.removeHeader = function(name){
 
 /**
  * Add more string data to previously added data. Or pipe the stream to previously added stream
- * Or set data if it is not set before.
+ * Or set data if it was not set before.
  * @param {*} data 
  */
 HttpAnswer.prototype.writeMore = function(data){
@@ -61,6 +61,7 @@ HttpAnswer.prototype.writeMore = function(data){
                 pump(this.data,data);
                 this.data = data;
         }else{
+            //TODO: set the date, number, boolean formats
             this.end(null,500,"Unsupported type " + typeof data + " is given");
             throw Error("Unsupported type " + typeof data + ".");
         }
@@ -89,6 +90,7 @@ HttpAnswer.prototype.write = function(data,type,length){
  * @param {string} type : content-type
  * @param {number|string} length : content-length
  */
+//TODO: rename it to replaceWith
 HttpAnswer.prototype.replace = function(data,type,length){
     this.data = data;
     type && this.type(type);
