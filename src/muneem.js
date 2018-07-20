@@ -47,16 +47,16 @@ Muneem.prototype.registerDefaultHandlers = function(){
     this.on("error", require("./defaultHandlers/exceptionHandler") );
 }
 
-Muneem.prototype.start = function(serverOptions){
-    if(serverOptions){
-        this.appContext.http2 = serverOptions.http2;
-        this.appContext.https = serverOptions.https !== undefined ? true : false;
+Muneem.prototype.start = function(){
+    if(this.options.server){
+        this.appContext.http2 = this.options.server.http2;
+        this.appContext.https = this.options.server.https !== undefined ? true : false;
     }
 
-    if(this.appContext.mappings){
-        this.routesManager.addRoutesFromMappingsFile(this.appContext.mappings);
+    if(this.options.mappings){
+        this.routesManager.addRoutesFromMappingsFile(this.options.mappings);
     }
-    this.server = new Server(serverOptions, this.routesManager.router, this.eventEmitter);
+    this.server = new Server(this.options.server, this.routesManager.router, this.eventEmitter);
     this.server.start();
 }
 const defaultCompressionOptions = {
@@ -81,8 +81,12 @@ const defaultOptions = {
 }
 function Muneem(options){
     if(!(this instanceof Muneem)) return new Muneem(options);
-    
-    this.appContext =  Object.assign({},defaultOptions,options);
+    this.options = options || {};
+    this.appContext =  Object.assign({},defaultOptions);
+
+    if(options && options.compress){
+        this.appContext.compress = options.compress;
+    }
 
     if(this.appContext.compress){
         this.appContext.compress =  Object.assign({},defaultCompressionOptions,this.appContext.compress);
@@ -105,13 +109,13 @@ function Muneem(options){
         streamCompressors : new Compressors()
     }
 
-    if(this.appContext.handlers){
-        if(Array.isArray(this.appContext.handlers)){
-            this.appContext.handlers.forEach(dir => {
+    if(options && options.handlers){//load handlers from given path(s)
+        if(Array.isArray(options.handlers)){
+            options.handlers.forEach(dir => {
                 this._addHandlers(dir);    
             })
         }else{
-            this._addHandlers(this.appContext.handlers);
+            this._addHandlers(options.handlers);
         }
     }
 
@@ -132,7 +136,7 @@ Muneem.addToAnswer = function(methodName, fn ){
     HttpAnswer.prototype[methodName] = fn;
 }
 
-Muneem.prototype.add = function(type, handles , handler, flag ){
+Muneem.prototype.add = function(type, handler, handles ,flag ){
 
     if(!type || !handles  || !handler){
         throw Error("Please provide valid parameters");
@@ -142,11 +146,11 @@ Muneem.prototype.add = function(type, handles , handler, flag ){
     if(type === "handler"){
         this.containers.handlers.add(handles ,handler);
     }else if(type === "route"){
-        this.routesManager.addRoute(route);
+        this.routesManager.addRoute(handler);
     }else if(type === "serializer"){
-        this.addSerializer(handles ,fn);
+        this.addSerializer(handles ,handler);
     }else if(type === "compressor"){
-        this.addCompressor(handles ,fn,flag);
+        this.addCompressor(handles ,handler ,flag);
     }else {
         throw Error("Please provide valid handler type");
     }
