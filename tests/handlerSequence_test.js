@@ -145,17 +145,17 @@ describe ('Routes Manager', () => {
         muneem.addHandler("last", () => {blocks.push("last")} ) ;
 
         const routesManager = muneem.routesManager;
-        muneem.beforeEachPreHandler((asked, handlerName) => {
+        muneem.before("PreHandler", (asked, handlerName) => {
             blocks.push("Pre: before " + handlerName)
         });
-        muneem.afterEachPreHandler((asked, handlerName) => {
+        muneem.after("PreHandler", (asked, handlerName) => {
             blocks.push("Pre: after " + handlerName)
         });
 
-        muneem.beforeEachPostHandler((asked, handlerName) => {
+        muneem.before("PostHandler", (asked, handlerName) => {
             blocks.push("Post: before " + handlerName)
         });
-        muneem.afterEachPostHandler((asked, handlerName) => {
+        muneem.after("PostHandler", (asked, handlerName) => {
             blocks.push("Post: after " + handlerName)
         });
 
@@ -207,10 +207,10 @@ describe ('Routes Manager', () => {
         muneem.addHandler("last", () => {blocks.push("last")} ) ;
 
         const routesManager = muneem.routesManager;
-        muneem.beforeEachHandler((asked, handlerName) => {
+        muneem.before("each", (asked, handlerName) => {
             blocks.push("before " + handlerName)
         });
-        muneem.afterEachHandler((asked, handlerName) => {
+        muneem.after("each", (asked, handlerName) => {
             blocks.push("after " + handlerName)
         });
 
@@ -277,10 +277,10 @@ describe ('Routes Manager', () => {
         muneem.addHandler("last", () => {blocks.push("last")} ) ;
 
         const routesManager = muneem.routesManager;
-        muneem.beforeMainHandler((asked, handlerName) => {
+        muneem.before("main", (asked, handlerName) => {
             blocks.push("Main: before " + handlerName)
         });
-        muneem.afterMainHandler((asked, handlerName) => {
+        muneem.after("main", (asked, handlerName) => {
             blocks.push("Main: after " + handlerName)
         });
 
@@ -346,10 +346,10 @@ describe ('Routes Manager', () => {
         muneem.addHandler("last", () => {blocks.push("last"); } ) ;
 
         const routesManager = muneem.routesManager;
-        muneem.beforeMainHandler((asked, handlerName) => {
+        muneem.before("main", (asked, handlerName) => {
             blocks.push("Main: before " + handlerName)
         });
-        muneem.afterMainHandler((asked, handlerName) => {
+        muneem.after("main", (asked, handlerName) => {
             blocks.push("Main: after " + handlerName)
         });
 

@@ -3,7 +3,6 @@ const MockReq = require('mock-req');
 const fs = require('fs');
 const eventEmitter = require('events').EventEmitter;
 const path = require('path');
-const Muneem = require("../src/muneem")
 const HttpAnswer = require("../src/HttpAnswer")
 const ApplicationSetupError = require("../src/ApplicationSetupError")
 const SerializerFactory = require("../src/SerializersContainer")

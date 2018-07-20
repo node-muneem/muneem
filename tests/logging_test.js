@@ -12,16 +12,16 @@ describe ('Muneem', () => {
     });
 
     it('should log as per set logger', (done) => {
-        var expctedLogs = `info : Adding event defaultRoute
-info : Adding event fatBody
-info : Adding event error
+        var expctedLogs = `info : Adding after event defaultRoute
+info : Adding after event fatBody
+info : Adding after event error
 info : Adding a serializer to handle application/json
 info : Adding a compressor to handle *
-info : Adding a stream compressor to handle *
+info : Adding a compressor to handle *
 info : Adding a compressor to handle gzip
-info : Adding a stream compressor to handle gzip
+info : Adding a compressor to handle gzip
 info : Adding a compressor to handle deflat
-info : Adding a stream compressor to handle deflat
+info : Adding a compressor to handle deflat
 info : Adding a methods justForTest to HttpAnswer
 debug : Request Id:undefined {"when":"GET","uri":"/test","to":"main","maxLength":1000000,"compress":{"threshold":1024,"shouldCompress":true}}
 debug : Request Id:undefined Executing handler main
