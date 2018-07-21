@@ -2,9 +2,7 @@
 
 ## Methods
 
-* **add** : add specific handler
-* **after** : add after event callback
-* **before** : add before event callback
+* **add** : To add a request handler, compressor, serializer, or route.
 * **start** : start the server
 
 ## Example
@@ -38,7 +36,7 @@ const muneem = Muneem({
 muneem.add("handler", handler, "name");//muneem.addHandler("name", handler) ;
 
 //Add serializers (Muneem can handle json, and plain text by default)
-muneem.add("Serializer", handler, "name");//muneem.addSerializer("type", handler);
+muneem.add("Serializer", handler, "type");//muneem.addSerializer("type", handler);
 
 //Add compressors (Muneem can handle gzip and inflate by default)
 muneem.add("Compressor", handler, "type");//muneem.addCompressor("type", handler);
