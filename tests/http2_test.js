@@ -72,6 +72,7 @@ describe ('Muneem server', () => {
         https : buildSecureServerConfig()
     };
 
+    muneem.options.mappings = undefined;
     muneem.start();
 
     const res = await h2url.request({

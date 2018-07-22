@@ -10,7 +10,6 @@ var chai = require('chai')
 chai.use(chaiHttp);
 
 const Muneem = require("../src/muneem");
-//const path = require("path");
 
 describe ('Muneem server', () => {
 
@@ -35,12 +34,12 @@ describe ('Muneem server', () => {
         asked.invalid();
     } ) ;
 
-    muneem.routesManager.addRoute({
+    muneem.route({
         uri: "/test",
         to: "main"
     })
 
-    muneem.routesManager.addRoute({
+    muneem.route({
         uri: "/invalid",
         to: "invalid"
     })
@@ -96,22 +95,25 @@ describe ('Muneem server', () => {
 
     it('should error back when port is busy', () => {
 
-       /* const  fakelogger = {
-            error : errmsg =>{
-                expect(errmsg).toEqual("EADDRINUSE: Port 3002 is already in use.")
-                done();
-            }
-        }
-        muneem.setLogger(fakelogger); */
+    //    const  fakelogger = {
+    //         error : errmsg =>{
+    //             expect(errmsg).toEqual("EADDRINUSE: Port 3002 is already in use.")
+    //             done();
+    //         }
+    //     }
+    //     muneem.setLogger(fakelogger);
+        muneem.options.mappings = undefined;
         muneem.start();//EADDRINUSE: Port 3002 is already in use.
     });
 
-    it('should error back when port is not accessible', () => {
+     it('should error back when port is not accessible', () => {
+        muneem.options.mappings = undefined;
         muneem.options.server.port = 8;
         muneem.start();//EACCES: Permission denied to use port 8
     });
 
     it('should error back when invalid host', () => {
+        muneem.options.mappings = undefined;
         muneem.options.server.host = "invalid";
         muneem.start();//ENOTFOUNDEADDRNOTAVAILD: Host "invalid" is not available.
     });
