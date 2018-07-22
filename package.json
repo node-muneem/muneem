@@ -1,7 +1,7 @@
 {
   "name": "muneem",
-  "version": "1.0.0",
-  "description": "A framework to write fast web services in easy way. Designed for developers, QAs, Maintainers, and BAs",
+  "version": "1.1.0",
+  "description": "Fast and simple web framework designed for developers, QAs, Maintainers, and BAs",
   "main": "src/muneem.js",
   "scripts": {
     "test": "jasmine tests/*test.js",
@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "accept": "^3.0.2",
-    "anumargak": "^1.2.0",
+    "anumargak": "^1.4.1",
     "pump": "^3.0.0",
     "uniqid": "^4.1.1",
     "yamljs": "^0.3.0"
