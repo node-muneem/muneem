@@ -84,7 +84,7 @@ function Muneem(options){
     this.options = options || {};
     this.appContext =  Object.assign({},defaultOptions);
 
-    if(options && options.compress){
+    if(options && options.compress !== undefined){
         this.appContext.compress = options.compress;
     }
 
@@ -138,7 +138,7 @@ Muneem.addToAnswer = function(methodName, fn ){
 
 Muneem.prototype.add = function(type, handler, handles ,flag ){
 
-    if(!type || !handles  || !handler){
+    if(!type || !handler){
         throw Error("Please provide valid parameters");
     }
     type = type.toLowerCase();
@@ -274,37 +274,38 @@ Muneem.prototype.on = function(eventName, callback){
  */
 
 Muneem.prototype.after = function(eventName, callback){
+    var eventNameInLower = eventName;
     if(!eventName || !callback) {
         throw Error("Please provide the valid parameters");
     }else{
         Muneem.logger.log.info(`Adding after event ${eventName}`);
-        eventName = eventName.replace(/-/g,"");
-        eventName = eventName.toLowerCase();
+        eventNameInLower = eventNameInLower.replace(/-/g,"");
+        eventNameInLower = eventNameInLower.toLowerCase();
     }
 
-    if( eventName === "addroute"){
+    if( eventNameInLower === "addroute"){
         Muneem.logger.log.warn(`Security warning: Handler registered for '${eventName}' event can know the name and sequence of handlers for any route.`);
-    }else if( eventName === "serverstart" || eventName === "start" ){
+    }else if( eventNameInLower === "serverstart" || eventNameInLower === "start" ){
         Muneem.logger.log.warn(`Security warning: Handler registered for '${eventName}' event can read server's host, and port.`);
         eventName = "afterServerStart"
-    }else if( eventName === "request"){
+    }else if( eventNameInLower === "request"){
         Muneem.logger.log.warn("Security warning: Handler registered for 'request' event can read raw request which may contain sensitive information.");
-    }else if( eventName === "route"){
+    }else if( eventNameInLower === "route"){
         Muneem.logger.log.warn("Security warning: Handler registered for 'route' event can read request before any other handler which may contain sensitive information.");
-    }else if( eventName === "exceedcontentlength" || eventName === "fatbody"){
+    }else if( eventNameInLower === "exceedcontentlength" || eventNameInLower === "fatbody"){
         eventName = "fatBody"
         //this.eventEmitter.removeAllListeners(eventName);
-    }else if( eventName === "serialize"){
+    }else if( eventNameInLower === "serialize"){
         eventName = "afterSerialize";
-    }else if( eventName === "compress" ){
+    }else if( eventNameInLower === "compress" ){
         eventName = "afterCompress";
-    }else if( eventName === "send" || eventName === "answer" || eventName === "response" ){
+    }else if( eventNameInLower === "send" || eventNameInLower === "answer" || eventNameInLower === "response" ){
         eventName = "afterAnswer";
-    }else if( eventName === "close" || eventName === "serverclose"){
+    }else if( eventNameInLower === "close" || eventNameInLower === "serverclose"){
         eventName = "afterServerClose";
-    }else if( eventName === "routenotfound" || eventName === "missingmapping" || eventName === "defaultroute"){
+    }else if( eventNameInLower === "routenotfound" || eventNameInLower === "missingmapping" || eventNameInLower === "defaultroute"){
         eventName = "defaultRoute";
-    }else if(eventName === "error"){
+    }else if(eventNameInLower === "error"){
         //this.eventEmitter.removeAllListeners("error");    
     }else{
         this._addAfterHandlers(eventName,callback);
@@ -328,25 +329,26 @@ Muneem.prototype.after = function(eventName, callback){
  * @param {function} callback 
  */
 Muneem.prototype.before = function(eventName, callback){
+    var eventNameInLower = eventName;
     if(!eventName || !callback) {
         throw Error("Please provide the valid parameters");
     }else{
         Muneem.logger.log.info(`Adding event before ${eventName}`);
-        eventName = eventName.replace(/-/g,"");
-        eventName = eventName.toLowerCase();
+        eventNameInLower = eventNameInLower.replace(/-/g,"");
+        eventNameInLower = eventNameInLower.toLowerCase();
     }
 
-    if( eventName === "route"){//request event is triggered before route
+    if( eventNameInLower === "route"){//request event is triggered before route
         eventName = "request";
-    }else if( eventName === "serverstart" || eventName === "start"){
+    }else if( eventNameInLower === "serverstart" || eventNameInLower === "start"){
         eventName = "beforeserverstart";
-    }else if( eventName === "serialize"){
+    }else if( eventNameInLower === "serialize"){
         eventName = "beforeSerialize";
-    }else if( eventName === "compress"){
+    }else if( eventNameInLower === "compress"){
         eventName = "beforesompress";
-    }else if( eventName === "send" || eventName === "answer" || eventName === "response"){
+    }else if( eventNameInLower === "send" || eventNameInLower === "answer" || eventNameInLower === "response"){
         eventName = "beforesnswer";
-    }else if( eventName === "close" || eventName === "serverclose"){
+    }else if( eventNameInLower === "close" || eventNameInLower === "serverclose"){
         eventName = "beforeServerClose";
     }else{
         this._addBeforeHandlers(eventName,callback);
