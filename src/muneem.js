@@ -53,6 +53,8 @@ Muneem.prototype.start = function(){
         this.appContext.https = this.options.server.https !== undefined ? true : false;
     }
 
+    //routes must be added when all type of handlers and events are added
+    //hence adding at the time of starting the server.
     if(this.options.mappings){
         this.routesManager.addRoutesFromMappingsFile(this.options.mappings);
     }
@@ -308,7 +310,7 @@ Muneem.prototype.after = function(eventName, callback){
     }else if(eventNameInLower === "error"){
         //this.eventEmitter.removeAllListeners("error");    
     }else{
-        this._addAfterHandlers(eventName,callback);
+        this._addAfterHandlers(eventNameInLower,callback);
         return this;
     }
     this.eventEmitter.on(eventName,callback);
@@ -351,7 +353,7 @@ Muneem.prototype.before = function(eventName, callback){
     }else if( eventNameInLower === "close" || eventNameInLower === "serverclose"){
         eventName = "beforeServerClose";
     }else{
-        this._addBeforeHandlers(eventName,callback);
+        this._addBeforeHandlers(eventNameInLower,callback);
         return this;
     }
 
