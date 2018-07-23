@@ -10,7 +10,7 @@ const Muneem = require("../src/muneem")
 
 describe ('Routes Manager', () => {
 
-    it('should call handlers in defined order', (done) => {
+    it('should call handlers in defined order added by direct methods', (done) => {
         
         const muneem = Muneem({
             alwaysReadRequestPayload: true
@@ -40,6 +40,102 @@ describe ('Routes Manager', () => {
             to: "main",
             after: ["auth", "parallel"],
             then: ["post", "last"]
+        });
+
+        var request  = new MockReq({
+            method: "POST",
+            url: '/test'
+        });
+
+        var response = new MockRes();
+
+        response.on('finish', function() {
+            expect(response.statusCode ).toEqual(200);
+            expect(blocks).toEqual([ 'auth',  'main', 'post', 'last']);
+        });
+        routesManager.router.lookup(request,response);
+
+    });
+
+
+    it('should call handlers in defined order added by add method', (done) => {
+        
+        const muneem = Muneem({
+            alwaysReadRequestPayload: true
+        });
+
+        let blocks = [];
+
+        muneem.add( "Handler",  () => {blocks.push("auth")} , "auth") ;
+        muneem.add( "Handler",  () => {
+            setTimeout(() => {
+                blocks.push("parallel");
+                expect(blocks).toEqual([ 'auth', 'main', 'post', 'last', 'parallel' ]);
+                done();
+            });
+        }, "parallel") ;
+        muneem.add( "Handler",  async (asked,answer) => {
+            blocks.push("main")
+        } , "main") ;
+        muneem.add( "Handler",  () => {blocks.push("post")}, "post" );
+        muneem.add( "Handler",  () => {blocks.push("last")} , "last") ;
+
+        const routesManager = muneem.routesManager;
+        
+        muneem.add ("route", {
+            when : "POST",
+            uri: "/test",
+            to: "main",
+            after: ["auth", "parallel"],
+            then: ["post", "last"]
+        });
+
+        var request  = new MockReq({
+            method: "POST",
+            url: '/test'
+        });
+
+        var response = new MockRes();
+
+        response.on('finish', function() {
+            expect(response.statusCode ).toEqual(200);
+            expect(blocks).toEqual([ 'auth',  'main', 'post', 'last']);
+        });
+        routesManager.router.lookup(request,response);
+
+    });
+
+
+    it('should call handlers in defined order without adding handlers', (done) => {
+        
+        const muneem = Muneem({
+            alwaysReadRequestPayload: true
+        });
+
+        let blocks = [];
+
+        var auth = () => {blocks.push("auth")}  ;
+        var parallel = () => {
+            setTimeout(() => {
+                blocks.push("parallel");
+                expect(blocks).toEqual([ 'auth', 'main', 'post', 'last', 'parallel' ]);
+                done();
+            });
+        } ;
+        var main = async (asked,answer) => {
+            blocks.push("main")
+        }  ;
+        var post = () => {blocks.push("post")} ;
+        var last = () => {blocks.push("last")} ;
+
+        const routesManager = muneem.routesManager;
+        
+        routesManager.addRoute({
+            when : "POST",
+            uri: "/test",
+            to: main,
+            after: [ auth, parallel],
+            then: [post, last]
         });
 
         var request  = new MockReq({

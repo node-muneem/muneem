@@ -94,7 +94,7 @@ RoutesManager.prototype.addRoute = function(route){
             ( route.when !== "GET" && route.when !== "HEAD" && route.when !== "UNLOCK" && route.when !== "PURGE" && route.when !== "COPY") ;
 
     this.eventEmitter.emit("addRoute",context.route);
-    this.router.on(route.when,route.uri, async (nativeRequest,nativeResponse,params) => {
+    this.router.on(route.when, route.uri, async (nativeRequest,nativeResponse,params) => {
         logger.log.debug(`Request Id:${nativeRequest.id}`, route);
         const asked = new HttpAsked(nativeRequest,params,context);
         asked._mayHaveBody = mayHaveBody;
@@ -186,36 +186,31 @@ RoutesManager.prototype.extractHandlersFromRoute = function(route){
     const handlerRunners = [];
 
     //Prepare the list of handler need to be called before
-    if(route.after){
-        if(typeof route.after === "string"){
-            route.after = [route.after];
-        }
-        for(let i=0;i<route.after.length;i++){
-            const handler = this.handlers.get(route.after[i]);
-            if(!handler) throw new ApplicationSetupError(`Unregistered handler ${route.after[i]}`);
-
-            handlerRunners.push(new Runner(route.after[i],handler.handle || handler,this.beforeEachPreHandler,this.afterEachPreHandler));
-        }
-    }
-    if(route.to){
-        const handler = this.handlers.get(route.to);
-        handlerRunners.push(new Runner(route.to,handler.handle || handler,this.beforeMainHandler,this.afterMainHandler));
-    }
-
-    //Prepare the list of handler need to be called after
-    if(route.then){
-        if(typeof route.then === "string"){
-            route.then = [route.then];
-        }
-        for(let i=0;i<route.then.length;i++){
-            const handler = this.handlers.get(route.then[i]);
-            if(!handler) throw new ApplicationSetupError(`Unregistered handler ${route.then[i]}`);
-           
-            handlerRunners.push(new Runner(route.then[i],handler.handle || handler ,this.beforeEachPostHandler,this.afterEachPostHandler));
-        }
-    }
+    this.pushToHandlerRunners(route.after, this.beforeEachPreHandler, this.afterEachPreHandler, handlerRunners );
+    this.pushToHandlerRunners(route.to, this.beforeMainHandler, this.afterMainHandler, handlerRunners );
+    this.pushToHandlerRunners(route.then, this.beforeEachPostHandler, this.afterEachPostHandler, handlerRunners );
 
     return handlerRunners;
+}
+
+RoutesManager.prototype.pushToHandlerRunners = function(handlersList, beforeHandler, afterHandler, handlerRunners ){
+    if(handlersList){
+        if( !Array.isArray(handlersList) ){
+            handlersList = [handlersList];
+        }
+        for(let i=0;i<handlersList.length;i++){
+            var fName = "", reqHandler = handlersList[i];
+            if(typeof reqHandler === "string"){
+                fName = handlersList[i];
+                reqHandler = this.handlers.get(reqHandler);
+                if(!reqHandler) throw new ApplicationSetupError(`Unregistered handler ${fName}`);
+            }else{
+                fName = reqHandler.name;
+            }
+
+            handlerRunners.push(new Runner(fName, reqHandler.handle || reqHandler, beforeHandler, afterHandler));
+        }
+    }
 }
 
 function RoutesManager(appContext,containers,eventEmitter){
