@@ -46,5 +46,10 @@
     "pump": "^3.0.0",
     "uniqid": "^4.1.1",
     "yamljs": "^0.3.0"
+  },
+  "nyc": {
+    "exclude": [
+      "tests", "build"
+    ]
   }
 }

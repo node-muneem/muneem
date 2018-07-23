@@ -1,8 +1,0 @@
-{
-    "nyc": {
-      "exclude": [
-        "tests/*",
-        "build"
-      ]
-    }
-  }
