@@ -3,6 +3,7 @@ const fs = require("fs");
 const zlib = require("zlib");
 const MockReq = require('mock-req');
 const MockRes = require('mock-res');
+const pump = require('pump')
 const eventEmitter = require('events').EventEmitter;
 const Muneem = require("../src/muneem")
 
@@ -241,7 +242,7 @@ describe ('Muneem', () => {
 
         muneem.addHandler("compress", 
             (asked,answer) => {
-                answer.writeMore(zlib.createGzip());
+                answer.write( pump(answer.data,zlib.createGzip() ) );
         }) ;
 
         const routesManager = muneem.routesManager;

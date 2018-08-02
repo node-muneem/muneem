@@ -1,5 +1,6 @@
 var zlib = require('zlib');
+var pump = require('pump');
 
 module.exports = (asked,answer) => {
-    answer.writeMore(zlib.createGzip());
+    answer.write( pump(answer.data, zlib.createGzip() ) );
 }

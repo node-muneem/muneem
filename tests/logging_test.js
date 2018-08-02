@@ -15,7 +15,6 @@ describe ('Muneem', () => {
         var expctedLogs = `info : Adding after event defaultRoute
 info : Adding after event fatBody
 info : Adding after event error
-info : Adding a serializer to handle application/json
 info : Adding a compressor to handle *
 info : Adding a compressor to handle *
 info : Adding a compressor to handle gzip

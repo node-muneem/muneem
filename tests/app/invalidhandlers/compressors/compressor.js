@@ -1,6 +1,6 @@
 module.exports = {
     /* type : "other", */
     compress : (asked,answer) => {
-        answer.replace("I'm fake compressor");
+        answer.write("I'm fake compressor");
     }
 }

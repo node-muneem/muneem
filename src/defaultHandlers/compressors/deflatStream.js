@@ -1,5 +1,6 @@
 var zlib = require('zlib');
+var pump = require('pump');
 
 module.exports = (asked,answer) => {
-    answer.writeMore(zlib.createDeflate());
+    answer.write( pump(answer.data, zlib.createDeflate() ) );
 }

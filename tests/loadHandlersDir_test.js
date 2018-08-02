@@ -6,7 +6,7 @@ const Muneem = require("../src/muneem")
 
 describe ('Muneem directory loader', () => {
 
-    it('should add valid handlers, compressors, and serializers including nexted path', (done) => {
+    it('should add valid handlers, and compressors including nested path', (done) => {
         
         //Muneem.setLogger(console)
         const muneem = Muneem({
@@ -41,13 +41,6 @@ describe ('Muneem directory loader', () => {
             }
         });
 
-        var serilizationRequest  = new MockReq({
-            url: '/test',
-            headers : {
-                "accept" : "application/other"
-            }
-        });
-
         var response1 = new MockRes();
 
         response1.on('finish', function() {
@@ -61,17 +54,10 @@ describe ('Muneem directory loader', () => {
         response2.on('finish', function() {
             expect(response2._getString() ).toEqual("I'm fake compressor");
             expect(response2.statusCode ).toEqual(200);
+            done();
         });
         routesManager.router.lookup(compressionRequest,response2);
 
-        var response3 = new MockRes();
-
-        response3.on('finish', function() {
-            expect(response3._getString() ).toEqual("I'm fake serializer");
-            expect(response3.statusCode ).toEqual(200);
-            done();
-        });
-        routesManager.router.lookup(serilizationRequest,response3);
     });
 
     it('should error when invalid dir path is given', () => {
@@ -91,16 +77,6 @@ describe ('Muneem directory loader', () => {
         expect(() => {
             muneem._addHandlers(path.join(__dirname, "app/invalidhandlers/handlers"));
         }).toThrowError("A handler should have property 'name'.");
-
-    });
-
-    it('should error when a serializer don\'t have type field', () => {
-        
-        const muneem = Muneem();
-        
-        expect(() => {
-            muneem._addHandlers(path.join(__dirname, "app/invalidhandlers/serializers"));
-        }).toThrowError("A serializer should have property 'type'.");
 
     });
 

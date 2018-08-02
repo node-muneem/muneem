@@ -2,7 +2,6 @@ const Container = require("./HandlersContainer");
 const RoutesManager = require("./routesManager");
 const Server = require("./server");
 const HttpAnswer = require("./HttpAnswer");
-const Serializers = require("./SerializersContainer");
 const Compressors = require("./CompressorsContainer");
 const ApplicationSetupError = require("./ApplicationSetupError");
 const fs = require("fs");
@@ -23,11 +22,6 @@ Muneem.setLogger = function(logger){
     }else{
         throw Error("Given logger doesn't support all standard logging methods.");
     }
-}
-
-Muneem.prototype.registerDefaultSerializers = function(){
-    //this.addSerializer("*/*" , require("./defaultHandlers/defaultSerializer"));
-    this.addSerializer("application/json" , require("./defaultHandlers/defaultSerializer"));
 }
 
 Muneem.prototype.registerDefaultCompressors = function(){
@@ -106,7 +100,6 @@ function Muneem(options){
     this.eventEmitter = new events.EventEmitter();
     this.containers = {
         handlers : new Container(),
-        serializers : new Serializers(),
         compressors : new Compressors(),
         streamCompressors : new Compressors()
     }
@@ -122,7 +115,6 @@ function Muneem(options){
     }
 
     this.registerDefaultHandlers();
-    this.registerDefaultSerializers();
     this.registerDefaultCompressors();
 
     this.routesManager = new RoutesManager(this.appContext,this.containers,this.eventEmitter);
@@ -149,8 +141,6 @@ Muneem.prototype.add = function(type, handler, handles ,flag ){
         this.containers.handlers.add(handles ,handler);
     }else if(type === "route"){
         this.routesManager.addRoute(handler);
-    }else if(type === "serializer"){
-        this.addSerializer(handles ,handler);
     }else if(type === "compressor"){
         this.addCompressor(handles ,handler ,flag);
     }else {
@@ -160,12 +150,6 @@ Muneem.prototype.add = function(type, handler, handles ,flag ){
     return this;
 
 };
-
-Muneem.prototype.addSerializer = function(mimeType, serializer ){
-    Muneem.logger.log.info("Adding a serializer to handle " + mimeType);
-    this.containers.serializers.add(mimeType, serializer);
-    return this;
-}
 
 Muneem.prototype.addCompressor = function(technique, compressor , handlesStream ){
     Muneem.logger.log.info("Adding a compressor to handle " + technique);
@@ -191,10 +175,9 @@ Muneem.prototype.addHandler = function(name,handler){
 }
 
 /*
-Add handlers, serializers, and compressors from a directory.
+Add handlers, and compressors from a directory.
 
 Handler should have name,
-serializers must have type,serialize/handle, 
 compressors must have type, compress/handler
 */
 Muneem.prototype._addHandlers = function(dir) {
@@ -225,11 +208,6 @@ Muneem.prototype._addHandlers = function(dir) {
                     }
                     this.addCompressor(aret[libName].type, aret[libName].compress);
 
-                }else if(aret[libName].serialize){
-                    if(!aret[libName].type){
-                        throw new ApplicationSetupError("A serializer should have property 'type'.");
-                    }
-                    this.addSerializer(aret[libName].type, aret[libName].serialize);
                 }
             }else{
                 throw new ApplicationSetupError(`Invalid handler ${libName}`);
@@ -265,7 +243,6 @@ Muneem.prototype.on = function(eventName, callback){
  * request : before route; raw request, raw response
  * route : before all handlers; asked, answer
  * exceedContentLengthn, fatBody; asked, answer
- * serialize : before Serialization happens; asked, answer
  * compress : before Compression happens; asked, answer
  * send, answer, response : After sending the response; asked, answer, isStream
  * serverclose, close : just before server's close is triggered
@@ -297,8 +274,6 @@ Muneem.prototype.after = function(eventName, callback){
     }else if( eventNameInLower === "exceedcontentlength" || eventNameInLower === "fatbody"){
         eventName = "fatBody"
         //this.eventEmitter.removeAllListeners(eventName);
-    }else if( eventNameInLower === "serialize"){
-        eventName = "afterSerialize";
     }else if( eventNameInLower === "compress" ){
         eventName = "afterCompress";
     }else if( eventNameInLower === "send" || eventNameInLower === "answer" || eventNameInLower === "response" ){
@@ -322,7 +297,6 @@ Muneem.prototype.after = function(eventName, callback){
  * 
  * addRoute : just before the route is added; args: route context
  * serverStart, start : just before server starts; 
- * serialize : before Serialization happens
  * compress : before Compression happens
  * send, answer, response : Before sending the response
  * serverClose, close : just before server's close is triggered
@@ -344,8 +318,6 @@ Muneem.prototype.before = function(eventName, callback){
         eventName = "request";
     }else if( eventNameInLower === "serverstart" || eventNameInLower === "start"){
         eventName = "beforeserverstart";
-    }else if( eventNameInLower === "serialize"){
-        eventName = "beforeSerialize";
     }else if( eventNameInLower === "compress"){
         eventName = "beforesompress";
     }else if( eventNameInLower === "send" || eventNameInLower === "answer" || eventNameInLower === "response"){

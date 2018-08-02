@@ -5,15 +5,10 @@ const eventEmitter = require('events').EventEmitter;
 const path = require('path');
 const HttpAnswer = require("../src/HttpAnswer")
 const ApplicationSetupError = require("../src/ApplicationSetupError")
-const SerializerFactory = require("../src/SerializersContainer")
-const defaultSerializer = require("../src/defaultHandlers/defaultSerializer")
 
 describe ('HttpAnswer', () => {
-    const serializerFactory = new SerializerFactory();
-    serializerFactory.add("application/json", defaultSerializer);
-    const containers = {
-        serializers : serializerFactory
-    }
+
+    const containers = {};
 
     it('should set Content-Type', () => {
         const answer = new HttpAnswer();
@@ -23,6 +18,7 @@ describe ('HttpAnswer', () => {
 
         //then
         expect(answer.getHeader("content-type")).toEqual("application/json");
+        expect( answer.type() ).toEqual("application/json");
     });
 
     it('should set Content-Length', () => {
@@ -33,6 +29,7 @@ describe ('HttpAnswer', () => {
 
         //then
         expect(answer.getHeader("content-length")).toEqual(35);
+        expect( answer.length() ).toEqual(35);
     });
 
     it('should return true when already answered', () => {
@@ -99,51 +96,6 @@ describe ('HttpAnswer', () => {
         expect(response.getHeader("content-length")).toEqual(9);
     });
 
-    it('should set number and content length', () => {
-        const response = new MockRes();
-        const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
-
-        //when
-        answer.write(420);
-        answer.end();
-
-        //then
-        expect(response._getString()).toEqual("420");
-        expect(response.getHeader("content-type")).toEqual("text/plain");
-        expect(response.getHeader("content-length")).toEqual(3);
-    });
-
-    it('should set object and it\'s length', () => {
-        const response = new MockRes();
-        const request = buildMockedRequest("application/json");
-        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
-
-        //when
-        answer.write({ hello : 'world'});
-        answer.end();
-
-        //then
-        expect(response._getString()).toEqual('{"hello":"world"}');
-        //expect(response.getHeader("content-type")).toEqual("application/json");
-        expect(response.getHeader("content-length")).toEqual(17);
-    });
-
-    it('should set wrong length if given', () => {
-        const response = new MockRes();
-        const request = buildMockedRequest("application/json");
-        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
-
-        //when
-        answer.write({ hello : 'world'}, "application/json",10);
-        answer.end();
-
-        //then
-        expect(response._getString()).toEqual('{"hello":"world"}');
-        expect(response.getHeader("content-type")).toEqual("application/json");
-        expect(response.getHeader("content-length")).toEqual(10);
-    });
-
     it('should set stream without content length', (done) => {
         const response = new MockRes();
         const request = buildMockedRequest();
@@ -160,15 +112,28 @@ describe ('HttpAnswer', () => {
        
         //when
         answer.write(fileReadableStream);
-        answer.end();
-
+        
         //then
+        /* response.on('finish', function() {
+            expect( response.getHeader("content-type")).toEqual(undefined);
+            expect( response.getHeader("content-length")).toEqual(undefined);
+            expect( response._responseData.toString() ).toEqual("This file is ready for download");
+            done();
+        }); */
+
+        let chunks = [];   
+        response.on('data', chunk => {
+            chunks.push(chunk);
+        });
         response.on('finish', function() {
-            expect(response.getHeader("content-type")).toEqual(undefined);
+            chunks = Buffer.concat(chunks);
             expect(response.getHeader("content-length")).toEqual(undefined);
-            expect(response._responseData.toString()).toEqual("This file is ready for download");
+            expect(chunks.toString() ).toEqual("This file is ready for download");
+            expect(response.statusCode ).toEqual(200);
             done();
         });
+
+        answer.end();
     });
 
     it('should set stream with content length when given', (done) => {
@@ -197,95 +162,41 @@ describe ('HttpAnswer', () => {
         });
     });
 
-    //TODO: fails intermittently
-    it('should pipe multiple streams', (done) => {
-        const response = new MockRes();
-        const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,null,new eventEmitter());
-
-        //create a file for test
-        /* let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
-        fileWritableStream.write("This file is ready for download");
-        fileWritableStream.end(); */
-        fs.writeFileSync(path.resolve(__dirname, "fileToDownload"), "This file is ready for download");
-
-        //create a stream
-        /* const filePath = path.resolve(__dirname, "fileToDownload"); */
-        const fileReadableStream = fs.createReadStream(path.resolve(__dirname, "fileToDownload"));
-       
-        //when
-        answer.write(fileReadableStream,"plain/text");
-        const zlib = require('zlib');
-        answer.writeMore(zlib.createGzip());
-        answer.end();
-
-        //then
-        let chunks = [];   
-        response.on('data', chunk => {
-            chunks.push(chunk);
-        });
-        response.on('finish', function() {
-            chunks = Buffer.concat(chunks);
-            expect(response.getHeader("content-type")).toEqual("plain/text");
-            expect(zlib.gunzipSync(chunks).toString()).toEqual("This file is ready for download");
-            expect(response.statusCode ).toEqual(200);
-            done();
-        });
-
-        
-    });
-
-    it('should set and add data', () => {
+    it('should not set data when already set and safety is on', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
         const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.write("I'm fine.");
-        answer.writeMore(" How are you?");
-        answer.end();
-
-        //then
-        expect(response._getString()).toEqual("I'm fine. How are you?");
-    });
-
-    it('should set but not add data when different type', () => {
-        const response = new MockRes();
-        const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
-
-        let fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "fileToDownload"));
-        fileWritableStream.end();
-
-        //when
-        answer.write("I'm fine.");
-        expect(() => {
-            answer.writeMore(fileWritableStream);
-        }).toThrowError("Unsupported type object.");
-    });
-
-    it('should not set data when already set', () => {
-        const response = new MockRes();
-        const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
-
-        //when
-        answer.write("I'm fine.");
-        answer.write(" How are you?");
+        answer.write(" How are you?", null, null, true);
         answer.end();
 
         //then
         expect(response._getString()).toEqual("I'm fine.");
     });
 
-    it('should replace data', () => {
+    it('should set data when already not set and safety is on', () => {
+        const response = new MockRes();
+        const request = buildMockedRequest();
+        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
+
+        //when
+        answer.write(" How are you?", null, null, true);
+        answer.end();
+
+        //then
+        expect(response._getString()).toEqual(" How are you?");
+    });
+
+    it('should replace data when safety is on', () => {
         const response = new MockRes();
         const request = buildMockedRequest();
         const answer = new HttpAnswer(response,request,containers,new eventEmitter());
 
         //when
         answer.write("I'm fine.","plain/text",9);
-        answer.replace(" How are you?","application/text",10);
+        answer.write(" How are you?","application/text",10, false);
         answer.end();
 
         //then
@@ -294,49 +205,6 @@ describe ('HttpAnswer', () => {
             "content-length" : 10,
             "content-type" : "application/text"
         });
-    });
-
-    it('should add data even if it is not set before', () => {
-        const response = new MockRes();
-        const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
-
-        //when
-        answer.writeMore("I'm fine.");
-        answer.end();
-
-        //then
-        expect(response._getString()).toEqual("I'm fine.");
-    });
-
-    it('should replace data even if it is not set before', () => {
-        const response = new MockRes();
-        const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
-
-        //when
-        answer.replace("I'm fine.");
-        answer.end();
-
-        //then
-        expect(response._getString()).toEqual("I'm fine.");
-    });
-
-    it('should response with 406 when data type can\'t be serialized', (done) => {
-        const response = new MockRes();
-        const request = buildMockedRequest();
-        const answer = new HttpAnswer(response,request,containers,new eventEmitter());
-
-        //when
-        answer.write(() => {});
-        answer.end();
-
-        //then
-        response.on('finish', function() {
-            expect(response.statusCode ).toEqual(406);
-            done();
-        });
-
     });
 
     it('should not set content length for status 204', (done) => {
@@ -385,19 +253,6 @@ describe ('HttpAnswer', () => {
             expect(response._headers["content-length"] ).toEqual(undefined);
             done();
         });
-    });
-
-    it('should error when invalid data is to add', () => {
-        const response = new MockRes();
-        const answer = new HttpAnswer(response,buildMockedRequest(),containers,new eventEmitter());
-
-        //when
-        answer.write("I'm fine.");
-        
-        //then
-        expect(() => {
-            answer.writeMore(() => {});
-        }).toThrowError("Unsupported type function.");
     });
 
     it('should set location header and 302 status code on redirect ', () => {

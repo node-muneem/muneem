@@ -2,11 +2,19 @@ const logger = require("./fakeLogger");
 var pump = require('pump')
 
 HttpAnswer.prototype.type = function(c_type){
-    this._headers["content-type"] = c_type;
+    if(!c_type) {
+        return this._headers["content-type"]
+    }else{
+        this._headers["content-type"] = c_type;
+    }
 }
 
 HttpAnswer.prototype.length = function(len){
-    this._headers["content-length"] = len;
+    if(len === undefined) {
+        return this._headers["content-length"];
+    }else{
+        this._headers["content-length"] = len;
+    }
 }
 
 HttpAnswer.prototype.answered = function(){
@@ -48,53 +56,17 @@ HttpAnswer.prototype.removeHeader = function(name){
 }
 
 /**
- * Add more string data to previously added data. Or pipe the stream to previously added stream
- * Or set data if it was not set before.
- * @param {*} data 
- */
-HttpAnswer.prototype.writeMore = function(data){
-    if(this.data){
-        if(typeof this.data === "string" && typeof data === "string"){
-                this.data += data;
-        }else if(isStream(this.data) && isStream(data)){
-                //this.data.pipe(data);
-                pump(this.data,data);
-                this.data = data;
-        }else{
-            //TODO: set the date, number, boolean formats
-            this.end(null,500,"Unsupported type " + typeof data + " is given");
-            throw Error("Unsupported type " + typeof data + ".");
-        }
-    }else{
-        this.data = data;
-    }
-}
-
-/**
  * Write if it is not written before
  * @param {*} data 
  * @param {string} type : content-type
  * @param {number|string} length : content-length
  */
-HttpAnswer.prototype.write = function(data,type,length){
-    if(!this.data) { //Don't set if it is already set
+HttpAnswer.prototype.write = function(data,type,length, safe){
+    if(! (safe && this.data) ) { //Don't set if it is already set
         this.data = data;   
         type && this.type(type);
         length && this.length(length);
     } 
-}
-
-/**
- * Replace previous data with new
- * @param {*} data 
- * @param {string} type : content-type
- * @param {number|string} length : content-length
- */
-//TODO: rename it to replaceWith
-HttpAnswer.prototype.replace = function(data,type,length){
-    this.data = data;
-    type && this.type(type);
-    length && this.length(length);
 }
 
 /**
@@ -141,12 +113,12 @@ HttpAnswer.prototype.end = function(){
         const compressionConfig = this._for.context.route.compress;
         if(isStream(this.data)){
             if(compressionConfig && compressionConfig.filter(this._for,this)){
-                    const compress =  this.containers.streamCompressors.get(this._for,compressionConfig.preference);
-                    if(compress){
-                        this.eventEmitter.emit("beforeCompress",this._for,this);
-                        compress(this._for, this);
-                        this.eventEmitter.emit("afterCompress",this._for,this);  
-                    } 
+                const compress =  this.containers.streamCompressors.get(this._for,compressionConfig.preference);
+                if(compress){
+                    this.eventEmitter.emit("beforeCompress",this._for,this);
+                    compress(this._for, this);
+                    this.eventEmitter.emit("afterCompress",this._for,this);  
+                } 
             }
             this._native.writeHead(this._statusCode, this._headers);
             this.eventEmitter.emit("beforeAnswer",this._for,this,true);
@@ -159,10 +131,6 @@ HttpAnswer.prototype.end = function(){
                 this._statusCode = 500;
                 this.length(0);
             }else if(this.data){
-                this.eventEmitter.emit("beforeSerialize",this._for,this);
-                if(this._serialize() === false) return;
-                this.eventEmitter.emit("afterSerialize",this._for,this);
-    
                 if(compressionConfig && this.data.length > 0 && this.data.length > compressionConfig.threshold && compressionConfig.filter(this._for,this)){
                     const compress =  this.containers.compressors.get(this._for,compressionConfig.preference);
                     if(compress){
@@ -170,11 +138,12 @@ HttpAnswer.prototype.end = function(){
                         compress(this._for, this);
                         this.eventEmitter.emit("afterCompress",this._for,this);
                         //When data is compressed, Transfer-Encoding →chunked, and content-encoding → compression type. So don't set content length
+                        //When data is compressed, content-encoding should be set (Eg gzip). Content type should represent the original content only
                         logger.log.debug(`Request Id:${this._for.id}; answer has been compressed`);
                     }
                     
                 }else{
-                    this._setContentLength(Buffer.byteLength(this.data));
+                    this._setContentLength();
                 }
             }else {
                 //this.length(0);
@@ -185,27 +154,6 @@ HttpAnswer.prototype.end = function(){
     }
 }
 
-
-HttpAnswer.prototype._serialize = function(){
-    const serialize = this.containers.serializers.get(this._for);
-    if(serialize){
-        serialize(this._for,this);
-    }else if(typeof this.data === "string"){
-        if( !this._headers['content-type'] ) this.type('text/plain');
-        Number(this.data);
-    }else if(Buffer.isBuffer(this.data) ){
-        if( !this._headers['content-type'] ) this.type('application/octet-stream');
-    }else  if(typeof this.data === "number" && !this._headers['content-type'] ){
-        this.data += '';
-        this.type('text/plain');
-    }else{
-        logger.log.debug(`Request Id:${this._for.id}; Unsupported data type to send :  ${typeof this.data}`);
-        this.length(0);
-        this._send("", 406)
-        return false;
-    }
-    return true;
-}
 HttpAnswer.prototype._send = function(data, statusCode){
     this._native.writeHead(statusCode || this._statusCode, this._headers);
     this.eventEmitter.emit("beforeAnswer",this._for,this,false);
@@ -218,18 +166,18 @@ HttpAnswer.prototype._send = function(data, statusCode){
 // Check section https://tools.ietf.org/html/rfc7230#section-3.3.2
 // we should not send content-length for status code < 200, 204.
 // or status code === 2xx and method === CONNECT
-HttpAnswer.prototype._setContentLength = function(len){
+HttpAnswer.prototype._setContentLength = function(){
     if ( !this._headers['content-length'] && !this._headers['transfer-encoding'] ){
         if(this._statusCode < 200 || this._statusCode === 204 || 
             (this._for.method === "CONNECT" && this._statusCode > 199 &&  this._statusCode < 300)) 
         {
             //don't send content length
-        }else{
-            this.length(len);
+        }else if( ! this.length() && typeof this.data === 'string' ){
+            this.length( this.length( Buffer.byteLength(this.data) ) );
         }
     } 
-
 }
+
 const isStream = function(data){
     return data && data.pipe && typeof data.pipe === "function"
 }
@@ -244,7 +192,7 @@ function HttpAnswer(res,asked,containers,eventEmitter){
     this.containers = containers;
     this._for = asked;
     this._native = res;
-    this.encoding = "utf8";
+    this.encoding = "utf-8";
     this._statusCode = 200;
     this._headers = {};
     this.eventEmitter = eventEmitter;
