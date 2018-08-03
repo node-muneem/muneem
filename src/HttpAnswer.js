@@ -86,6 +86,7 @@ HttpAnswer.prototype.write = function(data,type,length, safe){
  * 
  */
 HttpAnswer.prototype.end = function(){
+    
     if(this.answered()){
         logger.log.warn("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
     }else{
@@ -110,59 +111,32 @@ HttpAnswer.prototype.end = function(){
         type && this.type(type);
         length && this.length(length);
         
-        if(isStream(this.data)){
-            this._compress(true);
-            this._native.writeHead(this._statusCode, this._headers);
-            this.eventEmitter.emit("beforeAnswer",this._for,this,true);
-            pump(this.data,this._native);
-        }else{
-            if(this.data instanceof Error){
-                logger.log.error(this.data);
-                this._statusCode = 500;
-                this.length(0);
-            }else if(this.data && !this._compress()){
-                this._setContentLength();
-            }
-
-            this._send(this.data);
+        if(this.data instanceof Error){
+            logger.log.error( this.data );
+            this.data = "";
+            this._statusCode = 500;
+            this.length(0);
+        }else if(this.data && !isStream(this.data) ){
+            this._setContentLength();
         }
-        this.eventEmitter.emit("afterAnswer",this._for,this,false);
+        
+        //a user may call end() from beforeAnswer event
+        if( !this._beforeAnswerEventCall){
+            this.eventEmitter.emit("beforeAnswer", this._for, this);
+            this._beforeAnswerEventCall = true;
+        } 
+
+        if( ! this.answered() ){
+            this._native.writeHead(this._statusCode, this._headers);
+            if( isStream(this.data) ){
+                pump(this.data, this._native);
+            }else{
+                this._native.end(this.data ,this.encoding);
+            }
+            this.eventEmitter.emit("afterAnswer",this._for,this);
+        }
         logger.log.debug(`Request Id:${this._for.id} has been answered`);
     }
-}
-
-HttpAnswer.prototype._compress = function(isItAStream){
-    const compressionConfig = this._for.context.route.compress;
-
-    if(compressionConfig){
-        let compress;
-        if(isItAStream && compressionConfig.filter(this._for, this )  ){
-            compress = this.containers.streamCompressors.get(this._for,compressionConfig.preference);
-        }else if(this.data.length > 0 
-            && this.data.length > compressionConfig.threshold 
-            && compressionConfig.filter(this._for,this) ) {
-            compress =  this.containers.compressors.get(this._for,compressionConfig.preference);
-        }
-
-        if(compress){
-            this.eventEmitter.emit("beforeCompress",this._for,this);
-            compress(this._for, this);
-            this.eventEmitter.emit("afterCompress",this._for,this);
-
-            logger.log.debug(`Request Id:${this._for.id}; answer has been compressed`);
-            return true;
-            //When data is compressed, Transfer-Encoding →chunked, and content-encoding → compression type. So don't set content length
-            //When data is compressed, content-encoding should be set (Eg gzip). Content type should represent the original content only  
-        } 
-    }
-
-    return false;
-}
-
-HttpAnswer.prototype._send = function(data){
-    this._native.writeHead(this._statusCode, this._headers);
-    this.eventEmitter.emit("beforeAnswer",this._for,this,false);
-    this._native.end(data || "",this.encoding);
 }
 
 //TODO: test

@@ -36,7 +36,7 @@ describe ('Muneem server', () => {
     })
 
     afterAll(() => {
-        muneem.server.close();
+        //muneem.server.close();
     });
 
     it('should response back politely ;)',async () => {
@@ -66,26 +66,27 @@ describe ('Muneem server', () => {
 
         /* const res = await h2url.concat({ url : "http://localhost:3003/test" })
         console.log(res) */
-    muneem.options.server = {
-        port: 3004,
-        http2 : true,
-        https : buildSecureServerConfig()
-    };
+        muneem.options.server = {
+            port: 3004,
+            http2 : true,
+            https : buildSecureServerConfig()
+        };
 
-    muneem.options.mappings = undefined;
-    muneem.start();
+        muneem.options.mappings = undefined;
 
-    const res = await h2url.request({
-        method: "POST",
-        url : "https://localhost:3004/test",
-        body: "some sample data"
-    })
-    //console.log(res.headers)
-    expect(res.headers[":status"]).toEqual(200);
-    expect(res.headers["content-length"]).toEqual('51');
-    const body = await getStream(res.stream);
-    expect(body).toEqual("I'm glad to response you back with some sample data");
-});
+        muneem.start();
+
+        const res = await h2url.request({
+            method: "POST",
+            url : "https://localhost:3004/test",
+            body: "some sample data"
+        })
+        //console.log(res.headers)
+        expect(res.headers[":status"]).toEqual(200);
+        expect(res.headers["content-length"]).toEqual('51');
+        const body = await getStream(res.stream);
+        expect(body).toEqual("I'm glad to response you back with some sample data");
+    });
 
 });
 

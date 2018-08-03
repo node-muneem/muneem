@@ -1,6 +1,5 @@
 const RoutesManager = require("../src/routesManager");
 const Container = require("../src/HandlersContainer");
-const Compressors = require("../src/CompressorsContainer");
 const path = require("path");
 var events = require('events');
 
@@ -15,9 +14,7 @@ describe ('RoutesManager', () => {
         .add("main", () => {});
     
     const containers = {
-        handlers : container,
-        compressors : new Compressors(),
-        streamCompressors : new Compressors()
+        handlers : container
     }
     let env;
     beforeEach(()=>{
@@ -30,10 +27,7 @@ describe ('RoutesManager', () => {
 
     it('should skip if invalid yaml file is given', () => {
         const options = {
-            mappings :  path.join(__dirname , "app/mappings/invalid/invalid.yaml"),
-            compress : {
-                shouldCompress : false
-            }
+            mappings :  path.join(__dirname , "app/mappings/invalid/invalid.yaml")
         };
         const routesManager =new RoutesManager(options,containers);
         
@@ -44,10 +38,7 @@ describe ('RoutesManager', () => {
 
     it('should error when not exist file is given', () => {
         const options = {
-            mappings : path.join(__dirname , "app/mappings/notfound.yaml"),
-            compress : {
-                shouldCompress : false
-            }
+            mappings : path.join(__dirname , "app/mappings/notfound.yaml")
         };
         const routesManager =new RoutesManager(options,containers);
 
@@ -60,10 +51,7 @@ describe ('RoutesManager', () => {
     it('should skip non-yaml file and mappings for different environment', () => {
         const options = {
             mappings : path.join(__dirname , "app/mappings/"),
-            alwaysReadRequestPayload: true,
-            compress : {
-                shouldCompress : false
-            }
+            alwaysReadRequestPayload: true
         };
         const routesManager =new RoutesManager(options,containers,new events.EventEmitter());
         routesManager.addRoutesFromMappingsFile(options.mappings);
@@ -78,10 +66,7 @@ describe ('RoutesManager', () => {
     it('should let user add route through code', () => {
         const options = {
             mappings : path.join(__dirname , "app/mappings/"),
-            alwaysReadRequestPayload: true,
-            compress : {
-                shouldCompress : false
-            }
+            alwaysReadRequestPayload: true
         };
         const routesManager =new RoutesManager(options,containers,new events.EventEmitter());
 
@@ -120,10 +105,7 @@ describe ('RoutesManager', () => {
 
     it('should error when then handler is not registered', () => {
         const options = {
-            mappings : path.join(__dirname , "app/mappings/invalid/unknownHandler.yaml"),
-            compress : {
-                shouldCompress : false
-            }
+            mappings : path.join(__dirname , "app/mappings/invalid/unknownHandler.yaml")
         };
         const routesManager =new RoutesManager(options,containers);
         
@@ -134,11 +116,7 @@ describe ('RoutesManager', () => {
     });
 
     it('should error when after handler is not registered', () => {
-        const routesManager =new RoutesManager({
-            compress : {
-                shouldCompress : false
-            }
-        },containers);
+        const routesManager =new RoutesManager({},containers);
         expect(() => {
             routesManager.addRoute({
                 after: "unknown"
@@ -147,16 +125,4 @@ describe ('RoutesManager', () => {
 
     });
 
-    it('should error when preferred compression type is not registered', async () => {
-
-        const routesManager =new RoutesManager(null,containers);
-        expect(() => {
-            routesManager.addRoute({
-                compress : {
-                    preference : ["br"]
-                }
-            });
-        }).toThrowError("Unregistered compression type is set in preference : br");
-
-    });
 });

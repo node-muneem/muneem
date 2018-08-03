@@ -7,7 +7,7 @@ describe ('Muneem', () => {
     it('should add method to HttpAnswer', (done) => {
         
         const muneem = Muneem();
-        Muneem.addToAnswer("justForTest", function(msg){
+        muneem.addToAnswer("justForTest", function(msg){
             this.write("justforTest : " + msg);
         } );
         muneem.addHandler("main", (asked,answer) => {

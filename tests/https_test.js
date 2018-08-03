@@ -47,7 +47,7 @@ describe ('Muneem server', () => {
    });
 
     afterAll(() => {
-        muneem.server.close();
+        //muneem.server.close();
      });
 
     it('should response back politely ;)', (done) => {

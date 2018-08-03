@@ -276,14 +276,7 @@ describe ('HttpAnswer', () => {
                 "accept" : acceptType,
             },
             "method" : method,
-            context : {
-                route : {
-                    compress : false
-                },
-                app:{
-                    compress : false
-                }
-            }
+            context : {}
         });
     }
 });

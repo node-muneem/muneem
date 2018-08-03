@@ -13,10 +13,27 @@ Server.prototype.start = function(){
     });
 }
 
+/* const events = {
+    "b_close" : [],
+    "a_close" : [],
+    "error" : [],
+    "b_start" : [],
+    "a_start" : [],
+    "request" : []
+}
+Server.prototype.on = function(eventName, fn){
+    events[eventName].push(fn);
+}
+
+Server.prototype.emit = function(eventName){
+    events[eventName].push(fn);
+} */
+
 Server.prototype.close = function(){
     this.eventEmitter.emit('serverClose');
     this.server.close();
     this.eventEmitter.emit('afterServerClose');
+
 }
 
 function networkErrHandler(err,port,host,server) {

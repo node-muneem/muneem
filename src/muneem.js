@@ -2,7 +2,6 @@ const Container = require("./HandlersContainer");
 const RoutesManager = require("./routesManager");
 const Server = require("./server");
 const HttpAnswer = require("./HttpAnswer");
-const Compressors = require("./CompressorsContainer");
 const ApplicationSetupError = require("./ApplicationSetupError");
 const fs = require("fs");
 const path = require("path");
@@ -24,24 +23,19 @@ Muneem.setLogger = function(logger){
     }
 }
 
-Muneem.prototype.registerDefaultCompressors = function(){
-    this.addCompressor("*" , require("./defaultHandlers/compressors/gzip"));
-    this.addCompressor("*" , require("./defaultHandlers/compressors/gzipStream"), true);
-
-    this.addCompressor("gzip" , require("./defaultHandlers/compressors/gzip"));
-    this.addCompressor("gzip" , require("./defaultHandlers/compressors/gzipStream"), true);
-
-    this.addCompressor("deflat" , require("./defaultHandlers/compressors/deflat"));
-    this.addCompressor("deflat" , require("./defaultHandlers/compressors/deflatStream"), true);
-}
-
 Muneem.prototype.registerDefaultHandlers = function(){
+    this.checkIfNotStarted();    
     this.on("defaultRoute", require("./defaultHandlers/defaultRoute") );
     this.on("fatBody", require("./defaultHandlers/exceedContentLengthHandler") );
     this.on("error", require("./defaultHandlers/exceptionHandler") );
 }
 
 Muneem.prototype.start = function(){
+    /* if(this.state === "started"){
+        Muneem.logger.log.info("Server has already been started");
+        return;
+    } */
+    
     if(this.options.server){
         this.appContext.http2 = this.options.server.http2;
         this.appContext.https = this.options.server.https !== undefined ? true : false;
@@ -52,56 +46,26 @@ Muneem.prototype.start = function(){
     if(this.options.mappings){
         this.routesManager.addRoutesFromMappingsFile(this.options.mappings);
     }
-    this.server = new Server(this.options.server, this.routesManager.router, this.eventEmitter);
-    this.server.start();
+    const server = new Server(this.options.server, this.routesManager.router, this.eventEmitter);
+    server.start();
+    this.state = "started";
 }
-const defaultCompressionOptions = {
-    //preference : ["gzip"],
-    // minimum length of data to apply compression. Not applicable on stream
-    threshold : 1024,
-    filter : function(asked,answer){
-        if(asked.headers['x-no-compression'] 
-            || asked.headers['cache-control'] === 'no-transform'
-        ){
-            return false;
-        }else{
-            return true;
-        }
-    }
-};
 
 const defaultOptions = {
     alwaysReadRequestPayload: false,
-    compress : true,
     maxLength: 1e6
 }
 function Muneem(options){
+
     if(!(this instanceof Muneem)) return new Muneem(options);
+    this.state = "created";
     this.options = options || {};
     this.appContext =  Object.assign({},defaultOptions);
-
-    if(options && options.compress !== undefined){
-        this.appContext.compress = options.compress;
-    }
-
-    if(this.appContext.compress){
-        this.appContext.compress =  Object.assign({},defaultCompressionOptions,this.appContext.compress);
-        this.appContext.compress.shouldCompress = true;
-    }else{
-        this.appContext.compress = defaultCompressionOptions;
-        this.appContext.compress.shouldCompress = false; 
-    }
-    if(typeof this.appContext.compress.preference === "string"){
-        this.appContext.compress.preference = [ this.appContext.compress.preference ];
-    }
-
     
 
     this.eventEmitter = new events.EventEmitter();
     this.containers = {
-        handlers : new Container(),
-        compressors : new Compressors(),
-        streamCompressors : new Compressors()
+        handlers : new Container()
     }
 
     if(options && options.handlers){//load handlers from given path(s)
@@ -115,9 +79,11 @@ function Muneem(options){
     }
 
     this.registerDefaultHandlers();
-    this.registerDefaultCompressors();
 
     this.routesManager = new RoutesManager(this.appContext,this.containers,this.eventEmitter);
+    this.before("serverClose", () => {
+        this.state = "closed";
+    });
 }
 
 /**
@@ -125,13 +91,14 @@ function Muneem(options){
  * @param {string} methodName 
  * @param {function} fn 
  */
-Muneem.addToAnswer = function(methodName, fn ){
+Muneem.prototype.addToAnswer = function(methodName, fn ){
+    this.checkIfNotStarted();
     Muneem.logger.log.info("Adding a methods " + methodName + " to HttpAnswer");
     HttpAnswer.prototype[methodName] = fn;
 }
 
 Muneem.prototype.add = function(type, handler, handles ,flag ){
-
+    this.checkIfNotStarted();
     if(!type || !handler){
         throw Error("Please provide valid parameters");
     }
@@ -141,8 +108,6 @@ Muneem.prototype.add = function(type, handler, handles ,flag ){
         this.containers.handlers.add(handles ,handler);
     }else if(type === "route"){
         this.routesManager.addRoute(handler);
-    }else if(type === "compressor"){
-        this.addCompressor(handles ,handler ,flag);
     }else {
         throw Error("Please provide valid handler type");
     }
@@ -151,21 +116,6 @@ Muneem.prototype.add = function(type, handler, handles ,flag ){
 
 };
 
-Muneem.prototype.addCompressor = function(technique, compressor , handlesStream ){
-    Muneem.logger.log.info("Adding a compressor to handle " + technique);
-    if(handlesStream === true){
-        this.containers.streamCompressors.add(technique, compressor);
-    }else{
-        this.containers.compressors.add(technique, compressor);
-    }
-    return this;
-}
-
-/* Muneem.prototype.addStreamCompressor = function(technique, compressor ){
-    Muneem.logger.log.info("Adding a stream compressor to handle " + technique);
-    this.containers.streamCompressors.add(technique, compressor);
-}
- */
 /**
  * Add handlers to the container which should be used by each router
  */
@@ -175,10 +125,8 @@ Muneem.prototype.addHandler = function(name,handler){
 }
 
 /*
-Add handlers, and compressors from a directory.
-
+Add handlers from a directory.
 Handler should have name,
-compressors must have type, compress/handler
 */
 Muneem.prototype._addHandlers = function(dir) {
     var aret = [];
@@ -202,12 +150,6 @@ Muneem.prototype._addHandlers = function(dir) {
                     }
                     this.addHandler(aret[libName].name, aret[libName].handle);
 
-                }else if(aret[libName].compress){
-                    if(!aret[libName].type){
-                        throw new ApplicationSetupError("A compressor should have property 'type'.");
-                    }
-                    this.addCompressor(aret[libName].type, aret[libName].compress);
-
                 }
             }else{
                 throw new ApplicationSetupError(`Invalid handler ${libName}`);
@@ -219,6 +161,7 @@ Muneem.prototype._addHandlers = function(dir) {
 }
 
 Muneem.prototype.route = function(route){
+    this.checkIfNotStarted();
     this.routesManager.addRoute(route);
     return this;
 }
@@ -233,6 +176,7 @@ Muneem.prototype.afterHandler = function(name,fn){
 } */
 
 Muneem.prototype.on = function(eventName, callback){
+    this.checkIfNotStarted();
     return this.after(eventName, callback);
 };
 /**
@@ -243,7 +187,6 @@ Muneem.prototype.on = function(eventName, callback){
  * request : before route; raw request, raw response
  * route : before all handlers; asked, answer
  * exceedContentLengthn, fatBody; asked, answer
- * compress : before Compression happens; asked, answer
  * send, answer, response : After sending the response; asked, answer, isStream
  * serverclose, close : just before server's close is triggered
  * routeNotFound : when no matching route is found
@@ -253,6 +196,7 @@ Muneem.prototype.on = function(eventName, callback){
  */
 
 Muneem.prototype.after = function(eventName, callback){
+    this.checkIfNotStarted();
     var eventNameInLower = eventName;
     if(!eventName || !callback) {
         throw Error("Please provide the valid parameters");
@@ -274,8 +218,6 @@ Muneem.prototype.after = function(eventName, callback){
     }else if( eventNameInLower === "exceedcontentlength" || eventNameInLower === "fatbody"){
         eventName = "fatBody"
         //this.eventEmitter.removeAllListeners(eventName);
-    }else if( eventNameInLower === "compress" ){
-        eventName = "afterCompress";
     }else if( eventNameInLower === "send" || eventNameInLower === "answer" || eventNameInLower === "response" ){
         eventName = "afterAnswer";
     }else if( eventNameInLower === "close" || eventNameInLower === "serverclose"){
@@ -297,7 +239,6 @@ Muneem.prototype.after = function(eventName, callback){
  * 
  * addRoute : just before the route is added; args: route context
  * serverStart, start : just before server starts; 
- * compress : before Compression happens
  * send, answer, response : Before sending the response
  * serverClose, close : just before server's close is triggered
  * 
@@ -305,6 +246,7 @@ Muneem.prototype.after = function(eventName, callback){
  * @param {function} callback 
  */
 Muneem.prototype.before = function(eventName, callback){
+    this.checkIfNotStarted();
     var eventNameInLower = eventName;
     if(!eventName || !callback) {
         throw Error("Please provide the valid parameters");
@@ -318,10 +260,8 @@ Muneem.prototype.before = function(eventName, callback){
         eventName = "request";
     }else if( eventNameInLower === "serverstart" || eventNameInLower === "start"){
         eventName = "beforeserverstart";
-    }else if( eventNameInLower === "compress"){
-        eventName = "beforesompress";
     }else if( eventNameInLower === "send" || eventNameInLower === "answer" || eventNameInLower === "response"){
-        eventName = "beforesnswer";
+        eventName = "beforeAnswer";
     }else if( eventNameInLower === "close" || eventNameInLower === "serverclose"){
         eventName = "beforeServerClose";
     }else{
@@ -363,6 +303,11 @@ Muneem.prototype._addAfterHandlers = function(handlerType, fn){
     }else{
         throw Error("You've provided an invalid event name");
     }
+}
+
+Muneem.prototype.checkIfNotStarted = function(){
+    if(this.state === "started")
+        throw new ApplicationSetupError("You need to complete the setup before starting the server.");
 }
 
 module.exports = Muneem

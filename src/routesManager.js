@@ -84,7 +84,6 @@ RoutesManager.prototype.addRoute = function(route){
         route: route
     };
     context.route.maxLength = context.route.maxLength || context.app.maxLength;
-    this.updateCompressOptions(context);
 
     //build the chain of handlers need to run for given route
     const handlerRunners = this.extractHandlersFromRoute(route);
@@ -138,43 +137,6 @@ RoutesManager.prototype.addRoute = function(route){
     })//router.on ends
 
     //this.eventEmitter.emit("afterAddRoute",context.route);
-}
-
-RoutesManager.prototype.updateCompressOptions = function (context){
-    if(context.route.compress === undefined){
-        if(context.app.compress.shouldCompress){
-            context.route.compress = context.app.compress;
-        }else{
-            context.route.compress = false;
-        }
-        //TODO: need not to test for every route
-        
-        checkIfRegistered(this.containers,context.app.compress.preference);
-    }else if(context.route.compress === false){
-        //let it be false
-    }else{
-        context.route.compress =  Object.assign({},context.app.compress,context.route.compress);
-        if(typeof context.route.compress.preference === "string"){
-            context.route.compress.preference = [ context.route.compress.preference ];
-        }
-        checkIfRegistered(this.containers,context.route.compress.preference);
-    }
-}
-
-/**
- * Check if given compression preference is registered
- * @param {*} containers 
- * @param {*} preference 
- */
-function checkIfRegistered(containers,preference){
-    if(preference){
-        const compressorPreference = containers.compressors.checkIfAllRegistered(preference);
-        const streamCompressorPreference = containers.streamCompressors.checkIfAllRegistered(preference);
-    
-        if(!compressorPreference && !streamCompressorPreference){
-            throw new ApplicationSetupError(`Unregistered compression type is set in preference : ${preference}`);
-        }
-    }
 }
 
 /**
