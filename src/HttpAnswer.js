@@ -69,6 +69,16 @@ HttpAnswer.prototype.write = function(data,type,length, safe){
     } 
 }
 
+HttpAnswer.prototype.close = function(code, reason){
+    if(this.answered()){
+        logger.log.warn("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
+    }else{
+        this.answeredReason = reason;
+        this._native.end( '', this.encoding );
+
+        logger.log.debug(`Request Id:${this._for.id} has been closed`);
+    }
+}
 /**
  * Serialize -> compress -> set length -> send
  * if data parametre is null, undefined then it'll read data from this.data
