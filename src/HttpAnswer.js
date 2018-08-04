@@ -183,6 +183,7 @@ function HttpAnswer(res,asked,containers,eventEmitter){
     this._statusCode = 200;
     this._headers = {};
     this.eventEmitter = eventEmitter;
+    this.logger = logger;
 }
 
 module.exports = HttpAnswer;

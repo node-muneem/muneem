@@ -4,7 +4,7 @@ HttpAnswer is the wrapper on original HTTP response instance. This is passed as 
 
 ## Properties
 
-**encoding** : Default is "utf8"
+**encoding** : Default is "utf-8"
 
 ## Methods
 
@@ -12,12 +12,14 @@ HttpAnswer is the wrapper on original HTTP response instance. This is passed as 
 
 ```js
 answer.type("application/json");
+var contentType = answer.type();
 ```
 
 **length** : set Content-Length
 
 ```js
 answer.length(35);//in bytes
+var contentLength = answer.length();
 ```
 
 **getHeader** : get header parameter value. Header name is case insensitive.
@@ -58,31 +60,24 @@ answer.write("I'm fine.", "plain/text", 9);
 answer.end();
 ```
 
-**writeMore** : Add more string data to previously added data. Or pipe the stream to previously added stream. Or set data if it was not set before.
+**end** : End the response stream and finally send the data to client.
+
+Specifying the reason may helpful when client is answered abnormally due to the error, invalid input, server issue etc. It helps in error reporting, logging.
 
 ```js
-answer.writeMore("I'm fine.");
-answer.writeMore("How are you?");
+//answer.end(type ,length [, reason]);
+//answer.end(code [, reason]);
+//answer.end([ reason]);
 answer.end();
 ```
 
-**replace** : Overwrite previously added data to response.
+**close** : Lighter version of `end()`. Useful for non-200 responses. It doesn't invoke before/after answer event, it doesn't response with data.
+
+Specifying the reason may helpful in error reporting, logging.
 
 ```js
-//answer.replace(data [,type [,length] ]);
-answer.replace("I'm fine.", "plain/text", 9);
-answer.end();
-```
-
-**end** : End the response stream, serialize data if need to be, compress the data if need to be, then answer the client.
-
-Specifying the reason may helpful when client is answered abnormally due to the error, invalid input, server issue etc. It helps in error reporting, logging
-
-```js
-//answer.replace(type ,length [, reason]);
-//answer.replace(code [, reason]);
-//answer.replace([ reason]);
-answer.end();
+//answer.close(code [, reason]);
+answer.close(404);
 ```
 
 **redirectTo** : Redirect the current request to given location with 302 status code.

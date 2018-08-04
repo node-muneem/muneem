@@ -2,7 +2,6 @@
 
 HttpAsked is the wrapper on original HTTP request instance. This is passed as first parameter to any request handler.
 
-
 ## Properties
 
 **id** : An unique id which can be used to identify all the transactions in logs related to one request. This is by default not set until `generateUniqueReqId` property of server is set to `true`.
@@ -28,13 +27,20 @@ var data = asked.data;
 **context** : It contains route mappig and route specific app configuration.
 
 ```js
-context : {
+{
     route : {
-        uri : "some/uri",
-        compress : false
+        uri : "sample/uri", 
+        when : "POST", 
+        to : main, 
+        after : [ pre, handlers ], 
+        then : [ post, handlers ], 
+        in : "envName"
     },
-    app:{
-        compress : false
+    app : {
+        http2 : false,
+        https: true,
+        //alwaysReadRequestPayload: false,
+        maxLength: 1e6
     }
 }
 ```
