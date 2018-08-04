@@ -43,12 +43,11 @@ describe ('Muneem server', () => {
 
             /* const res = await h2url.concat({ url : "http://localhost:3003/test" })
             console.log(res) */
-        muneem.options.server = {
+
+        muneem.start({
             port: 3003,
             http2 : true,
-        };
-
-        muneem.start();
+        });
 
         const res = await h2url.request({
             method: "POST",
@@ -66,15 +65,13 @@ describe ('Muneem server', () => {
 
         /* const res = await h2url.concat({ url : "http://localhost:3003/test" })
         console.log(res) */
-        muneem.options.server = {
+        muneem.options.mappings = undefined;
+
+        muneem.start({
             port: 3004,
             http2 : true,
             https : buildSecureServerConfig()
-        };
-
-        muneem.options.mappings = undefined;
-
-        muneem.start();
+        });
 
         const res = await h2url.request({
             method: "POST",

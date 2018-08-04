@@ -15,11 +15,7 @@ const Muneem = require("../src/muneem");
 describe ('Muneem server', () => {
 
     const muneem = Muneem({
-        mappings : path.join(__dirname , "app/mappings/"),
-        server : {
-            https : buildSecureServerConfig(),
-            port: 3005
-        }
+        mappings : path.join(__dirname , "app/mappings/")
     });
     muneem.addHandler("main", (asked,answer) => {
         answer.write("I'm glad to response you back.");
@@ -43,7 +39,10 @@ describe ('Muneem server', () => {
     })
 
     beforeAll(() => {
-        muneem.start();
+        muneem.start({
+            https : buildSecureServerConfig(),
+            port: 3005
+        });
    });
 
     afterAll(() => {

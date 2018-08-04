@@ -30,15 +30,15 @@ Muneem.prototype.registerDefaultHandlers = function(){
     this.on("error", require("./defaultHandlers/exceptionHandler") );
 }
 
-Muneem.prototype.start = function(){
+Muneem.prototype.start = function(serverConfig){//a plugin should not know server configuration
     /* if(this.state === "started"){
         Muneem.logger.log.info("Server has already been started");
         return;
     } */
     
-    if(this.options.server){
-        this.appContext.http2 = this.options.server.http2;
-        this.appContext.https = this.options.server.https !== undefined ? true : false;
+    if(serverConfig){
+        this.appContext.http2 = serverConfig.http2;
+        this.appContext.https = serverConfig.https !== undefined ? true : false;
     }
 
     //routes must be added when all type of handlers and events are added
@@ -46,7 +46,7 @@ Muneem.prototype.start = function(){
     if(this.options.mappings){
         this.routesManager.addRoutesFromMappingsFile(this.options.mappings);
     }
-    const server = new Server(this.options.server, this.routesManager.router, this.eventEmitter);
+    const server = new Server(serverConfig, this.routesManager.router, this.eventEmitter);
     server.start();
     this.state = "started";
 }

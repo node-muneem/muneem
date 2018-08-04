@@ -14,12 +14,7 @@ const Muneem = require("../src/muneem");
 describe ('Muneem server', () => {
 
     const muneem = Muneem({
-        mappings : path.join(__dirname , "app/mappings/"),
-        server : {
-            //TODO: test if new id is being set
-            generateUniqueReqId : true,
-            maxHeadersCount : 5
-        }
+        mappings : path.join(__dirname , "app/mappings/")
     });
     muneem.addHandler("main", (asked,answer) => {
         if(asked.headers["header6"]) throw Error("Not expected");
@@ -45,7 +40,11 @@ describe ('Muneem server', () => {
     })
 
     beforeAll(() => {
-        muneem.start();
+        muneem.start({
+            //TODO: test if new id is being set
+            generateUniqueReqId : true,
+            maxHeadersCount : 5
+        });
     });
 
     afterAll(() => {
@@ -108,14 +107,16 @@ describe ('Muneem server', () => {
 
      it('should error back when port is not accessible', () => {
         muneem.options.mappings = undefined;
-        muneem.options.server.port = 8;
-        muneem.start();//EACCES: Permission denied to use port 8
+        muneem.start({
+            port: 8
+        });//EACCES: Permission denied to use port 8
     });
 
     it('should error back when invalid host', () => {
         muneem.options.mappings = undefined;
-        muneem.options.server.host = "invalid";
-        muneem.start();//ENOTFOUNDEADDRNOTAVAILD: Host "invalid" is not available.
+        muneem.start({
+            host : "invalid"
+        });//ENOTFOUNDEADDRNOTAVAILD: Host "invalid" is not available.
     });
 
 });
