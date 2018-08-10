@@ -58,8 +58,8 @@ describe ('RoutesManager', () => {
         
         expect(routesManager.router.count).toEqual(7);
 
-        expect(routesManager.router.find("GET", "/in/dev").name).toEqual("defaultRoute"); 
-        expect(routesManager.router.find("GET", "/in/test").name).toEqual("defaultRoute"); 
+        expect(routesManager.router.find("GET", "/in/dev") ).toEqual( null ); 
+        expect(routesManager.router.find("GET", "/in/test") ).toEqual( null ); 
 
     });
 
@@ -81,8 +81,8 @@ describe ('RoutesManager', () => {
         })); */
         expect(routesManager.router.count).toEqual(8);
 
-        expect(routesManager.router.find("GET", "/in/dev").name).toEqual("defaultRoute"); 
-        expect(routesManager.router.find("GET", "/in/test").name).toEqual("defaultRoute"); 
+        expect(routesManager.router.find("GET", "/in/dev") ).toEqual( null ); 
+        expect(routesManager.router.find("GET", "/in/test") ).toEqual( null ); 
     });
 
     /* it('should read mappings for the mentioned envirnment', () => {

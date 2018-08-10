@@ -92,8 +92,8 @@ RoutesManager.prototype.addRoute = function(route){
     let mayHaveBody = this.appContext.alwaysReadRequestPayload || 
             ( route.when !== "GET" && route.when !== "HEAD" && route.when !== "UNLOCK" && route.when !== "PURGE" && route.when !== "COPY") ;
 
-    this.eventEmitter.emit("addRoute",context.route);
-    this.router.on(route.when, route.uri, async (nativeRequest,nativeResponse,params) => {
+    this.eventEmitter.emit("addroute", context.route);
+    this.router.on(route.when, route.uri, async ( nativeRequest, nativeResponse, params ) => {
         logger.log.debug(`Request Id:${nativeRequest.id}`, route);
         const asked = new HttpAsked(nativeRequest,params,context);
         asked._mayHaveBody = mayHaveBody;

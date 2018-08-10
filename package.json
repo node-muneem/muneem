@@ -42,14 +42,15 @@
   },
   "dependencies": {
     "accept": "^3.0.2",
-    "anumargak": "^1.4.1",
+    "anumargak": "^1.8.1",
     "pump": "^3.0.0",
     "uniqid": "^4.1.1",
     "yamljs": "^0.3.0"
   },
   "nyc": {
     "exclude": [
-      "tests", "build"
+      "tests",
+      "build"
     ]
   }
 }
