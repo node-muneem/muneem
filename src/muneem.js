@@ -2,6 +2,7 @@ const Container = require("./HandlersContainer");
 const RoutesManager = require("./routesManager");
 const Server = require("./server");
 const HttpAnswer = require("./HttpAnswer");
+const HttpAsked = require("./HttpAsked");
 const ApplicationSetupError = require("./ApplicationSetupError");
 const fs = require("fs");
 const path = require("path");
@@ -98,6 +99,17 @@ Muneem.prototype.addToAnswer = function(methodName, fn ){
 }
 
 /**
+ * Add custom method to HttpAsked
+ * @param {string} methodName 
+ * @param {function} fn 
+ */
+Muneem.prototype.addToAsked = function(methodName, fn ){
+    this.checkIfNotStarted();
+    Muneem.logger.log.info("Adding a method " + methodName + " to HttpAsked");
+    HttpAsked.prototype[methodName] = fn;
+}
+
+/**
  * Add something to the store that can be requested from a request handler
  * @param {string} _name 
  * @param {any} anything 
@@ -134,9 +146,7 @@ Muneem.prototype.add = function(type, handler, _name  ){
     }else {
         throw Error("Please provide valid handler type");
     }
-
     return this;
-
 };
 
 /**
@@ -331,6 +341,16 @@ Muneem.prototype._addAfterHandlers = function(handlerType, fn){
 Muneem.prototype.checkIfNotStarted = function(){
     if(this.state === "started")
         throw new ApplicationSetupError("You need to complete the setup before starting the server.");
+}
+
+/**
+ * To support style of other web frameworks
+ * @param {string} methodName 
+ * @param {function} fn 
+ */
+Muneem.prototype.use = function(fn, anything){
+    if(typeof fn !== 'function') throw Error("The plugin you wanna use is not a function. I don't know how should I execute it.");
+    fn(this, anything);
 }
 
 module.exports = Muneem
