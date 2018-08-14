@@ -16,7 +16,7 @@ describe ('Muneem', () => {
 info : Adding after event fatBody
 info : Adding after event error
 info : Adding event before serverClose
-info : Adding a methods justForTest to HttpAnswer
+info : Adding a method justForTest to HttpAnswer
 debug : Request Id:undefined {"when":"GET","uri":"/test","to":"main","maxLength":1000000}
 debug : Request Id:undefined Executing handler main
 debug : Request Id:undefined has been answered
