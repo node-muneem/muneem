@@ -25,7 +25,7 @@ You can also add routes from the code.
 ```JavaScript
 const muneem = Muneem();
 //Add request handlers
-muneem.addHandler("paymentService", (asked, answer) => {
+muneem.addHandler("paymentService", (asked, answer, giveMe) => {
     answer.write("I'm a fake service");
 });
 //Add route
@@ -44,7 +44,7 @@ serviceName, authentication , cache-out, cache-in , and compress in above mappin
 
 ```JavaScript
 const muneem = Muneem();
-var paymentService = (asked, answer) => {
+var paymentService = (asked, answer, giveMe) => {
     answer.write("I'm a fake service");
 }
 muneem.route({
@@ -72,7 +72,7 @@ Syntax of the handler file
 ```JavaScript
 module.exports = {
     name : "main",
-    handle : (asked,answer) => {
+    handle : (asked,answer, giveMe) => {
         answer.write("from main");
     }
 }

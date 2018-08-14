@@ -114,9 +114,10 @@ RoutesManager.prototype.addRoute = function(route){
             nativeRequest.pipe(asked.stream);
         }
 
+        const that = this;
         nativeRequest.on('error', function(err) {
             answer.error = err;
-            this.eventEmitter.emit("error",asked,answer);
+            that.eventEmitter.emit("error",asked,answer);
         });
 
         this.eventEmitter.emit("route",asked,answer);
@@ -170,17 +171,18 @@ RoutesManager.prototype.pushToHandlerRunners = function(handlersList, beforeHand
                 fName = reqHandler.name;
             }
 
-            handlerRunners.push(new Runner(fName, reqHandler.handle || reqHandler, beforeHandler, afterHandler));
+            handlerRunners.push(new Runner(fName, reqHandler.handle || reqHandler, beforeHandler, afterHandler, this.store));
         }
     }
 }
 
-function RoutesManager(appContext,containers,eventEmitter){
+function RoutesManager(appContext,containers,eventEmitter, store){
     this.appContext = appContext || {};
 
     this.eventEmitter = eventEmitter;
     this.containers = containers;
     this.handlers = containers.handlers;
+    this.store = store;
 
     this.beforeEachPreHandler = [],  this.beforeMainHandler = [], this.beforeEachPostHandler = [];
     this.afterEachPreHandler = [],  this.afterMainHandler = [], this.afterEachPostHandler = [];

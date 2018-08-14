@@ -4,7 +4,9 @@ Runner.prototype.run = async function(asked,answer){
     this.runBefore(asked);
     
     logger.log.debug(`Request Id:${asked.id} Executing handler ${this.handlerName}`);
-    await this.handler(asked,answer);
+    await this.handler(asked,answer, (_name) => {
+        return this.store[ _name ];
+    });
     
     this.runAfter(asked);
 }
@@ -40,7 +42,8 @@ function callAll(arrayOfFunctions, ...args){
  * @param {Array} before 
  * @param {Array} after 
  */
-function Runner(name,handler,before,after){
+function Runner(name,handler,before,after, store){
+    this.store = store;
     this.handlerName = name;
     this.handler = handler;
     if(before && Array.isArray(before) && before.length > 0)

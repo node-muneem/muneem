@@ -61,7 +61,7 @@ function Muneem(options){
     this.state = "created";
     this.options = options || {};
     this.appContext =  Object.assign({},defaultOptions);
-    
+    this._store = {};
 
     this.eventEmitter = new events.EventEmitter();
     this.containers = {
@@ -80,7 +80,7 @@ function Muneem(options){
 
     this.registerDefaultHandlers();
 
-    this.routesManager = new RoutesManager( this.appContext, this.containers, this.eventEmitter);
+    this.routesManager = new RoutesManager( this.appContext, this.containers, this.eventEmitter, this._store);
     this.before("serverClose", () => {
         this.state = "closed";
     });
@@ -93,11 +93,32 @@ function Muneem(options){
  */
 Muneem.prototype.addToAnswer = function(methodName, fn ){
     this.checkIfNotStarted();
-    Muneem.logger.log.info("Adding a methods " + methodName + " to HttpAnswer");
+    Muneem.logger.log.info("Adding a method " + methodName + " to HttpAnswer");
     HttpAnswer.prototype[methodName] = fn;
 }
 
-Muneem.prototype.add = function(type, handler, handles ,flag ){
+/**
+ * Add something to the store that can be requested from a request handler
+ * @param {string} _name 
+ * @param {any} anything 
+ */
+Muneem.prototype.addToStore = function(_name, anything, safe){
+    this.checkIfNotStarted();
+    if( this._store[ _name] && safe) throw ApplicationSetupError(`You're trying to overwrite a resource ${_name}`);
+    Muneem.logger.log.info("Adding a resource " + _name);
+    this._store[_name] = anything;
+}
+
+/**
+ * add("route", object)
+ * add("handler", object | function, name)
+ * add("resource", object | function, name)
+ * 
+ * @param {string} type 
+ * @param {any} handler 
+ * @param {string} _name 
+ */
+Muneem.prototype.add = function(type, handler, _name  ){
     this.checkIfNotStarted();
     if(!type || !handler){
         throw Error("Please provide valid parameters");
@@ -105,9 +126,11 @@ Muneem.prototype.add = function(type, handler, handles ,flag ){
     type = type.toLowerCase();
     
     if(type === "handler"){
-        this.containers.handlers.add(handles ,handler);
+        this.containers.handlers.add(_name ,handler);
     }else if(type === "route"){
         this.routesManager.addRoute(handler);
+    }else if(type === "resource"){
+        this.addToStore(_name, handler);
     }else {
         throw Error("Please provide valid handler type");
     }
