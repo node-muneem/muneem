@@ -1,6 +1,6 @@
 {
   "name": "muneem",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Fast and simple web framework designed for developers, QAs, Maintainers, and BAs",
   "main": "src/muneem.js",
   "scripts": {
