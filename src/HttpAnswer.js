@@ -21,8 +21,8 @@ HttpAnswer.prototype.answered = function(){
     return this._native.finished;
 }
 
-HttpAnswer.prototype.skipRest = function(){
-    this.leave = true;
+HttpAnswer.prototype.skip = function(num){
+    this.chain.skip = num;
 }
 
 HttpAnswer.prototype.status = function(code){
@@ -70,6 +70,7 @@ HttpAnswer.prototype.write = function(data,type,length, safe){
 }
 
 HttpAnswer.prototype.close = function(code, reason){
+    this.chain.skip = -1;
     if(this.answered()){
         logger.log.warn("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
     }else{
@@ -96,7 +97,7 @@ HttpAnswer.prototype.close = function(code, reason){
  * 
  */
 HttpAnswer.prototype.end = function(){
-    
+    this.chain.skip = -1;
     if(this.answered()){
         logger.log.warn("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
     }else{
@@ -184,6 +185,9 @@ function HttpAnswer(res,asked,containers,eventEmitter){
     this._headers = {};
     this.eventEmitter = eventEmitter;
     this.logger = logger;
+    this.chain = {
+        skip : 0
+    }
 }
 
 module.exports = HttpAnswer;

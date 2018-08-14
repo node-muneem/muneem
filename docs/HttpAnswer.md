@@ -64,6 +64,8 @@ answer.end();
 
 Specifying the reason may helpful when client is answered abnormally due to the error, invalid input, server issue etc. It helps in error reporting, logging.
 
+Once called all the remaining handlers and their pre/post handler event callbacks will be canceled.
+
 ```js
 //answer.end(type ,length [, reason]);
 //answer.end(code [, reason]);
@@ -75,10 +77,21 @@ answer.end();
 
 Specifying the reason may helpful in error reporting, logging.
 
+Once called all the remaining handlers and their pre/post handler event callbacks will be canceled.
+
 ```js
 //answer.close(code [, reason]);
 answer.close(404);
 ```
+
+**skip** : Once called number of next handlers and their pre/post handler event callbacks will be skipped.
+
+```js
+//answer.close(code [, reason]);
+answer.skip(2);
+```
+
+
 
 **redirectTo** : Redirect the current request to given location with 302 status code.
 

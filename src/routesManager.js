@@ -124,8 +124,12 @@ RoutesManager.prototype.addRoute = function(route){
         try{
 
             for(let i=0; i<handlerRunners.length;i++){
+                if(answer.chain.skip > 0) {
+                    answer.chain.skip--;
+                    continue;
+                }
                 await handlerRunners[i].run(asked ,answer);
-                if(answer.leave) break;
+                if(answer.chain.skip === -1) break;
             }
 
             answer.end();	

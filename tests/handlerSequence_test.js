@@ -343,7 +343,7 @@ describe ('Routes Manager', () => {
 
     });
 
-    it('should not skip next handlers when response is already ended', (done) => {
+    it('should skip rest handlers when response is already ended', (done) => {
         
         const muneem = Muneem();
         let blocks = [];
@@ -356,8 +356,8 @@ describe ('Routes Manager', () => {
                 expect(blocks).toEqual([ 
                      'auth' ,
                     'Main: before main', 'main', 'Main: after main',
-                    'post',
-                    'last',
+                    //'post',
+                    //'last',
                     'parallel'
                 ]);
                 done();
@@ -401,8 +401,8 @@ describe ('Routes Manager', () => {
             expect(blocks).toEqual([ 
                 'auth' ,
                "Main: before main", 'main', 'Main: after main',
-               'post',
-               'last',
+               //'post',
+               //'last',
            ]);
         });
         routesManager.router.lookup(request,response);
@@ -412,13 +412,12 @@ describe ('Routes Manager', () => {
 
     });
 
-
-    it('should skip next handlers when explicitly asked', (done) => {
+    it('should skip next N handlers when skip is called', (done) => {
         
         const muneem = Muneem();
         let blocks = [];
 
-        muneem.addHandler("auth", () => {blocks.push("auth"); } ) ;
+        muneem.addHandler("auth", () => {blocks.push("auth")} ) ;
         muneem.addHandler("parallel", () => {
             setTimeout(() => {
 
@@ -426,6 +425,8 @@ describe ('Routes Manager', () => {
                 expect(blocks).toEqual([ 
                      'auth' ,
                     'Main: before main', 'main', 'Main: after main',
+                    //'post',
+                    'last',
                     'parallel'
                 ]);
                 done();
@@ -434,12 +435,11 @@ describe ('Routes Manager', () => {
 
         muneem.addHandler("main", async (asked,answer) => {
             answer.write(await asked.readBody());
-            answer.end();
+            answer.skip(1);
             blocks.push("main")
-            answer.skipRest();
         } ) ;
         muneem.addHandler("post", () => {blocks.push("post")} );
-        muneem.addHandler("last", () => {blocks.push("last"); } ) ;
+        muneem.addHandler("last", () => {blocks.push("last")} ) ;
 
         const routesManager = muneem.routesManager;
         muneem.before("main", (asked, handlerName) => {
@@ -469,7 +469,9 @@ describe ('Routes Manager', () => {
             expect(response.statusCode ).toEqual(200);
             expect(blocks).toEqual([ 
                 'auth' ,
-               "Main: before main", 'main', 'Main: after main'
+               "Main: before main", 'main', 'Main: after main',
+               //'post',
+               'last',
            ]);
         });
         routesManager.router.lookup(request,response);
