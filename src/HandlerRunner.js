@@ -5,6 +5,7 @@ Runner.prototype.run = async function(asked,answer){
     
     logger.log.debug(`Request Id:${asked.id} Executing handler ${this.handlerName}`);
     await this.handler(asked,answer, (_name) => {
+        //TODO : log the name of the handler with the resource _name
         return this.store[ _name ];
     });
     

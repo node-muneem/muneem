@@ -7,9 +7,9 @@ Server.prototype.start = function(){
         port: this.options.port,
         http2 : this.options.http2
     });
-    this.server.listen(this.options.port,this.options.host, () => {
+    this.server.listen(this.options.port, this.options.host, () => {
         this.eventEmitter.emit('afterServerStart');
-        console.log("Cool DOWN server is UP: http://" + this.options.host + ":" + this.options.port);
+        console.log("Cool DOWN server is UP on host " + this.options.host + " at port " + this.options.port);
     });
 }
 
@@ -60,7 +60,7 @@ const defaultOptions = {
     host : "0.0.0.0",
     generateUniqueReqId : false
 }
-function Server(options,requestResponseHandler,eventEmitter){
+function Server(options, requestResponseHandler, eventEmitter){
     this.options = Object.assign({},defaultOptions,options);
     var reqId = () => {};
     if(typeof this.options.generateUniqueReqId === "function"){
@@ -100,7 +100,7 @@ function Server(options,requestResponseHandler,eventEmitter){
     //this.server.on('request', requestResponseHandler);
     this.server.on('error', function(err){
 		eventEmitter.emit('onServerError');
-		networkErrHandler(err,options.port,options.host,sLocal);
+		networkErrHandler(err,options.port, options.host, sLocal);
 	});
 }
 

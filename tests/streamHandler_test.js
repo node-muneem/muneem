@@ -13,11 +13,10 @@ describe ('Muneem', () => {
         
         const muneem = Muneem();
 
-        muneem.addHandler("fileUploader", 
-            (asked,answer) => {
-                fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "filename"));
-                asked.stream.pipe(fileWritableStream);
-            }) ;
+        muneem.addHandler("fileUploader", (asked,answer) => {
+            fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "filename"));
+            asked.stream.pipe(fileWritableStream);
+        }) ;
 
         const routesManager = muneem.routesManager;
         routesManager.addRoute({
