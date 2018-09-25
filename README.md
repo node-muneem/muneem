@@ -5,24 +5,18 @@ Simple and fast web framework designed not only for developers but QAs, Maintain
 
 मुनीम (Muneem) is the web framework developed in nodejs. It is designed with the aim of easy & rapid delopment, small learning curve, distributed development, fast services, proper documentation, easy bug discovery and providing the best solution not only for developers but all the team members.
 
-> Your contribution will be appreciated.
+> Your contribution will help us to grow fast
 
-## Aim
-* Distributed Development
-* Small Learning curve
-* Fast fault detection
-* Rich documentation APIs
-* Security
-* Friendly for all the project members
 
 ## Usages
-Muneem can be used in multiple ways. Here is the quick overview. Please read the full [documentation](https://github.com/muneem4node/muneem/tree/master/docs) or watch video tutorials for complete detail.
 
 **Install**
 
 ```bash
 $ npm i muneem --save
 ```
+
+
 
 **Example**
 
@@ -34,13 +28,42 @@ muneem.add(...);
 muneem.start();
 ```
 
-Routes can be added either from code or by mapping file;
+Muneem allows to add routes and request handlers from the code as well as from the file system. 
+
+Routes added using yaml mapping files are redable can be understood and managed by non-developers;
 
 ```yaml
+#Scenario: this is the sample route
 - route: 
     uri: /some/url
     when: POST
-    to: serviceHandler
+    to: requestHandler
     after: [ "authentication", "monitoring", "cache out"]
     then: [ "compress it" , "cache in"]
 ```
+
+Similarly request handlers added from filesystem hides the detail of framework configuration from the user. Eg
+
+**profile.js**
+```JavaScript
+//@handler
+var getProfileDetail = async (asked, answer, store) => {
+    await asked.readXml();
+    var profileDetail = store("db")( buildQuery(asked.body.profileId) );
+    answer.writeXml(profileDetail);
+}
+
+//..
+
+module.exports = getProfileDetail;
+```
+
+## Documentation
+* [Introduction](https://github.com/node-muneem/muneem/blob/master/docs/Introduction.md): registering routes, adding resources to store, server configuration, https, http2, limiting request length.
+* [Routes](https://github.com/node-muneem/muneem/blob/master/docs/routeMapping.md): request mapping with request-handlers, sequence of handlers, environment specific routes, unnamed handlers, limiting request length etc.
+* [Request Handler](https://github.com/node-muneem/muneem/blob/master/docs/Handler.md): Adding handlers from code, and from files.
+    * [HttpAsked](https://github.com/node-muneem/muneem/blob/master/docs/HttpAsked.md): A wrapper around native http request object.
+    * [HttpAnswer](https://github.com/node-muneem/muneem/blob/master/docs/HttpAnswer.md): A wrapper around native http response object.
+* [Events](https://github.com/node-muneem/muneem/blob/master/docs/Events.md): Adding before/after events, and pre/post handlers, Handling errors, default routs, and large requests using events.
+* [Writing Middleware or Plugins](https://github.com/node-muneem/muneem/blob/master/docs/Plugins.md): How a plugin can be written. What are the things can be done by a plugin.
+* [Available Plugins](https://github.com/node-muneem/muneem/blob/master/docs/AvailablePlugins.md): body parsers, serializers, compression etc.

@@ -12,6 +12,7 @@ Please check [अनुमार्गक (anumargak)](https://github.com/node-m
     after: [ authentication , cache-out ]
     then: [ cache-in , compress ]
     in: dev #environment
+    maxLength: 1250
 ```
 
 ```JavaScript

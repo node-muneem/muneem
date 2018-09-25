@@ -9,9 +9,7 @@ const muneem = Muneem({
 }).start();
 ```
 
-You can add routes, request handlers, and event callbacks. Route and handlers can be added from the code or from the filesystem.
-
-You can check [documentation](docs) for more detail.
+You can add routes, request handlers, resources and event callbacks. Route and handlers can be added from the code or from the filesystem.
 
 ### Muneem configuration 
 
@@ -26,11 +24,15 @@ const muneem = new Muneem({
         https : httpsOptions,
         requestId : false, //default : false
         maxHeadersCount : 5
-    }
+    },
+    maxLength : 1e6 //default 1e6
 })
 ```
 
-**server.requestId** : Set it to a function which generates unique id or true to take request arrival time as request id.
+* **server.requestId**: Set it to a function which generates unique id or true to take request arrival time as request id.
+* **server.maxHeadersCount**: App will skip extra headers.
+* **server.https**: node js standard https option for secure connection.
+* **maxLength**: maximum request length
 
 ### Store
 

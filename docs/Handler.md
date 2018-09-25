@@ -1,6 +1,6 @@
 # Request Handler
 
-A request handler can be added in 3 ways;
+A request handler can be added from file system or from code;
 
 ```JavaScript
 const muneem = Muneem({
@@ -12,12 +12,15 @@ muneem.add("handler", "name", fn);
  muneem.start();
 ```
 
-Handler example
+A handler accepts 3 arguments: [HttpAsked](HttpAsked.md), [HttpAnswer](HttpAnswer.md), Store.
+
+A store is the collection of shared resources which can be added as `app.addToStore("name", resource)`.
 
 ```JavaScript
-module.exports = (asked, answer, giveMe) => {
+module.exports = async (asked, answer, giveMe) => {
     const data = await asked.readJson();//read request data
     var db = giveMe("mongo"); //shared resources
-    anwser.writeJson( db.get(data.query) );//response back
+    //..
+    anwser.writeJson( data );//response back
 }
 ```
