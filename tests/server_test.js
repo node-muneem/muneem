@@ -18,15 +18,15 @@ describe ('Muneem server', () => {
     });
     muneem.addHandler("main", (asked,answer) => {
         if(asked.headers["header6"]) throw Error("Not expected");
-        answer.setHeader("id", asked.id);
+        answer.setHeader("id", "asked.id");
         answer.write("I'm glad to response you back.");
     } ) ;
     muneem.addHandler("post", (asked,answer) => {} ) ;
     muneem.addHandler("parallel", (asked,answer) => {} ) ;
     muneem.addHandler("auth", (asked,answer) => {} ) ;
     muneem.addHandler("stream", (asked,answer) => {} ) ;
-    muneem.addHandler("invalid", (asked,answer) => {
-        asked.invalid();
+    muneem.addHandler("internalError", (asked,answer) => {
+        asked.notExist();
     } ) ;
 
     muneem.route({
@@ -35,28 +35,23 @@ describe ('Muneem server', () => {
     })
 
     muneem.route({
-        uri: "/invalid",
-        to: "invalid"
+        uri: "/internalError",
+        to: "internalError"
     })
 
-    beforeAll(() => {
-        muneem.start({
-            //TODO: test if new id is being set
-            generateUniqueReqId : true,
-            maxHeadersCount : 5
-        });
+    muneem.start({
+        //TODO: test if new id is being set
+        generateUniqueReqId : true,
+        maxHeadersCount : 5
     });
+    
 
-    afterAll(() => {
-        //muneem.server.close();
-    });
-
-    it('should response back politely ;)', (done) => {
+    it('should start and work as expected.', (done) => {
         chai.request("http://localhost:3002")
             .get('/test')
             .then(res => {
                 expect(res.status).toBe(200);
-                expect(res.headers["id"]).not.toBe(undefined);
+                expect(res.headers["id"]).toBe("asked.id");
                 expect(res.text).toBe("I'm glad to response you back.");
                 done();
             }).catch( err => {
@@ -64,9 +59,9 @@ describe ('Muneem server', () => {
             });
     });
 
-    it('should response back harshly with 500.', (done) => {
+    it('should response back with 500 when internal error.', (done) => {
         chai.request("http://localhost:3002")
-            .get('/invalid')
+            .get('/internalError')
             .then(res => {
                 expect(res.status).toBe(500);
                 done();
@@ -85,38 +80,53 @@ describe ('Muneem server', () => {
             .set("header5","value5")
             .set("header6","value6")
             .then(res => {
-                expect(res.status).toBe(200);
+                expect(res.status).toBe(500);
                 done();
             }).catch( err => {
                 done.fail("not expected " + err);
             });
     });
 
+    //TODO: assert
     it('should error back when port is busy', () => {
 
-    //    const  fakelogger = {
-    //         error : errmsg =>{
-    //             expect(errmsg).toEqual("EADDRINUSE: Port 3002 is already in use.")
-    //             done();
-    //         }
-    //     }
-    //     muneem.setLogger(fakelogger);
-        muneem.options.mappings = undefined;
+       /* const  fakelogger = {
+            error : errmsg =>{
+                console.log(errmsg);
+                expect(errmsg).toEqual("EADDRINUSE: Port 3002 is already in use.")
+                done();
+            },
+            debug : () => {},
+            info : () => {},
+            warn : () => {},
+        }
+        Muneem.setLogger(fakelogger); */
+        const muneem = Muneem();
         muneem.start();//EADDRINUSE: Port 3002 is already in use.
     });
 
+    //TODO: assert
      it('should error back when port is not accessible', () => {
-        muneem.options.mappings = undefined;
-        muneem.start({
-            port: 8
-        });//EACCES: Permission denied to use port 8
+        const muneem = Muneem({
+            server : {
+                port: 8  
+            }
+        });
+
+        muneem.start();
+        //EACCES: Permission denied to use port 8
     });
 
+    //TODO: assert
     it('should error back when invalid host', () => {
-        muneem.options.mappings = undefined;
-        muneem.start({
-            host : "invalid"
-        });//ENOTFOUNDEADDRNOTAVAILD: Host "invalid" is not available.
+        const muneem = Muneem({
+            server : {
+                host : "invalid"    
+            }
+        });
+
+        muneem.start();
+        //ENOTFOUNDEADDRNOTAVAILD: Host "invalid" is not available.
     });
 
 });

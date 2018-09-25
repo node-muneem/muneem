@@ -6,48 +6,21 @@ const getStream = require('get-stream')
 
 const Muneem = require("../src/muneem");
 
-describe ('Muneem server', () => {
+describe ('HTTP2', () => {
 
-    //Muneem.setLogger(console);
-    const muneem = Muneem({
-        mappings : path.join(__dirname , "app/mappings/")
-    });
-    muneem.addHandler("main", async (asked,answer) => {
-        //answer.setHeader("id", asked.id);
-        answer.write("I'm glad to response you back with " + await asked.readBody());
-    } ) ;
-    muneem.addHandler("post", (asked,answer) => {} ) ;
-    muneem.addHandler("parallel", (asked,answer) => {} ) ;
-    muneem.addHandler("auth", (asked,answer) => {} ) ;
-    muneem.addHandler("stream", (asked,answer) => {} ) ;
-    muneem.addHandler("invalid", (asked,answer) => {
-        asked.invalid();
-    } ) ;
+    it('should work fine',async () => {
 
-    muneem.routesManager.addRoute({
-        when : "POST",
-        uri: "/test",
-        to: "main"
-    })
-
-    muneem.routesManager.addRoute({
-        uri: "/invalid",
-        to: "invalid"
-    })
-
-    afterAll(() => {
-        //muneem.server.close();
-    });
-
-    it('should response back politely ;)',async () => {
-
-            /* const res = await h2url.concat({ url : "http://localhost:3003/test" })
-            console.log(res) */
-
-        muneem.start({
-            port: 3003,
-            http2 : true,
+        const muneem = Muneem({
+            mappings : path.join(__dirname , "app/mappings/"),
+            server : {
+                port: 3003,
+                http2 : true
+            }
         });
+        
+        buildServer(muneem);
+
+        muneem.start();
 
         const res = await h2url.request({
             method: "POST",
@@ -61,17 +34,20 @@ describe ('Muneem server', () => {
         expect(body).toEqual("I'm glad to response you back with some sample data");
     });
 
-    it('should response back politely ;)',async () => {
-
-        /* const res = await h2url.concat({ url : "http://localhost:3003/test" })
-        console.log(res) */
-        muneem.options.mappings = undefined;
-
-        muneem.start({
-            port: 3004,
-            http2 : true,
-            https : buildSecureServerConfig()
+    it('should work fine for secure connection',async () => {
+        
+        const muneem = Muneem({
+            mappings : path.join(__dirname , "app/mappings/"),
+            server : {
+                port: 3004,
+                http2 : true,
+                https : buildSecureServerConfig()
+            }
         });
+        
+        buildServer(muneem);
+
+        muneem.start();
 
         const res = await h2url.request({
             method: "POST",
@@ -104,4 +80,29 @@ function buildSecureServerConfig(config){
     } */
 
     return options;
+}
+
+function buildServer(app){
+    app.addHandler("main", async (asked,answer) => {
+        //answer.setHeader("id", asked.id);
+        answer.write("I'm glad to response you back with " + await asked.readBody());
+    } ) ;
+    app.addHandler("post", (asked,answer) => {} ) ;
+    app.addHandler("parallel", (asked,answer) => {} ) ;
+    app.addHandler("auth", (asked,answer) => {} ) ;
+    app.addHandler("stream", (asked,answer) => {} ) ;
+    app.addHandler("invalid", (asked,answer) => {
+        asked.invalid();
+    } ) ;
+
+    app.routesManager.addRoute({
+        when : "POST",
+        uri: "/test",
+        to: "main"
+    })
+
+    app.routesManager.addRoute({
+        uri: "/invalid",
+        to: "invalid"
+    })
 }

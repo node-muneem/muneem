@@ -31,38 +31,18 @@ Muneem.prototype.registerDefaultHandlers = function(){
     this.on("error", require("./defaultHandlers/exceptionHandler") );
 }
 
-Muneem.prototype.start = function(serverConfig){//a plugin should not know server configuration
-    /* if(this.state === "started"){
-        Muneem.logger.log.info("Server has already been started");
-        return;
-    } */
-    
-    if(serverConfig){
-        this.appContext.http2 = serverConfig.http2;
-        this.appContext.https = serverConfig.https !== undefined ? true : false;
-    }
-
-    //routes must be added when all type of handlers and events are added
-    //hence adding at the time of starting the server.
-    if(this.options.mappings){
-        this.routesManager.addRoutesFromMappingsFile(this.options.mappings);
-    }
-    const server = new Server(serverConfig, this.routesManager.router, this.eventEmitter);
-    server.start();
-    this.state = "started";
-}
 
 const defaultOptions = {
     alwaysReadRequestPayload: false,
     maxLength: 1e6
 }
 function Muneem(options){
-
     if(!(this instanceof Muneem)) return new Muneem(options);
+
     this.state = "created";
-    this.options = options || {};
-    this.appContext =  Object.assign({},defaultOptions);
-    this._store = {};
+    options = options || {};
+    const appContext =  Object.assign({},defaultOptions);
+    const _store = {};
 
     this.eventEmitter = new events.EventEmitter();
     this.containers = {
@@ -81,10 +61,38 @@ function Muneem(options){
 
     this.registerDefaultHandlers();
 
-    this.routesManager = new RoutesManager( this.appContext, this.containers, this.eventEmitter, this._store);
+    this.routesManager = new RoutesManager( appContext, this.containers, this.eventEmitter, _store);
     this.before("serverClose", () => {
         this.state = "closed";
     });
+
+    this.start = function(){//a plugin should not know server configuration
+        /* if(this.state === "started"){
+            Muneem.logger.log.info("Server has already been started");
+            return;
+        } */
+        
+        if(options.server){
+            appContext.http2 = options.http2;
+            appContext.https = options.https !== undefined ? true : false;
+        }
+    
+        //routes must be added when all type of handlers and events are added
+        //hence adding at the time of starting the server.
+        if(options.mappings){
+            this.routesManager.addRoutesFromMappingsFile(options.mappings);
+        }
+        const server = new Server(options.server, this.routesManager.router, this.eventEmitter);
+        server.start();
+        this.state = "started";
+    }
+    
+    this.addToStore = function(_name, anything, safe){
+        this.checkIfNotStarted();
+        if( _store[ _name] && safe) throw ApplicationSetupError(`You're trying to overwrite a resource ${_name}`);
+        Muneem.logger.log.info("Adding a resource " + _name);
+        _store[_name] = anything;
+    }
 }
 
 /**
@@ -107,18 +115,6 @@ Muneem.prototype.addToAsked = function(methodName, fn ){
     this.checkIfNotStarted();
     Muneem.logger.log.info("Adding a method " + methodName + " to HttpAsked");
     HttpAsked.prototype[methodName] = fn;
-}
-
-/**
- * Add something to the store that can be requested from a request handler
- * @param {string} _name 
- * @param {any} anything 
- */
-Muneem.prototype.addToStore = function(_name, anything, safe){
-    this.checkIfNotStarted();
-    if( this._store[ _name] && safe) throw ApplicationSetupError(`You're trying to overwrite a resource ${_name}`);
-    Muneem.logger.log.info("Adding a resource " + _name);
-    this._store[_name] = anything;
 }
 
 /**

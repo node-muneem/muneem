@@ -12,44 +12,21 @@ chai.use(chaiHttp);
 
 const Muneem = require("../src/muneem");
 
-describe ('Muneem server', () => {
+describe ('HTTPS server', () => {
 
-    const muneem = Muneem({
-        mappings : path.join(__dirname , "app/mappings/")
-    });
-    muneem.addHandler("main", (asked,answer) => {
-        answer.write("I'm glad to response you back.");
-    } ) ;
-    muneem.addHandler("post", (asked,answer) => {} ) ;
-    muneem.addHandler("parallel", (asked,answer) => {} ) ;
-    muneem.addHandler("auth", (asked,answer) => {} ) ;
-    muneem.addHandler("stream", (asked,answer) => {} ) ;
-    muneem.addHandler("invalid", (asked,answer) => {
-        asked.invalid();
-    } ) ;
-
-    muneem.routesManager.addRoute({
-        uri: "/test",
-        to: "main"
-    })
-
-    muneem.routesManager.addRoute({
-        uri: "/invalid",
-        to: "invalid"
-    })
-
-    beforeAll(() => {
-        muneem.start({
-            https : buildSecureServerConfig(),
-            port: 3005
+    it('should work as expected.', (done) => {
+        const muneem = Muneem({
+            mappings : path.join(__dirname , "app/mappings/"),
+            server  : {
+                port: 3005,
+                https : buildSecureServerConfig()
+            }
         });
-   });
 
-    afterAll(() => {
-        //muneem.server.close();
-     });
+        buildServer(muneem);
 
-    it('should response back politely ;)', (done) => {
+        muneem.start();
+
         chai.request("https://localhost:3005")
             .get('/test')
             .ca(fs.readFileSync(path.join(__dirname, "truststore/ca.crt") ) )
@@ -80,4 +57,29 @@ function buildSecureServerConfig(config){
     } */
 
     return options;
+}
+
+function buildServer(app){
+    app.addHandler("main", async (asked,answer) => {
+        //answer.setHeader("id", asked.id);
+        answer.write("I'm glad to response you back.");
+    } ) ;
+    app.addHandler("post", (asked,answer) => {} ) ;
+    app.addHandler("parallel", (asked,answer) => {} ) ;
+    app.addHandler("auth", (asked,answer) => {} ) ;
+    app.addHandler("stream", (asked,answer) => {} ) ;
+    app.addHandler("invalid", (asked,answer) => {
+        asked.invalid();
+    } ) ;
+
+    app.routesManager.addRoute({
+        when : "GET",
+        uri: "/test",
+        to: "main"
+    })
+
+    app.routesManager.addRoute({
+        uri: "/invalid",
+        to: "invalid"
+    })
 }
