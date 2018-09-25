@@ -1,5 +1,4 @@
 var http = require('http');
-var uniqid = require('uniqid');
 
 Server.prototype.start = function(){
     this.eventEmitter.emit('beforeServerStart', {

@@ -55,14 +55,12 @@ answer.status(200);
 **write** : write data to response.
 
 ```js
-//answer.write(data [,type [,length] ]);
+//answer.write(data [,type [,length [, safe ] ] ]);
 answer.write("I'm fine.", "plain/text", 9);
 answer.end();
 ```
 
 **end** : End the response stream and finally send the data to client.
-
-Specifying the reason may helpful when client is answered abnormally due to the error, invalid input, server issue etc. It helps in error reporting, logging.
 
 Once called all the remaining handlers and their pre/post handler event callbacks will be canceled.
 
@@ -72,10 +70,10 @@ Once called all the remaining handlers and their pre/post handler event callback
 //answer.end([ reason]);
 answer.end();
 ```
+Specifying the reason may helpful when client is answered abnormally due to the error, invalid input, server issue etc. It helps in error reporting, logging.
+
 
 **close** : Lighter version of `end()`. Useful for non-200 responses. It doesn't invoke before/after answer event, it doesn't response with data.
-
-Specifying the reason may helpful in error reporting, logging.
 
 Once called all the remaining handlers and their pre/post handler event callbacks will be canceled.
 
@@ -84,14 +82,14 @@ Once called all the remaining handlers and their pre/post handler event callback
 answer.close(404);
 ```
 
+Specifying the reason may helpful in error reporting, logging.
+
 **skip** : Once called number of next handlers and their pre/post handler event callbacks will be skipped.
 
 ```js
 //answer.close(code [, reason]);
 answer.skip(2);
 ```
-
-
 
 **redirectTo** : Redirect the current request to given location with 302 status code.
 

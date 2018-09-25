@@ -4,17 +4,17 @@ HttpAsked is the wrapper on original HTTP request instance. This is passed as fi
 
 ## Properties
 
-**id** : An unique id which can be used to identify all the transactions in logs related to one request. This is by default not set until `generateUniqueReqId` property of server is set to `true`.
+**id** : An unique id which can be used to identify all the transactions in logs related to one request. This is by default not set until `requestId` property of server is set to `true` or set to a function to generate unique id.
 
-**params** : This is not set in case of static URLs. Otherwise it is a map where all the properties are the name of the parameters. Check [Anumargak](https://github.com/NaturalIntelligence/anumargak) for more detail.
+**params** : This is not set in case of static URLs. Otherwise it is a map where all the properties are the name of the parameters. Check [Anumargak](https://github.com/node-muneem/anumargak) for more detail.
 
 **headers** : Request header parameters map.
 
 **query** : Query parameters map.
 
-**_native** : Native request, in case you need to process it.
+**_native** : Native request. You should avoid to use it, use *stream* instead.
 
-**stream** : Request Body stream
+**stream** : Metered request stream.
 
 **data** : Request Body content. It'll be set when you call `readBody` method.
 
@@ -39,7 +39,6 @@ var data = asked.data;
     app : {
         http2 : false,
         https: true,
-        //alwaysReadRequestPayload: false,
         maxLength: 1e6
     }
 }
