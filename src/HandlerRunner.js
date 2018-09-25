@@ -4,7 +4,7 @@ Runner.prototype.run = async function(asked,answer){
     this.runBefore(asked);
     
     logger.log.debug(`Request Id:${asked.id} Executing handler ${this.handlerName}`);
-    await this.handler(asked,answer, (_name) => {
+    await this.handler(asked, answer, (_name) => {
         //TODO : log the name of the handler with the resource _name
         return this.store[ _name ];
     });
@@ -16,14 +16,14 @@ Runner.prototype.run = async function(asked,answer){
 Runner.prototype.runBefore = function(asked) {
     if(this.before){
         logger.log.debug(`Request Id:${asked.id} Executing before of ${this.handlerName}`);
-        callAll(this.before,asked,this.handlerName);
+        callAll(this.before, asked, this.handlerName);
     }
 }
 
 Runner.prototype.runAfter = function(asked) {
     if(this.after){
         logger.log.debug(`Request Id:${asked.id} Executing after of ${this.handlerName}`);
-        callAll(this.after,asked,this.handlerName);
+        callAll(this.after, asked, this.handlerName);
     }
 }
 
@@ -31,9 +31,9 @@ Runner.prototype.runAfter = function(asked) {
  * 
  * @param {Array} arrayOfFunctions 
  */
-function callAll(arrayOfFunctions, ...args){
+function callAll(arrayOfFunctions, asked, handlerName){
     for(let i=0; i < arrayOfFunctions.length; i++){
-        arrayOfFunctions[i](...args);
+        arrayOfFunctions[i]( asked, handlerName);
     }
 }
 

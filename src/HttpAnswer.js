@@ -144,7 +144,7 @@ HttpAnswer.prototype.end = function(){
             }else{
                 this._native.end(this.data ,this.encoding);
             }
-            this.eventEmitter.emit("afterAnswer",this._for,this);
+            this.eventEmitter.emit("afterAnswer",this._for);
         }
         logger.log.debug(`Request Id:${this._for.id} has been answered`);
     }

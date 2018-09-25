@@ -5,7 +5,8 @@ Server.prototype.start = function(){
     this.eventEmitter.emit('beforeServerStart', {
         host : this.options.host,
         port: this.options.port,
-        http2 : this.options.http2
+        http2 : this.options.http2,
+        https : this.secure
     });
     this.server.listen(this.options.port, this.options.host, () => {
         this.eventEmitter.emit('afterServerStart');
@@ -85,6 +86,7 @@ function Server(options, requestResponseHandler, eventEmitter){
         }
     } else {
         if(this.options.https){
+            this.secure = true;
             this.server = require('https').createServer(this.options.https,httpHandler);
         }else{
             this.server = require('http').createServer(httpHandler);

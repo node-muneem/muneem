@@ -235,9 +235,7 @@ Muneem.prototype.after = function(eventName, callback){
         eventNameInLower = eventNameInLower.toLowerCase();
     }
 
-    if( eventNameInLower === "addroute"){
-        Muneem.logger.log.warn(`Security warning: Handler registered for '${eventName}' event can know the name and sequence of handlers for any route.`);
-    }else if( eventNameInLower === "serverstart" || eventNameInLower === "start" ){
+    if( eventNameInLower === "serverstart" || eventNameInLower === "start" ){
         Muneem.logger.log.warn(`Security warning: Handler registered for '${eventName}' event can read server's host, and port.`);
         eventName = "afterServerStart"
     }else if( eventNameInLower === "request"){
@@ -285,7 +283,9 @@ Muneem.prototype.before = function(eventName, callback){
         eventNameInLower = eventNameInLower.toLowerCase();
     }
 
-    if( eventNameInLower === "route"){//request event is triggered before route
+    if( eventNameInLower === "addroute"){
+        Muneem.logger.log.warn(`Security warning: Handler registered for '${eventName}' event can know the name and sequence of handlers and the configuration for any route.`);
+    }else if( eventNameInLower === "route"){//request event is triggered before route
         eventName = "request";
     }else if( eventNameInLower === "serverstart" || eventNameInLower === "start"){
         eventName = "beforeserverstart";

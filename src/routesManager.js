@@ -101,7 +101,7 @@ RoutesManager.prototype.addRoute = function(route){
         
         if(asked.contentLength > route.maxLength){
             logger.log.debug(`Request Id:${asked.id} Calling __exceedContentLength handler`);
-            this.eventEmitter.emit("fatBody",asked,answer);
+            this.eventEmitter.emit("fatBody", asked, answer);
             return;
         }else if(mayHaveBody){
             asked.stream = new StreamMeter({
@@ -117,8 +117,7 @@ RoutesManager.prototype.addRoute = function(route){
 
         const that = this;
         nativeRequest.on('error', function(err) {
-            answer.error = err;
-            that.eventEmitter.emit("error",asked,answer);
+            that.eventEmitter.emit("error", err, asked, answer);
         });
 
         this.eventEmitter.emit("route",asked,answer);
@@ -136,9 +135,7 @@ RoutesManager.prototype.addRoute = function(route){
             answer.end();	
 
         }catch(e){
-            answer.error = e;
-            //console.log(e);
-            this.eventEmitter.emit("error",asked,answer);
+            this.eventEmitter.emit("error", e, asked,answer);
         }
     })//router.on ends
 
@@ -201,7 +198,7 @@ function RoutesManager(appContext,containers,eventEmitter, store){
                 app : appContext
             });
             const answer = new HttpAnswer(nativeResponse,asked,this.containers,this.eventEmitter);
-            this.eventEmitter.emit("defaultRoute",asked,answer);
+            this.eventEmitter.emit("defaultRoute", asked, answer);
         }
     } );
 }
