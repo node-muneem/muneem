@@ -9,8 +9,9 @@ You can also register for an event. Check [the list of events](Events.md) suppor
 ```JavaScript
 export.modules = function(muneem, globalOptions){
 
-    muneem.addToAnswer("newMethod", () => {});
-    muneem.addToAsked("newMethod", () => {});
+    muneem.addToAnswer("writeXXX", () => {});
+    muneem.addToAsked("readXXX", () => {});
+    muneem.addToStore("printer", printerInstance);
     //muneem.on("eventName", () => {});
     muneem.after("eventName", () => {});
     muneem.before("eventName", () => {});

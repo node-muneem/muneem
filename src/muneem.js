@@ -87,11 +87,11 @@ function Muneem(options){
         this.state = "started";
     }
     
-    this.addToStore = function(_name, anything, safe){
+    this.addToStore = function(_name, resource, safe){
         this.checkIfNotStarted();
         if( _store[ _name] && safe) throw ApplicationSetupError(`You're trying to overwrite a resource ${_name}`);
         Muneem.logger.log.info("Adding a resource " + _name);
-        _store[_name] = anything;
+        _store[_name] = resource;
     }
 }
 

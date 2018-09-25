@@ -31,3 +31,19 @@ const muneem = new Muneem({
 ```
 
 **server.requestId** : Set it to a function which generates unique id or true to take request arrival time as request id.
+
+### Store
+
+If you need you can add shared resources to the store that you can access in request handlers;
+
+```JavaScript
+const muneem = new Muneem();
+
+muneem.addToStore("logger", logger);
+
+muneem.addHandler("paymentService", (asked, answer, giveMe ) => {
+    //..
+    const logger = giveMe("logger");
+    //..
+})
+```

@@ -17,7 +17,7 @@ Handler example
 ```JavaScript
 module.exports = (asked, answer, giveMe) => {
     const data = await asked.readJson();//read request data
-    var db = giveMe("mongo"); //get previously added resource
+    var db = giveMe("mongo"); //shared resources
     anwser.writeJson( db.get(data.query) );//response back
 }
 ```
