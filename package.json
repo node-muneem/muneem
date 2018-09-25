@@ -1,7 +1,7 @@
 {
   "name": "muneem",
-  "version": "2.1.1",
-  "description": "Fast and simple web framework designed for developers, QAs, Maintainers, and BAs",
+  "version": "2.2.0",
+  "description": "Fast and simple web framework designed for all team members",
   "main": "src/muneem.js",
   "scripts": {
     "test": "jasmine tests/*test.js",
@@ -9,7 +9,7 @@
     "coverage": "nyc jasmine tests/*test.js; nyc report --reporter=lcov",
     "iCoverage": "istanbul cover -x 'tests/*test.js' --dir './coverage' jasmine --captureExceptions tests/*test.js"
   },
-  "author": "Amit Gupta (https://github.com/amitguptagwl)",
+  "author": "Amit Gupta (http://amitkumargupta.work)",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -22,8 +22,11 @@
   "keywords": [
     "REST",
     "HTTP",
+    "HTTP2",
+    "HTTPS",
     "web services",
-    "server"
+    "server",
+    "fast"
   ],
   "devDependencies": {
     "chai": "^4.1.2",
@@ -41,10 +44,8 @@
     "istanbul": "^0.4.5"
   },
   "dependencies": {
-    "accept": "^3.0.2",
     "anumargak": "^1.9.4",
     "pump": "^3.0.0",
-    "uniqid": "^4.1.1",
     "yamljs": "^0.3.0"
   },
   "nyc": {
