@@ -157,36 +157,45 @@ Muneem.prototype.addHandler = function(name,handler){
 Add handlers from a directory.
 Handler should have name,
 */
-Muneem.prototype._addHandlers = function(dir) {
-    var aret = [];
-    fs.readdirSync(dir).forEach( library => {
-
-        const fullPath = path.join(dir, library);
+Muneem.prototype._addHandlers = function(dir, rootDir) {
+    if(!rootDir) rootDir = dir;
+    fs.readdirSync(dir).forEach( file => {
+        //console.log(file);
+        const fullPath = path.join(dir, file);
         if(fs.lstatSync(fullPath).isDirectory()){
-            this._addHandlers(fullPath);
+            this._addHandlers(fullPath, rootDir);
             return;
         }
-        var isLibrary = library.split(".").length > 0 && library.split(".")[1] === 'js',
-        libName = library.split(".")[0].toLowerCase();
-        if (isLibrary) {
-            aret[libName] = require(fullPath);
+
+        var fileNameParts = file.split(".");
+        var isJs = fileNameParts.length > 0 && fileNameParts[1] === 'js'; //ends with .js extension
+        //console.log(fullPath, rootDir)
+        if (isJs && isHandler(fullPath)) {
+            var handlerName = fullPath.substr(rootDir.length + 1).toLowerCase().replace(/\//, ".");
+            handlerName = handlerName.substr(0, handlerName.length - 3);
+            console.log("registering", handlerName);
+            var handler = require(fullPath);
             //TODO: call an event; onHandlerLoad or something
 
-            if(typeof aret[libName] === 'object'){
-                if(aret[libName].handle){
-                    if(!aret[libName].name){
-                        throw new ApplicationSetupError("A handler should have property 'name'.");
-                    }
-                    this.addHandler(aret[libName].name, aret[libName].handle);
-
-                }
+            if(typeof handler === 'function'){
+                this.addHandler( handlerName, handler);
             }else{
-                throw new ApplicationSetupError(`Invalid handler ${libName}`);
+                throw new ApplicationSetupError(`Invalid handler ${fullPath}`);
             }
             
         }
     });
-    return  aret;
+}
+
+function isHandler(fullPath){
+    //read the file content
+    const fileContent = fs.readFileSync(fullPath).toString();
+    var result = new RegExp(/\s*\/\/\s*@handler\s*$/, "gm").exec( fileContent);
+    if( result ){
+        return true;
+    }else{
+        return false;
+    }
 }
 
 Muneem.prototype.route = function(route){
@@ -348,5 +357,6 @@ Muneem.prototype.use = function(fn, anything){
     if(typeof fn !== 'function') throw Error("The plugin you wanna use is not a function. I don't know how should I execute it.");
     fn(this, anything);
 }
+
 
 module.exports = Muneem

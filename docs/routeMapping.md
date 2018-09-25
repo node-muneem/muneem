@@ -2,7 +2,7 @@
 
 You can define the route mapping in a separate yaml file (recommend) as they are easy to read, understand, and manage.
 
-Please check [अनुमार्गक (anumargak)](https://github.com/NaturalIntelligence/anumargak) for more detail about uri syntax.
+Please check [अनुमार्गक (anumargak)](https://github.com/node-muneem/anumargak) for more detail about uri syntax.
 
 ```yaml
 - route: 
@@ -40,7 +40,7 @@ muneem.route({
 muneem.start();
 ```
 
-serviceName, authentication , cache-out, cache-in , and compress in above mappings are the name of request handlers. They can be registered against some name and that name can be used as a reference in route mapping (see above examples) or directly;
+serviceName, authentication , cache-out, cache-in , and compress in above mappings are the name of request handlers. They can be registered with some name and that name can be used as a reference in route mapping. You can also map a handler without registering it. 
 
 ```JavaScript
 const muneem = Muneem();
@@ -67,15 +67,13 @@ Muneem({
 }).start();
 ```
 
-Syntax of the handler file
+Handler file : A valid js file with `//@handler`
 
 ```JavaScript
-module.exports = {
-    name : "main",
-    handle : (asked,answer, giveMe) => {
-        answer.write("from main");
-    }
+//..
+//@handler   
+
+module.exports = (asked,answer) => {
+    //..
 }
 ```
-
-TODO: make name attribute optional, use fileName as handler name instead.

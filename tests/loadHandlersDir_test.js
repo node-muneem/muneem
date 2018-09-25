@@ -12,12 +12,12 @@ describe ('Muneem directory loader', () => {
         const muneem = Muneem({
             handlers : [
                 path.join(__dirname, "app/handlers"),
-                path.join(__dirname, "app/handlers/nested")
+                //path.join(__dirname, "app/handlers/nested")
             ]
         });
         
         //adding multiple times should not cause any issue
-        muneem._addHandlers(path.join(__dirname, "app/handlers"));
+        //muneem._addHandlers(path.join(__dirname, "app/handlers"));
 
         const routesManager = muneem.routesManager;
         
@@ -26,7 +26,19 @@ describe ('Muneem directory loader', () => {
             to: "main"
         });
 
-        var request  = new MockReq({
+        muneem.route({
+            uri: "/testNested",
+            to: "nested.nested"
+        });
+
+        expect( () => {
+            muneem.route({
+                uri: "/testNotAHandler",
+                to: "not-a-handler"
+            });
+        }).toThrowError("Unregistered handler not-a-handler");
+
+        var request1  = new MockReq({
             url: '/test'
         });
 
@@ -37,7 +49,22 @@ describe ('Muneem directory loader', () => {
             expect(response1.statusCode ).toEqual(200);
             done();
         });
-        routesManager.router.lookup(request,response1);
+
+        routesManager.router.lookup(request1, response1);
+
+        var request2  = new MockReq({
+            url: '/testNested'
+        });
+
+        var response2 = new MockRes();
+
+        response2.on('finish', function() {
+            expect(response2._getString() ).toEqual("from nested");
+            expect(response2.statusCode ).toEqual(200);
+            done();
+        });
+
+        routesManager.router.lookup(request2, response2);
     });
 
     it('should error when invalid dir path is given', () => {
@@ -49,26 +76,5 @@ describe ('Muneem directory loader', () => {
         }).toThrow();
 
     });
-
-    it('should error when a handler don\'t have name field', () => {
-        
-        const muneem = Muneem();
-        
-        expect(() => {
-            muneem._addHandlers(path.join(__dirname, "app/invalidhandlers/handlers"));
-        }).toThrowError("A handler should have property 'name'.");
-
-    });
-
-    it('should error when invalid handler', () => {
-        
-        const muneem = Muneem();
-        
-        expect(() => {
-            muneem._addHandlers(path.join(__dirname, "app/invalidhandlers/invalid"));
-        }).toThrowError("Invalid handler invalid");
-
-    });
-    
 
 });
