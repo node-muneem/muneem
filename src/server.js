@@ -58,15 +58,15 @@ function networkErrHandler(err,port,host,server) {
 const defaultOptions = {
     port : 3002,
     host : "0.0.0.0",
-    generateUniqueReqId : false
+    requestId : false
 }
 function Server(options, requestResponseHandler, eventEmitter){
     this.options = Object.assign({},defaultOptions,options);
     var reqId = () => {};
-    if(typeof this.options.generateUniqueReqId === "function"){
-        reqId = this.options.generateUniqueReqId;
-    }else if(this.options.generateUniqueReqId === true){
-        reqId = uniqid;
+    if(typeof this.options.requestId === "function"){
+        reqId = this.options.requestId;
+    }else if(this.options.requestId === true){
+        reqId = new Date().getTime;
     }
     options = this.options;
     this.eventEmitter = eventEmitter;
