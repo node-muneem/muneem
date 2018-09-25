@@ -119,8 +119,8 @@ Muneem.prototype.addToAsked = function(methodName, fn ){
 
 /**
  * add("route", object)
- * add("handler", object | function, name)
- * add("resource", object | function, name)
+ * add("handler", name, object | function)
+ * add("resource", name, object | function)
  * 
  * @param {string} type 
  * @param {any} handler 
@@ -134,11 +134,11 @@ Muneem.prototype.add = function(type, handler, _name  ){
     type = type.toLowerCase();
     
     if(type === "handler"){
-        this.containers.handlers.add(_name ,handler);
+        this.containers.handlers.add(handler, _name);
     }else if(type === "route"){
         this.routesManager.addRoute(handler);
     }else if(type === "resource"){
-        this.addToStore(_name, handler);
+        this.addToStore(handler, _name);
     }else {
         throw Error("Please provide valid handler type");
     }

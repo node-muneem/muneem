@@ -6,8 +6,8 @@ A request handler can be added in 3 ways;
 const muneem = Muneem({
     handlers : "path/for/request/handlers",
 })
-muneem.add("handler", fn, "nameOfTheService");
-muneem.addHandler("nameOfTheService", fn);
+muneem.add("handler", "name", fn);
+//muneem.addHandler("name", fn);
 
  muneem.start();
 ```

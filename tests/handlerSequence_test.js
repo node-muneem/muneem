@@ -66,19 +66,19 @@ describe ('Routes Manager', () => {
 
         let blocks = [];
 
-        muneem.add( "Handler",  () => {blocks.push("auth")} , "auth") ;
-        muneem.add( "Handler",  () => {
+        muneem.add( "Handler",  "auth", () => {blocks.push("auth")} ) ;
+        muneem.add( "Handler", "parallel",  () => {
             setTimeout(() => {
                 blocks.push("parallel");
                 expect(blocks).toEqual([ 'auth', 'main', 'post', 'last', 'parallel' ]);
                 done();
             });
-        }, "parallel") ;
-        muneem.add( "Handler",  async (asked,answer) => {
+        }) ;
+        muneem.add( "Handler", "main",  async (asked,answer) => {
             blocks.push("main")
-        } , "main") ;
-        muneem.add( "Handler",  () => {blocks.push("post")}, "post" );
-        muneem.add( "Handler",  () => {blocks.push("last")} , "last") ;
+        } ) ;
+        muneem.add( "Handler", "post",  () => {blocks.push("post")} );
+        muneem.add( "Handler", "last",  () => {blocks.push("last")} ) ;
 
         const routesManager = muneem.routesManager;
         
