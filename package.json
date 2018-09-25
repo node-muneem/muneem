@@ -13,12 +13,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/muneem4node/muneem.git"
+    "url": "https://github.com/node-muneem/muneem.git"
   },
   "bugs": {
-    "url": "https://github.com/muneem4node/muneem/issues"
+    "url": "https://github.com/node-muneem/muneem/issues"
   },
-  "homepage": "https://github.com/muneem4node/muneem",
+  "homepage": "https://github.com/node-muneem/muneem",
   "keywords": [
     "REST",
     "HTTP",
@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "accept": "^3.0.2",
-    "anumargak": "^1.8.1",
+    "anumargak": "^1.9.4",
     "pump": "^3.0.0",
     "uniqid": "^4.1.1",
     "yamljs": "^0.3.0"
