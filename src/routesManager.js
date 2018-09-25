@@ -111,6 +111,7 @@ RoutesManager.prototype.addRoute = function(route){
                     this.eventEmitter.emit("fatBody",asked,answer);
                 }
             })
+            asked.stream.headers = nativeRequest.headers; // So that custom plugins don't need native request
             nativeRequest.pipe(asked.stream);
         }
 
