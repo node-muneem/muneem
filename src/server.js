@@ -66,7 +66,7 @@ function Server(options, requestResponseHandler, eventEmitter){
     if(typeof this.options.requestId === "function"){
         reqId = this.options.requestId;
     }else if(this.options.requestId === true){
-        reqId = new Date().getTime;
+        reqId = () => new Date().getTime();
     }
     options = this.options;
     this.eventEmitter = eventEmitter;
