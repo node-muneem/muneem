@@ -9,7 +9,7 @@ function HttpAsked(request,params,context){
     this.stream = request;
     this.context = context;
     this.body =[];
-    this.url = this._native._url;
+    this.path = this._native._path;
     this.queryStr = this._native._queryStr;
     this.hashStr = this._native.hashStr;
 
