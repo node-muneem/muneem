@@ -18,7 +18,7 @@ HttpAnswer.prototype.length = function(len){
 }
 
 HttpAnswer.prototype.answered = function(){
-    return this._native.finished;
+    return this.answeredFlag || this._native.finished;
 }
 
 HttpAnswer.prototype.skip = function(num){
@@ -106,7 +106,7 @@ HttpAnswer.prototype.close = function(code, reason){
 HttpAnswer.prototype.end = function(){
     this.chain.skip = -1;
     if(this.answered()){
-        logger.log.warn("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
+        logger.log.warn("This response has been rejected as the client has already been answered. Reason: " + this.answeredReason);
     }else{
         let code,type,length,reason;
 
@@ -149,12 +149,14 @@ HttpAnswer.prototype.end = function(){
             this._native.statusCode = this._statusCode;
             setHeaders(this._native, this);
             if( isStream(this.data) ){
+                console.log("pumping")
                 pump(this.data, this._native);
             }else{
                 this._native.end(this.data ,this.encoding);
             }
             this.eventEmitter.emit("afterAnswer",this._for);
         }
+        this.answeredFlag = true;
         logger.log.debug(`Request Id:${this._for.id} has been answered`);
     }
 }
@@ -194,8 +196,10 @@ HttpAnswer.prototype.redirectTo = function(loc){
 }
 
 HttpAnswer.prototype.resourceNotFound = function(){
+    console.log("HttpAnswer.prototype.resourceNotFound")
     this.eventEmitter.emit("route-not-found-notify", this._for);
     this.eventEmitter.emit("route-not-found-handler", this._for, this);
+    console.log("after: HttpAnswer.prototype.resourceNotFound")
 }
 
 HttpAnswer.prototype.error = function(err){
