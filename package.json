@@ -44,7 +44,7 @@
     "istanbul": "^0.4.5"
   },
   "dependencies": {
-    "anumargak": "^1.9.4",
+    "anumargak": "^1.9.5",
     "pump": "^3.0.0",
     "yamljs": "^0.3.0"
   },
