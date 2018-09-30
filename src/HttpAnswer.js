@@ -107,6 +107,7 @@ HttpAnswer.prototype.end = function(){
     this.chain.skip = -1;
     if(this.answered()){
         logger.log.warn("This response has been rejected as the client has already been answered. Reason: " + this.answeredReason);
+        logger.log.warn("You should handle this case grasefully otherwise the socket will hung up everytime");
     }else{
         let code,type,length,reason;
 

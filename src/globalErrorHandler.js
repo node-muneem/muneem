@@ -15,3 +15,6 @@ process.on('uncaughtException', function(err) {
 process.on('unhandledRejection', (reason, p) => {
     logger.log.error(reason,'Unhandled Rejection at Promise');
 });
+
+//uncommented for debugging only
+//process.on('warning', e => console.warn(e.stack));
