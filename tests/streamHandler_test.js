@@ -9,43 +9,6 @@ const Muneem = require("../src/muneem")
 
 describe ('Muneem', () => {
 
-    it('should error when the length of incoming stream is more than allowed', (done) => {
-        
-        const muneem = Muneem();
-
-        muneem.addHandler("fileUploader", (asked,answer) => {
-            fileWritableStream = fs.createWriteStream(path.resolve(__dirname, "filename"));
-            asked.stream.pipe(fileWritableStream);
-        }) ;
-
-        const routesManager = muneem.routesManager;
-        routesManager.addRoute({
-            uri: "/test",
-            when: "POST",
-            to: "fileUploader",
-            maxLength: 5
-        });
-
-        var request = new MockReq({
-            method: 'POST',
-            url: '/test'
-        });
-
-        var response = new MockRes();
-
-        response.on('finish', function() {
-            expect(response._getString() ).toEqual("");
-            expect(response.statusCode ).toEqual(413);
-            //expect(response.statusMessage ).toEqual("request entity too large");
-            done();
-        });
-        routesManager.router.lookup(request,response);
-
-        request.write("data sent in request");
-        request.end()
-
-    });
-
     it('should error when Internal server error', (done) => {
         
         const muneem = Muneem();

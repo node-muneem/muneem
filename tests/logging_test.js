@@ -12,9 +12,9 @@ describe ('Muneem', () => {
     });
 
     it('should log as per set logger', (done) => {
-        var expctedLogs = `info : Adding after event defaultRoute
-info : Adding after event fatBody
-info : Adding after event error
+        var expctedLogs = `info : Adding custom route not found handler.
+info : Adding custom fat body handler.
+info : Adding custom error handler.
 info : Adding event before serverClose
 info : Adding a method justForTest to HttpAnswer
 debug : Request Id:undefined {"when":"GET","uri":"/test","to":"main","maxLength":1000000}

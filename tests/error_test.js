@@ -13,6 +13,10 @@ describe ('Routes Manager', () => {
             throw Error("some error");
         } ) ;
 
+        muneem.on( "error", (err, asked) => {
+            expect(err.message).toEqual("some error")
+        } ) ;
+
         const routesManager = muneem.routesManager;
         
         routesManager.addRoute({
@@ -28,6 +32,46 @@ describe ('Routes Manager', () => {
 
         response.on('finish', function() {
             expect(response.statusCode ).toEqual(500);
+            done();
+        });
+        
+        routesManager.router.lookup(request,response);
+
+    });
+
+    it('should handle unexpected error using custom handler', (done) => {
+        
+        const muneem = Muneem();
+        muneem.addHandler("main", (asked,answer) => {
+            throw Error("some error");
+        } ) ;
+
+        muneem.on( "error", (err, asked) => {
+            expect(err.message).toEqual("some error")
+        } ) ;
+
+        muneem.setErrorHandler( (err, asked, answer) => {
+            expect(err.message).toEqual("some error")
+            answer.write("Internal server error");
+            answer.end(200);
+        } ) ;
+
+        const routesManager = muneem.routesManager;
+        
+        routesManager.addRoute({
+            uri: "/test",
+            to: "main"
+        });
+
+        var request  = new MockReq({
+            url: '/test'
+        });
+
+        var response = new MockRes();
+
+        response.on('finish', function() {
+            expect(response.statusCode ).toEqual(200);
+            expect(response._getString() ).toEqual("Internal server error");
             done();
         });
         

@@ -109,7 +109,7 @@ muneem.after("serverClose", (  asked, answer ) => {
 
 * exceedContentLengthn, or fatBody: this event is triggered when the request stream is more than expected.
 ```JavaScript
-muneem.after("fatBody", (asked, answer ) => {
+muneem.after("fatBody", (asked ) => {
     //..
 })
 ```
@@ -130,14 +130,14 @@ muneem.after("serverClose", ( ) => {
 
 * routeNotFound : when no matching route is found
 ```JavaScript
-muneem.after("routeNotFound", ( asked, answer ) => {
+muneem.after("routeNotFound", ( asked ) => {
     //..
 })
 ```
 
 * error : on error
 ```JavaScript
-muneem.after("error", ( error, asked, answer ) => {
+muneem.after("error", ( error, asked ) => {
     //..
 })
 ```

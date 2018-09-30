@@ -101,14 +101,16 @@ RoutesManager.prototype.addRoute = function(route){
         
         if(asked.contentLength > route.maxLength){
             logger.log.debug(`Request Id:${asked.id} Calling __exceedContentLength handler`);
-            this.eventEmitter.emit("fatBody", asked, answer);
+            this.eventEmitter.emit("fat-body-notify", asked);
+            this.eventEmitter.emit("fat-body-handler", asked, answer);
             return;
         }else if(mayHaveBody){
             asked.stream = new StreamMeter({
                 maxLength : context.route.maxLength,
                 errorHandler : () => {
                     logger.log.debug(`Request Id:${asked.id} Calling __exceedContentLength handler`);
-                    this.eventEmitter.emit("fatBody",asked,answer);
+                    this.eventEmitter.emit("fat-body-notify", asked);
+                    this.eventEmitter.emit("fat-body-handler", asked, answer);
                 }
             })
             asked.stream.headers = nativeRequest.headers; // So that custom plugins don't need native request
@@ -117,7 +119,8 @@ RoutesManager.prototype.addRoute = function(route){
 
         const that = this;
         nativeRequest.on('error', function(err) {
-            that.eventEmitter.emit("error", err, asked, answer);
+            that.eventEmitter.emit("error-notify", err, asked);
+            that.eventEmitter.emit("error-handler", err, asked, answer);
         });
 
         this.eventEmitter.emit("route",asked,answer);
@@ -134,8 +137,9 @@ RoutesManager.prototype.addRoute = function(route){
 
             answer.end();	
 
-        }catch(e){
-            this.eventEmitter.emit("error", e, asked,answer);
+        }catch(err){
+            that.eventEmitter.emit("error-notify", err, asked);
+            that.eventEmitter.emit("error-handler", err, asked, answer);
         }
     })//router.on ends
 
@@ -192,13 +196,14 @@ function RoutesManager(appContext,containers,eventEmitter, store){
     this.router = require('anumargak')( {
         ignoreTrailingSlash: true,
         //maxParamLength: appContext.maxParamLength || 100,
-        defaultRoute : (nativeRequest,nativeResponse) =>{
-            const asked = new HttpAsked(nativeRequest,null,{
-                route : defaultRouteConfig,
+        defaultRoute : (nativeRequest, nativeResponse) =>{
+            const asked = new HttpAsked(nativeRequest, null, {
+                //route : defaultRouteConfig,
                 app : appContext
             });
             const answer = new HttpAnswer(nativeResponse,asked,this.containers,this.eventEmitter);
-            this.eventEmitter.emit("defaultRoute", asked, answer);
+            this.eventEmitter.emit("route-not-found-notify", asked);
+            this.eventEmitter.emit("route-not-found-handler", asked, answer);
         }
     } );
 }

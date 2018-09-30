@@ -49,3 +49,37 @@ muneem.addHandler("paymentService", (asked, answer, giveMe ) => {
     //..
 })
 ```
+
+### Default Handlers
+
+#### Route not found handler
+This handler is invoked when the requested route (combination of URL and method) is not registered.
+
+```JavaScript
+muneem.setRouteNotFoundHandler( (asked, answer) => {
+    //..
+} );
+```
+
+#### Error handler
+This handler is invoked when an unexpected error is thrown.
+
+```JavaScript
+muneem.setErrorHandler( (err, asked, answer) => {
+    //..
+} );
+```
+
+#### Fat Body handler
+This handler is invoked when request length is larger than defined length.
+
+```JavaScript
+const muneem = new Muneem({
+    maxLength : 1e6 //default 1e6
+})
+muneem.setFatBodyHandler( (asked, answer) => {
+    //..
+} );
+```
+
+Maximum length can be specified at route level as well.

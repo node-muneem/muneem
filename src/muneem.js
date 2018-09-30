@@ -26,11 +26,43 @@ Muneem.setLogger = function(logger){
 
 Muneem.prototype.registerDefaultHandlers = function(){
     this.checkIfNotStarted();    
-    this.on("defaultRoute", require("./defaultHandlers/defaultRoute") );
-    this.on("fatBody", require("./defaultHandlers/exceedContentLengthHandler") );
-    this.on("error", require("./defaultHandlers/exceptionHandler") );
+    this.setRouteNotFoundHandler( require("./defaultHandlers/defaultRoute") );
+    this.setFatBodyHandler( require("./defaultHandlers/exceedContentLengthHandler") );
+    this.setErrorHandler( require("./defaultHandlers/exceptionHandler") );
 }
 
+/**
+ * Add custom error handler
+ * @param {function} fn 
+ */
+Muneem.prototype.setErrorHandler = function( fn ){
+    this.checkIfNotStarted();
+    Muneem.logger.log.info("Adding custom error handler.");
+    this.eventEmitter.removeAllListeners("error-handler");
+    this.eventEmitter.on("error-handler", fn);
+}
+
+/**
+ * Add custom resource/route not found handler
+ * @param {function} fn 
+ */
+Muneem.prototype.setRouteNotFoundHandler = function( fn ){
+    this.checkIfNotStarted();
+    Muneem.logger.log.info("Adding custom route not found handler.");
+    this.eventEmitter.removeAllListeners("route-not-found-handler");
+    this.eventEmitter.on("route-not-found-handler", fn);
+}
+
+/**
+ * Add custom exceed content length or fat body handler
+ * @param {function} fn 
+ */
+Muneem.prototype.setFatBodyHandler = function( fn ){
+    this.checkIfNotStarted();
+    Muneem.logger.log.info("Adding custom fat body handler.");
+    this.eventEmitter.removeAllListeners("fat-body-handler");
+    this.eventEmitter.on("fat-body-handler", fn);
+}
 
 const defaultOptions = {
     alwaysReadRequestPayload: false,
@@ -252,16 +284,15 @@ Muneem.prototype.after = function(eventName, callback){
     }else if( eventNameInLower === "route"){
         Muneem.logger.log.warn("Security warning: Handler registered for 'route' event can read request before any other handler which may contain sensitive information.");
     }else if( eventNameInLower === "exceedcontentlength" || eventNameInLower === "fatbody"){
-        eventName = "fatBody"
-        //this.eventEmitter.removeAllListeners(eventName);
+        eventName = "fat-body-notify"
     }else if( eventNameInLower === "send" || eventNameInLower === "answer" || eventNameInLower === "response" ){
         eventName = "afterAnswer";
     }else if( eventNameInLower === "close" || eventNameInLower === "serverclose"){
         eventName = "afterServerClose";
     }else if( eventNameInLower === "routenotfound" || eventNameInLower === "missingmapping" || eventNameInLower === "defaultroute"){
-        eventName = "defaultRoute";
+        eventName = "route-not-found-notify";
     }else if(eventNameInLower === "error"){
-        //this.eventEmitter.removeAllListeners("error");    
+        eventName = "error-notify";
     }else{
         this._addAfterHandlers(eventNameInLower,callback);
         return this;
