@@ -70,11 +70,18 @@ HttpAnswer.prototype.write = function(data,type,length, safe){
 }
 
 HttpAnswer.prototype.close = function(code, reason){
+    if(typeof code === 'string'){
+        reason = code;
+        code = null
+    }
     this.chain.skip = -1;
     if(this.answered()){
         logger.log.warn("This response has been rejected as client has already been answered. Reason: " + this.answeredReason);
     }else{
         this.answeredReason = reason;
+        if(code){
+            this._native.statusCode = code;
+        }
         this._native.end( '', this.encoding );
 
         logger.log.debug(`Request Id:${this._for.id} has been closed`);
