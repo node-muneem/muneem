@@ -96,3 +96,16 @@ answer.skip(2);
 ```js
 answer.redirectTo(location);
 ```
+
+**error** : This method invokes error handler.
+
+```js
+answer.error(new Error());
+```
+
+**resourceNotFound** : This method invokes route not found handler
+
+```js
+answer.resourceNotFound(new Error());
+```
+

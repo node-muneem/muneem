@@ -193,6 +193,16 @@ HttpAnswer.prototype.redirectTo = function(loc){
     this._native.end("");
 }
 
+HttpAnswer.prototype.resourceNotFound = function(){
+    this.eventEmitter.emit("route-not-found-notify", this._for);
+    this.eventEmitter.emit("route-not-found-handler", this._for, this);
+}
+
+HttpAnswer.prototype.error = function(err){
+    this.eventEmitter.emit("error-notify", err, this._for);
+    this.eventEmitter.emit("error-handler", err, this._for, this);
+}
+
 function HttpAnswer(res,asked,containers,eventEmitter){
     this.containers = containers;
     this._for = asked;
