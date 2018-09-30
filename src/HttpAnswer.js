@@ -138,7 +138,9 @@ HttpAnswer.prototype.end = function(){
         } 
 
         if( ! this.answered() ){
-            this._native.writeHead(this._statusCode, this._headers);
+            //this.writeHeads(this._statusCode, this._headers);
+            this._native.statusCode = this._statusCode;
+            setHeaders(this._native, this);
             if( isStream(this.data) ){
                 pump(this.data, this._native);
             }else{
@@ -147,6 +149,14 @@ HttpAnswer.prototype.end = function(){
             this.eventEmitter.emit("afterAnswer",this._for);
         }
         logger.log.debug(`Request Id:${this._for.id} has been answered`);
+    }
+}
+
+function setHeaders(nativeResponse, wrapper){
+    const headers = Object.keys( wrapper._headers );
+
+    for(let i=0; i< headers.length; i++){
+        nativeResponse.setHeader( headers[i],  wrapper._headers[ headers[i] ]);
     }
 }
 
