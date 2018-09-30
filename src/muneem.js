@@ -117,6 +117,12 @@ function Muneem(options){
         const server = new Server(options.server, this.routesManager.router, this.eventEmitter);
         server.start();
         this.state = "started";
+
+        var eventNames = this.eventEmitter.eventNames();
+        Muneem.logger.log.info("Number of events registered");
+        for( var i in  eventNames){
+            Muneem.logger.log.info( eventNames[i] ," \t: ", this.eventEmitter.listenerCount( eventNames[i] ) )
+        }
     }
     
     this.addToStore = function(_name, resource, safe){
