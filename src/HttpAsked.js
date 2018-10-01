@@ -20,6 +20,10 @@ function HttpAsked(request,params,context){
     }
 }
 
+HttpAsked.prototype.cookie = function(){
+    return this.headers.cookie;
+}
+
 HttpAsked.prototype.readBody = async function(){
     if(this._mayHaveBody === false || this.contentLength === 0) return;
     else if(this.body && this.body.length > 0) return this.body;

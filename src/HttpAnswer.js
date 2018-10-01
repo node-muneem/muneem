@@ -34,21 +34,18 @@ HttpAnswer.prototype.getHeader = function(name){
     return this._headers[name.toLowerCase()];
 }
 
-/* HttpAnswer.prototype.setCookie = function(val){
-    if (this._headers['set-cookie']) {
-        this._headers['set-cookie'] = [this._headers['set-cookie']].concat(val);
-      } else {
-        this._headers['set-cookie'] = val
-      }
-} */
-
-HttpAnswer.prototype.setHeader = function(name,val){
-    name = name.toLowerCase();
-    if (this._headers[name] && name === 'set-cookie') {
-        this._headers[name] = [this._headers[name]].concat(val);
+HttpAnswer.prototype.cookie = function(val){
+    if (this._headers['set-cookie'] ) {
+        this._headers['set-cookie'] = [ this._headers['set-cookie'] ].concat(val);
     } else {
-        this._headers[name] = val
+        this._headers['set-cookie'] = val
     }
+}
+
+
+HttpAnswer.prototype.setHeader = function(name, val){
+    name = name.toLowerCase();
+    this._headers[name] = val;
 }
 
 HttpAnswer.prototype.removeHeader = function(name){

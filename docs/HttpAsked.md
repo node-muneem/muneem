@@ -10,6 +10,24 @@ HttpAsked is the wrapper on original HTTP request instance. This is passed as fi
 
 **headers** : Request header parameters map.
 
+**cookie** : return cookie header value. The value should be parsed to get the value of specific cookie. 
+
+```js
+asked.cookie();
+```
+
+You can use some external library for parsing. Eg
+
+```js
+var cookie = require('cookie');
+
+muneem.add("handler", (asked, answer) => {
+    var cookies = cookie.parse( asked.cookie() );
+    console.log( cookies["foo"] );
+    //..
+});
+```
+
 **query** : Query parameters map.
 
 **_native** : Native request. You should avoid to use it, use *stream* instead.

@@ -28,7 +28,24 @@ var contentLength = answer.length();
 answer.getHeader("header-name");
 ```
 
-**setHeader** : set header parameter value. Header name is case insensitive and overwrite privious value. However for header `set-cookie` this function put the values in an array instead of overriding previous value.
+**cookie** : Set cookie header value. The value should be serialized with all attributes, like path, domain, expiry time etc. 
+
+```js
+answer.cookie("sessionToken=abc123; Expires=Wed, 09 Jun 2021 10:18:14 GMT");
+```
+
+You can use some external library for serialization. Eg
+
+```js
+var cookie = require('cookie');
+
+muneem.add("handler", (asked, answer) => {
+    //..
+    answer.cookie( cookie.serialize(name, val, attributes) );
+});
+```
+
+**setHeader** : set header parameter value. Header name is case insensitive and overwrite privious value.
 
 ```js
 answer.setHeader("header-name", value);
