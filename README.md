@@ -1,4 +1,7 @@
 # मुनीम (Muneem)
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/node-muneem/muneem.svg)](https://greenkeeper.io/)
+
 Simple and fast web framework designed not only for developers but QAs, Maintainers, BAs, and DevOps.
 
 <img align="left" alt="Muneem Logo" src="./static/muneem.png" width="180px" />
