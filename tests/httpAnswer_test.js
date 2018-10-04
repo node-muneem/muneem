@@ -72,13 +72,13 @@ describe ('HttpAnswer', () => {
     it('should set,get, cookie headers', () => {
         const answer = new HttpAnswer();
 
-        expect(answer.getHeader("set-cookie")).toEqual(undefined);
+        expect(answer.cookie()).toEqual(undefined);
 
-        answer.setHeader("Set-Cookie", "choco-flavoured")
-        expect(answer.getHeader("set-cookie")).toEqual("choco-flavoured");
+        answer.cookie("choco-flavoured");
+        expect(answer.cookie()).toEqual("choco-flavoured");
         
-        answer.setHeader("set-cookie", "vanilla-flavoured")
-        expect(answer.getHeader("set-cookie")).toEqual(["choco-flavoured","vanilla-flavoured"]);
+        answer.cookie("vanilla-flavoured");
+        expect(answer.cookie()).toEqual(["choco-flavoured","vanilla-flavoured"]);
     });
 
     it('should set string data with content type and length', () => {
