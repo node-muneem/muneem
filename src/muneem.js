@@ -238,7 +238,16 @@ function isHandler(fullPath){
 
 Muneem.prototype.route = function(route){
     this.checkIfNotStarted();
-    this.routesManager.addRoute(route);
+    if( Array.isArray(route) ){
+        for(let index=0;index<route.length;index++){
+            this.routesManager.addRoute(route[index]);
+        }
+    }else{
+        this.routesManager.addRoute(route);
+    }
+    
+
+    
     return this;
 }
 
@@ -360,7 +369,7 @@ Muneem.prototype._addBeforeHandlers = function(handlerType, fn){
     }else if( handlerType === "main" || handlerType === "mainhandler"){
         this.routesManager.beforeMainHandler.push(fn);
     }else{
-        throw Error("You've provided an invalid event name");
+        throw Error(`You've provided an invalid event name: ${handlerType}`);
     }
 }
 
@@ -376,7 +385,7 @@ Muneem.prototype._addAfterHandlers = function(handlerType, fn){
     }else if( handlerType === "main" || handlerType === "mainhandler"){
         this.routesManager.afterMainHandler.push(fn);
     }else{
-        throw Error("You've provided an invalid event name");
+        throw Error(`You've provided an invalid event name: ${handlerType}`);
     }
 }
 
