@@ -35,7 +35,9 @@ HttpAnswer.prototype.getHeader = function(name){
 }
 
 HttpAnswer.prototype.cookie = function(val){
-    if (this._headers['set-cookie'] ) {
+    if(!val){
+        return this._headers['set-cookie'];
+    }else if (this._headers['set-cookie'] ) {
         this._headers['set-cookie'] = [ this._headers['set-cookie'] ].concat(val);
     } else {
         this._headers['set-cookie'] = val
