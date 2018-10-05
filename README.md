@@ -3,7 +3,7 @@ Simple and fast web framework designed not only for developers but QAs, Maintain
 
 <img align="left" alt="Muneem Logo" src="./static/muneem.png" width="180px" />
 
-मुनीम (Muneem) is the web framework developed in nodejs. It is designed with the aim of easy & rapid delopment, small learning curve, distributed development, fast services, proper documentation, easy bug discovery and providing the best solution not only for developers but all the team members.
+मुनीम (Muneem) is the web framework developed in nodejs. It is designed with the aim of easy & rapid development, small learning curve, distributed development, fast services, proper documentation, easy bug discovery and providing the best solution not only for developers but all the team members.
 
 > Your contribution will help us to grow fast
 
