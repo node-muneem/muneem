@@ -75,9 +75,11 @@ const mayHaveBody = ["POST", "PUT", "DELETE", "OPTION"] */
  * @param {object} route
  */
 RoutesManager.prototype.addRoute = function(route){
+    
     if(route.in && route.in.indexOf(profile) === -1) return; //skip mapping for other environments
     
     route =  Object.assign({},defaultRouteConfig,route);
+
 
     const context = {
         app: this.appContext,
@@ -135,7 +137,7 @@ RoutesManager.prototype.addRoute = function(route){
                 if(answer.chain.skip === -1) break;
             }
 
-            answer.end();	
+            if( !answer.answered() ) answer.end();
 
         }catch(err){
             that.eventEmitter.emit("error-notify", err, asked);
