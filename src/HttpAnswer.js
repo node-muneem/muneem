@@ -190,8 +190,7 @@ const isStream = function(data){
 
 HttpAnswer.prototype.redirectTo = function(loc){
     this._headers['location'] = loc;
-    setHeaders(this._native, this);
-    this.close(302, "redirecting");
+    this.end(302, "redirecting");
 }
 
 HttpAnswer.prototype.resourceNotFound = function(){
