@@ -16,7 +16,7 @@ Please check [अनुमार्गक (anumargak)](https://github.com/node-m
 ```
 
 ```JavaScript
-const muneem = Muneem({
+const app = Muneem({
     mappings : "path/for/routes/mappings",
 }).start();
 ```
@@ -24,13 +24,13 @@ const muneem = Muneem({
 You can also add routes from the code.
 
 ```JavaScript
-const muneem = Muneem();
+const app = Muneem();
 //Add request handlers
-muneem.addHandler("paymentService", (asked, answer, giveMe) => {
+app.addHandler("paymentService", (asked, answer, giveMe) => {
     answer.write("I'm a fake service");
 });
 //Add route
-muneem.route({
+app.route({
     uri: "/this/is/the/uri",
     when: ["POST", "PUT"], //default: GET
     to: "paymentService",
@@ -38,17 +38,17 @@ muneem.route({
     then: [ "cache-in" , "compress" ],
     in: "dev" //environment
 })
-muneem.start();
+app.start();
 ```
 
 serviceName, authentication , cache-out, cache-in , and compress in above mappings are the name of request handlers. They can be registered with some name and that name can be used as a reference in route mapping. You can also map a handler without registering it. 
 
 ```JavaScript
-const muneem = Muneem();
+const app = Muneem();
 var paymentService = (asked, answer, giveMe) => {
     answer.write("I'm a fake service");
 }
-muneem.route({
+app.route({
     uri: "/this/is/the/uri",
     when: ["POST", "PUT"], //default: GET
     to: paymentService,
@@ -56,25 +56,25 @@ muneem.route({
     then: [ "cache-in" , "compress" ],
     in: "dev" //environment
 })
-muneem.start();
+app.start();
 ```
 
-All the request handlers can be added in 2 ways: either by code as above or from some file
+You can also pass an array of routes. Eg
 
 ```JavaScript
-Muneem({
-    mappings : "path/for/routes/mappings",
-    handlers : "path/for/handlers"
-}).start();
+app.route([{
+    uri : "/logout",
+    to : logoutHandler,
+},{
+    uri : "/login",
+    to : loginHandler,
+},{
+    uri : "/public/url",
+    to : publicPageProvider,
+},{
+    uri : "/private/url",
+    to : privatePageProvider,
+    after: authentication
+}]);
 ```
-
-Handler file : A valid js file with `//@handler`
-
-```JavaScript
-//..
-//@handler   
-
-module.exports = (asked,answer) => {
-    //..
-}
-```
+Please note that a request handler should bre registered before registering a route. A [request handler](Handler.md) can be added either through code or from file system.

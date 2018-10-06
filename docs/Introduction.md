@@ -39,11 +39,12 @@ const muneem = new Muneem({
 If you need you can add shared resources to the store that you can access in request handlers;
 
 ```JavaScript
-const muneem = new Muneem();
+const app = new Muneem();
 
-muneem.addToStore("logger", logger);
+app.add("resource", "logger", logger);
+//app.addToStore("logger", logger);
 
-muneem.addHandler("paymentService", (asked, answer, giveMe ) => {
+app.addHandler("paymentService", (asked, answer, giveMe ) => {
     //..
     const logger = giveMe("logger");
     //..
@@ -56,7 +57,7 @@ muneem.addHandler("paymentService", (asked, answer, giveMe ) => {
 This handler is invoked when the requested route (combination of URL and method) is not registered.
 
 ```JavaScript
-muneem.setRouteNotFoundHandler( (asked, answer) => {
+app.setRouteNotFoundHandler( (asked, answer) => {
     //..
 } );
 ```
@@ -65,7 +66,7 @@ muneem.setRouteNotFoundHandler( (asked, answer) => {
 This handler is invoked when an unexpected error is thrown.
 
 ```JavaScript
-muneem.setErrorHandler( (err, asked, answer) => {
+app.setErrorHandler( (err, asked, answer) => {
     //..
 } );
 ```
@@ -74,10 +75,10 @@ muneem.setErrorHandler( (err, asked, answer) => {
 This handler is invoked when request length is larger than defined length.
 
 ```JavaScript
-const muneem = new Muneem({
+const app = new Muneem({
     maxLength : 1e6 //default 1e6
 })
-muneem.setFatBodyHandler( (asked, answer) => {
+app.setFatBodyHandler( (asked, answer) => {
     //..
 } );
 ```

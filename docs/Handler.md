@@ -3,13 +3,13 @@
 A request handler can be added from file system or from code;
 
 ```JavaScript
-const muneem = Muneem({
+const app = Muneem({
     handlers : "path/for/request/handlers",
 })
-muneem.add("handler", "name", fn);
-//muneem.addHandler("name", fn);
+app.add("handler", "name", fn);
+//app.addHandler("name", fn);
 
- muneem.start();
+ app.start();
 ```
 
 A handler accepts 3 arguments: [HttpAsked](HttpAsked.md), [HttpAnswer](HttpAnswer.md), Store.
@@ -22,5 +22,17 @@ module.exports = async (asked, answer, giveMe) => {
     var db = giveMe("mongo"); //shared resources
     //..
     anwser.writeJson( data );//response back
+}
+```
+
+A handler added from the file system should have `//@handler`, which helps to differentiate other code from request handlers
+
+```JavaScript
+//@handler   
+
+//.. some code 
+
+module.exports = (asked,answer) => {
+    //..
 }
 ```
