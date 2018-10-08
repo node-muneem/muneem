@@ -30,7 +30,7 @@ muneem.start();
 
 Muneem allows to add routes and request handlers from the code as well as from the file system. 
 
-Routes added using yaml mapping files are redable can be understood and managed by non-developers;
+Routes added using yaml mapping files are readable and can be understood and managed by non-developers;
 
 ```yaml
 #Scenario: this is the sample route
