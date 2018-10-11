@@ -17,15 +17,14 @@ describe ('HTTPS server', () => {
     it('should work as expected.', (done) => {
         const muneem = Muneem({
             mappings : path.join(__dirname , "app/mappings/"),
-            server  : {
-                port: 3005,
-                https : buildSecureServerConfig()
-            }
         });
 
         buildServer(muneem);
 
-        muneem.start();
+        muneem.start({
+            port: 3005,
+            https : buildSecureServerConfig()
+        });
 
         chai.request("https://localhost:3005")
             .get('/test')

@@ -123,18 +123,38 @@ function Muneem(options){
             Muneem.logger.log.info("Server has already been started");
             return;
         } */
-        
-        if(options.server){
-            appContext.http2 = options.http2;
-            appContext.https = options.https !== undefined ? true : false;
+        var serverOptions = {};
+        if(arguments.length > 0){
+            if( typeof arguments[0] === 'object') {
+                serverOptions = arguments[0];
+                if( arguments[2]){ //callback
+                    this.on( "start", arguments[3] );
+                }
+
+                appContext.http2 = serverOptions.http2;
+                appContext.https = serverOptions.https !== undefined ? true : false;
+            }else{
+                serverOptions.port = arguments[0];
+                if( arguments[1] && typeof arguments[1] !== "function"){
+                    serverOptions.host = arguments[1];
+                }
+                if( arguments[2] && typeof arguments[2] !== "function"){
+                    serverOptions.backlog = arguments[2];
+                }
+                if( arguments[3] ){//callback
+                    this.on( "start", arguments[3] );
+                }
+            }
         }
+
+        
     
         //routes must be added when all type of handlers and events are added
         //hence adding at the time of starting the server.
         if(options.mappings){
             this.routesManager.addRoutesFromMappingsFile(options.mappings);
         }
-        const server = new Server(options.server, this.routesManager.router, this.eventEmitter);
+        const server = new Server(serverOptions, this.routesManager.router, this.eventEmitter);
         server.start();
         this.state = "started";
 

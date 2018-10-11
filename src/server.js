@@ -7,10 +7,20 @@ Server.prototype.start = function(){
         http2 : this.options.http2,
         https : this.secure
     });
-    this.server.listen(this.options.port, this.options.host, () => {
-        this.eventEmitter.emit('afterServerStart');
-        console.log("Cool DOWN server is UP on host " + this.options.host + " at port " + this.options.port);
-    });
+    if(this.options.backlog){
+
+        this.server.listen(this.options.port, this.options.host, this.options.backlog, () => {
+            this.eventEmitter.emit('afterServerStart');
+            console.log("Cool DOWN server is UP on host " + this.options.host + " at port " + this.options.port);
+        });
+    }else{
+
+        this.server.listen(this.options.port, this.options.host, () => {
+            this.eventEmitter.emit('afterServerStart');
+            console.log("Cool DOWN server is UP on host " + this.options.host + " at port " + this.options.port);
+        });
+    }
+
 }
 
 /* const events = {
@@ -33,7 +43,6 @@ Server.prototype.close = function(){
     this.eventEmitter.emit('serverClose');
     this.server.close();
     this.eventEmitter.emit('afterServerClose');
-
 }
 
 function networkErrHandler(err,port,host,server) {

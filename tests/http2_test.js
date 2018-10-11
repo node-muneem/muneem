@@ -12,15 +12,14 @@ describe ('HTTP2', () => {
 
         const muneem = Muneem({
             mappings : path.join(__dirname , "app/mappings/"),
-            server : {
-                port: 3003,
-                http2 : true
-            }
         });
         
         buildServer(muneem);
 
-        muneem.start();
+        muneem.start({
+            port: 3003,
+            http2 : true
+        });
 
         const res = await h2url.request({
             method: "POST",
@@ -38,16 +37,15 @@ describe ('HTTP2', () => {
         
         const muneem = Muneem({
             mappings : path.join(__dirname , "app/mappings/"),
-            server : {
-                port: 3004,
-                http2 : true,
-                https : buildSecureServerConfig()
-            }
         });
         
         buildServer(muneem);
 
-        muneem.start();
+        muneem.start({
+            port: 3004,
+            http2 : true,
+            https : buildSecureServerConfig()
+        });
 
         const res = await h2url.request({
             method: "POST",

@@ -40,7 +40,6 @@ describe ('Muneem server', () => {
     })
 
     muneem.start({
-        //TODO: test if new id is being set
         generateUniqueReqId : true,
         maxHeadersCount : 5
     });
@@ -78,9 +77,9 @@ describe ('Muneem server', () => {
             .set("header3","value3")
             .set("header4","value4")
             .set("header5","value5")
-            .set("header6","value6")
+            .set("header6","value6") //will be skipped
             .then(res => {
-                expect(res.status).toBe(500);
+                expect(res.status).toBe(200);
                 done();
             }).catch( err => {
                 done.fail("not expected " + err);
@@ -107,25 +106,19 @@ describe ('Muneem server', () => {
 
     //TODO: assert
      it('should error back when port is not accessible', () => {
-        const muneem = Muneem({
-            server : {
-                port: 8  
-            }
-        });
+        const muneem = Muneem();
 
-        muneem.start();
+        muneem.start(8);
         //EACCES: Permission denied to use port 8
     });
 
     //TODO: assert
     it('should error back when invalid host', () => {
-        const muneem = Muneem({
-            server : {
-                host : "invalid"    
-            }
-        });
+        const muneem = Muneem();
 
-        muneem.start();
+        muneem.start({
+            host : "invalid" 
+        });
         //ENOTFOUNDEADDRNOTAVAILD: Host "invalid" is not available.
     });
 

@@ -14,11 +14,7 @@ const Muneem = require("../src/muneem");
 
 describe ('fatBody custom handler', () => {
 
-    const muneem = Muneem({
-        server  : {
-            port: 3006,
-        }
-    });
+    const muneem = Muneem();
 
     muneem.addHandler("main", async (asked,answer) => {
         await asked.readBody();
@@ -49,7 +45,7 @@ describe ('fatBody custom handler', () => {
         maxLength: 20
     });
 
-    muneem.start();
+    muneem.start(3006);
 
     it('should 500 on big body.', (done) => {
 
