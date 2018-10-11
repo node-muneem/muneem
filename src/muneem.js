@@ -136,15 +136,17 @@ function Muneem(options){
                 appContext.http2 = serverOptions.http2;
                 appContext.https = serverOptions.https !== undefined ? true : false;
             }else{
-                serverOptions.port = arguments[0];
-                if( arguments[1] && typeof arguments[1] !== "function"){
-                    serverOptions.host = arguments[1];
-                }
-                if( arguments[2] && typeof arguments[2] !== "function"){
-                    serverOptions.backlog = arguments[2];
-                }
-                if( arguments[3] ){//callback
-                    this.on( "start", arguments[3] );
+                
+                for( let index =0 ; index < arguments.length ; index++ ){
+                    if( typeof arguments[index] === 'function') { //callback
+                        this.on( "start", arguments[index] );
+                    }else if( index === 0){
+                        serverOptions.port = arguments[0];
+                    }else if( index === 1){
+                        serverOptions.host = arguments[1];
+                    }else if( index === 2){
+                        serverOptions.backlog = arguments[2];
+                    }
                 }
             }
         }
@@ -168,9 +170,9 @@ function Muneem(options){
         _store[_name] = resource;
     }
 
-    this.get = function(_name){
+    /* this.get = function(_name){ //get is http method
         return _store[_name] ;
-    }
+    } */
 }
 
 function logEventDetails(emitter){
