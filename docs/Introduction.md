@@ -17,7 +17,8 @@ You can add routes, request handlers, resources and event callbacks. Route and h
 const app = new Muneem({
     handlers : "path/of/handlers/directory", //or an array
     mappings : "path/of/mappings/file_or_directory", //or an array
-    maxLength : 1e6 //default 1e6
+    maxLength : 1e6, //default 1e6
+    requestId : false, //true, false, a function to generate unique request id
 });
 
 app.start({
@@ -25,7 +26,6 @@ app.start({
     port : 3377, //default : 3002
     http2 : false, //default : false
     https : httpsOptions,
-    requestId : false, //default : false
     maxHeadersCount : 5,
     //backlog: 511, //maximum length of the queue of pending connections
 });

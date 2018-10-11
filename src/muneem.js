@@ -123,7 +123,9 @@ function Muneem(options){
             Muneem.logger.log.info("Server has already been started");
             return;
         } */
-        var serverOptions = {};
+        var serverOptions = {
+            requestId : options.requestId
+        };
         if(arguments.length > 0){
             if( typeof arguments[0] === 'object') {
                 serverOptions = arguments[0];
@@ -146,11 +148,8 @@ function Muneem(options){
                 }
             }
         }
-
-        
     
         //routes must be added when all type of handlers and events are added
-        //hence adding at the time of starting the server.
         if(options.mappings){
             this.routesManager.addRoutesFromMappingsFile(options.mappings);
         }
