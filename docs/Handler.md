@@ -14,7 +14,7 @@ app.add("handler", "name", fn);
 
 A handler accepts 3 arguments: [HttpAsked](HttpAsked.md), [HttpAnswer](HttpAnswer.md), Store.
 
-A store is the collection of shared resources which can be added as `app.addToStore("name", resource)`.
+A store is the collection of shared resources which can be added as `app.set("name", resource)`.
 
 ```JavaScript
 module.exports = async (asked, answer, giveMe) => {

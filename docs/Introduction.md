@@ -46,8 +46,7 @@ If you need you can add shared resources to the store that you can access in req
 ```JavaScript
 const app = new Muneem();
 
-app.add("resource", "logger", logger);
-//app.addToStore("logger", logger);
+app.set("logger", logger);
 
 app.addHandler("paymentService", (asked, answer, giveMe ) => {
     //..

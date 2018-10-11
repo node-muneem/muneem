@@ -11,7 +11,7 @@ export.modules = function(muneem, globalOptions){
 
     muneem.addToAnswer("writeXXX", () => {});
     muneem.addToAsked("readXXX", () => {});
-    muneem.addToStore("printer", printerInstance);
+    muneem.set("printer", printerInstance);
     //muneem.on("eventName", () => {});
     muneem.after("eventName", () => {});
     muneem.before("eventName", () => {});

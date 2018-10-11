@@ -7,8 +7,8 @@ describe ('Muneem store', () => {
     it('should return saved resources', (done) => {
         
         const muneem = Muneem();
-        muneem.addToStore("str", "amit gupta");
-        muneem.addToStore("obj", {
+        muneem.set("str", "amit gupta");
+        muneem.set("obj", {
             get : () => "an object"
         });
 

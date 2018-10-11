@@ -161,11 +161,15 @@ function Muneem(options){
         
     }
     
-    this.addToStore = function(_name, resource, safe){
+    this.set = function(_name, resource, safe){
         this.checkIfNotStarted();
         if( _store[ _name] && safe) throw ApplicationSetupError(`You're trying to overwrite a resource ${_name}`);
         Muneem.logger.log.info("Adding a resource " + _name);
         _store[_name] = resource;
+    }
+
+    this.get = function(_name){
+        return _store[_name] ;
     }
 }
 
@@ -220,8 +224,6 @@ Muneem.prototype.add = function(type, handler, _name  ){
         this.containers.handlers.add(handler, _name);
     }else if(type === "route"){
         this.routesManager.addRoute(handler);
-    }else if(type === "resource"){
-        this.addToStore(handler, _name);
     }else {
         throw Error("Please provide valid handler type");
     }
