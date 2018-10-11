@@ -8,6 +8,8 @@ const fs = require("fs");
 const path = require("path");
 var merge = require('merge-descriptors');
 var appEvents = require('./appEvents');
+var http = require('http')
+var httpMethods = http.METHODS;
 
 var events = require('events');
 require("./globalErrorHandler");
@@ -102,6 +104,20 @@ function Muneem(options){
         this.state = "closed";
     });
 
+    //add methods to register a route directly with httpMethods
+    for (var index in httpMethods) {
+        const methodName = httpMethods[index];
+        const methodNameInSmall = methodName.toLowerCase();
+      
+        this[methodNameInSmall] = function (url, fn) {
+          return this.routesManager.addRoute({
+              when : methodName,
+              url : url,
+              to : fn
+          });
+        }
+    }
+
     this.start = function(){//a plugin should not know server configuration
         /* if(this.state === "started"){
             Muneem.logger.log.info("Server has already been started");
@@ -122,23 +138,26 @@ function Muneem(options){
         server.start();
         this.state = "started";
 
-        logEventDetails( this.eventEmitter.eventNames() );
+        logEventDetails( this.eventEmitter );
         
     }
     
-    function logEventDetails(eventNames){
-        Muneem.logger.log.info("Registered events");
-        Muneem.logger.log.info("----------------------------------------");
-        for( var i in  eventNames){
-            Muneem.logger.log.info( eventNames[i] ," \t: ", this.eventEmitter.listenerCount( eventNames[i] ) )
-        }
-    }
+    
 
     this.addToStore = function(_name, resource, safe){
         this.checkIfNotStarted();
         if( _store[ _name] && safe) throw ApplicationSetupError(`You're trying to overwrite a resource ${_name}`);
         Muneem.logger.log.info("Adding a resource " + _name);
         _store[_name] = resource;
+    }
+}
+
+function logEventDetails(emitter){
+    const eventNames = emitter.eventNames();
+    Muneem.logger.log.info("Registered events");
+    Muneem.logger.log.info("----------------------------------------");
+    for( var i in  eventNames){
+        Muneem.logger.log.info( eventNames[i] ," \t: ", emitter.listenerCount( eventNames[i] ) )
     }
 }
 

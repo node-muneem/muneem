@@ -1,6 +1,14 @@
 # Route Mapping
 
-You can define the route mapping in a separate yaml file (recommend) as they are easy to read, understand, and manage.
+Just like other web framework, a route can be registered by calling HTTP method on app instance;
+
+```js
+const app = Muneem();
+app.get("this/is/the/url", (req,res) => {
+    //..
+});
+```
+Unlike other frameworks, you can define the route mapping in a separate yaml file (recommended) as they are easy to read, understand, and manage.
 
 Please check [अनुमार्गक (anumargak)](https://github.com/node-muneem/anumargak) for more detail about url syntax.
 
@@ -41,18 +49,26 @@ app.route({
 app.start();
 ```
 
-serviceName, authentication , cache-out, cache-in , and compress in above mappings are the name of request handlers. They can be registered with some name and that name can be used as a reference in route mapping. You can also map a handler without registering it. 
+serviceName, authentication , cache-out, cache-in , and compress in above mappings are the name of request handlers. They can be registered with some name and that name can be used as a reference in route mapping. 
+
+If you're adding a route from the code, you need not to register the handler. 
 
 ```JavaScript
 const app = Muneem();
 var paymentService = (asked, answer, giveMe) => {
     answer.write("I'm a fake service");
 }
+var authentication = (asked, answer, giveMe) => {
+    answer.write("I'm a fake service");
+}
+//..
 app.route({
     url: "/this/is/the/url",
     when: ["POST", "PUT"], //default: GET
-    to: paymentService,
-    after: [ "authentication" , "cache-out" ],
+    to: (asked, answer, giveMe) => {
+        answer.write("I'm a fake service");
+    },
+    after: [ authentication , "cache-out" ],
     then: [ "cache-in" , "compress" ],
     in: "dev" //environment
 })
@@ -77,4 +93,5 @@ app.route([{
     after: authentication
 }]);
 ```
-Please note that a request handler should bre registered before registering a route. A [request handler](Handler.md) can be added either through code or from file system.
+
+Please note that a request handler should be registered/declared before adding a route. You can add a [request handler](Handler.md) from the file system as well.
