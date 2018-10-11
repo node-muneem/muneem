@@ -6,6 +6,8 @@ const HttpAsked = require("./HttpAsked");
 const ApplicationSetupError = require("./ApplicationSetupError");
 const fs = require("fs");
 const path = require("path");
+var merge = require('merge-descriptors');
+var appEvents = require('./appEvents');
 
 var events = require('events');
 require("./globalErrorHandler");
@@ -71,6 +73,8 @@ const defaultOptions = {
 function Muneem(options){
     if(!(this instanceof Muneem)) return new Muneem(options);
 
+    merge(this, appEvents, false);
+
     this.state = "created";
     options = options || {};
     const appContext =  Object.assign({},defaultOptions);
@@ -118,13 +122,18 @@ function Muneem(options){
         server.start();
         this.state = "started";
 
-        var eventNames = this.eventEmitter.eventNames();
-        Muneem.logger.log.info("Number of events registered");
+        logEventDetails( this.eventEmitter.eventNames() );
+        
+    }
+    
+    function logEventDetails(eventNames){
+        Muneem.logger.log.info("Registered events");
+        Muneem.logger.log.info("----------------------------------------");
         for( var i in  eventNames){
             Muneem.logger.log.info( eventNames[i] ," \t: ", this.eventEmitter.listenerCount( eventNames[i] ) )
         }
     }
-    
+
     this.addToStore = function(_name, resource, safe){
         this.checkIfNotStarted();
         if( _store[ _name] && safe) throw ApplicationSetupError(`You're trying to overwrite a resource ${_name}`);
@@ -245,9 +254,6 @@ Muneem.prototype.route = function(route){
     }else{
         this.routesManager.addRoute(route);
     }
-    
-
-    
     return this;
 }
 
@@ -260,134 +266,6 @@ Muneem.prototype.afterHandler = function(name,fn){
     this.routesManager.afterHandler.add(name,fn);
 } */
 
-Muneem.prototype.on = function(eventName, callback){
-    this.checkIfNotStarted();
-    return this.after(eventName, callback);
-};
-/**
- * Supported Events
- * 
- * addRoute : just after the route is added; args: route context
- * serverStart, start : just after server starts; 
- * request : before route; raw request, raw response
- * route : before all handlers; asked, answer
- * exceedContentLengthn, fatBody; asked, answer
- * send, answer, response : After sending the response; asked, answer, isStream
- * serverclose, close : just before server's close is triggered
- * routeNotFound : when no matching route is found
- * error : on error
- * @param {string} eventName 
- * @param {function} callback 
- */
-
-Muneem.prototype.after = function(eventName, callback){
-    this.checkIfNotStarted();
-    var eventNameInLower = eventName;
-    if(!eventName || !callback) {
-        throw Error("Please provide the valid parameters");
-    }else{
-        Muneem.logger.log.info(`Adding after event ${eventName}`);
-        eventNameInLower = eventNameInLower.replace(/-/g,"");
-        eventNameInLower = eventNameInLower.toLowerCase();
-    }
-
-    if( eventNameInLower === "serverstart" || eventNameInLower === "start" ){
-        Muneem.logger.log.warn(`Security warning: Handler registered for '${eventName}' event can read server's host, and port.`);
-        eventName = "afterServerStart"
-    }else if( eventNameInLower === "request"){
-        Muneem.logger.log.warn("Security warning: Handler registered for 'request' event can read raw request which may contain sensitive information.");
-    }else if( eventNameInLower === "route"){
-        Muneem.logger.log.warn("Security warning: Handler registered for 'route' event can read request before any other handler which may contain sensitive information.");
-    }else if( eventNameInLower === "exceedcontentlength" || eventNameInLower === "fatbody"){
-        eventName = "fat-body-notify"
-    }else if( eventNameInLower === "send" || eventNameInLower === "answer" || eventNameInLower === "response" ){
-        eventName = "afterAnswer";
-    }else if( eventNameInLower === "close" || eventNameInLower === "serverclose"){
-        eventName = "afterServerClose";
-    }else if( eventNameInLower === "routenotfound" || eventNameInLower === "missingmapping" || eventNameInLower === "defaultroute"){
-        eventName = "route-not-found-notify";
-    }else if(eventNameInLower === "error"){
-        eventName = "error-notify";
-    }else{
-        this._addAfterHandlers(eventNameInLower,callback);
-        return this;
-    }
-    this.eventEmitter.on(eventName,callback);
-    return this;
-}
-
-/**
- * Supported Events
- * 
- * addRoute : just before the route is added; args: route context
- * serverStart, start : just before server starts; 
- * send, answer, response : Before sending the response
- * serverClose, close : just before server's close is triggered
- * 
- * @param {string} eventName 
- * @param {function} callback 
- */
-Muneem.prototype.before = function(eventName, callback){
-    this.checkIfNotStarted();
-    var eventNameInLower = eventName;
-    if(!eventName || !callback) {
-        throw Error("Please provide the valid parameters");
-    }else{
-        Muneem.logger.log.info(`Adding event before ${eventName}`);
-        eventNameInLower = eventNameInLower.replace(/-/g,"");
-        eventNameInLower = eventNameInLower.toLowerCase();
-    }
-
-    if( eventNameInLower === "addroute"){
-        Muneem.logger.log.warn(`Security warning: Handler registered for '${eventName}' event can know the name and sequence of handlers and the configuration for any route.`);
-    }else if( eventNameInLower === "route"){//request event is triggered before route
-        eventName = "request";
-    }else if( eventNameInLower === "serverstart" || eventNameInLower === "start"){
-        eventName = "beforeserverstart";
-    }else if( eventNameInLower === "send" || eventNameInLower === "answer" || eventNameInLower === "response"){
-        eventName = "beforeAnswer";
-    }else if( eventNameInLower === "close" || eventNameInLower === "serverclose"){
-        eventName = "beforeServerClose";
-    }else{
-        this._addBeforeHandlers(eventNameInLower,callback);
-        return this;
-    }
-
-    this.eventEmitter.on(eventName,callback);
-    return this;
-}
-
-Muneem.prototype._addBeforeHandlers = function(handlerType, fn){
-    if( handlerType === "pre" || handlerType === "prehandler"  ){
-        this.routesManager.beforeEachPreHandler.push(fn);
-    }else if( handlerType === "post"  || handlerType === "posthandler" ){
-        this.routesManager.beforeEachPostHandler.push(fn);
-    }else if( handlerType === "each"  || handlerType === "eachhandler"){
-        this.routesManager.beforeEachPreHandler.push(fn);
-        this.routesManager.beforeEachPostHandler.push(fn);
-        this.routesManager.beforeMainHandler.push(fn);
-    }else if( handlerType === "main" || handlerType === "mainhandler"){
-        this.routesManager.beforeMainHandler.push(fn);
-    }else{
-        throw Error(`You've provided an invalid event name: ${handlerType}`);
-    }
-}
-
-Muneem.prototype._addAfterHandlers = function(handlerType, fn){
-    if( handlerType === "pre" || handlerType === "prehandler"  ){
-        this.routesManager.afterEachPreHandler.push(fn);
-    }else if( handlerType === "post"  || handlerType === "posthandler" ){
-        this.routesManager.afterEachPostHandler.push(fn);
-    }else if( handlerType === "each"  || handlerType === "eachhandler"){
-        this.routesManager.afterEachPreHandler.push(fn);
-        this.routesManager.afterEachPostHandler.push(fn);
-        this.routesManager.afterMainHandler.push(fn);
-    }else if( handlerType === "main" || handlerType === "mainhandler"){
-        this.routesManager.afterMainHandler.push(fn);
-    }else{
-        throw Error(`You've provided an invalid event name: ${handlerType}`);
-    }
-}
 
 Muneem.prototype.checkIfNotStarted = function(){
     if(this.state === "started")

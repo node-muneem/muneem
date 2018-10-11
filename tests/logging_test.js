@@ -15,26 +15,88 @@ describe ('Muneem', () => {
         var expctedLogs = `info : Adding custom route not found handler.
 info : Adding custom fat body handler.
 info : Adding custom error handler.
-info : Adding event before serverClose
+info : Adding event before 'serverClose'
+info : Adding after event 'route'
+warn : Handler registered for 'route' event can access route configuration.
+info : Adding after event 'start'
+info : Adding after event 'request'
+warn : Handler registered for 'request' event can access raw request.
+info : Adding after event 'fatBody'
+info : Adding after event 'send'
+info : Adding after event 'close'
+info : Adding after event 'routeNotFound'
+info : Adding after event 'error'
+info : Adding event before 'addRoute'
+warn : Security warning: Handler registered for 'addRoute' event can know the name and sequence of handlers and the configuration for any route.
+info : Adding event before 'route'
+warn : Handler registered for before 'route' event can access raw request.
+info : Adding event before 'start'
+warn : Handler registered for 'start' event can read server related information. Like: host, port etc.
+info : Adding event before 'send'
+info : Adding event before 'close'
+info : Adding after event 'pre'
+info : Adding after event 'post'
+info : Adding after event 'each'
+info : Adding after event 'main'
+info : Adding event before 'pre'
+info : Adding event before 'post'
+info : Adding event before 'each'
+info : Adding event before 'main'
 info : Adding a method justForTest to HttpAnswer
+info : before addRoute
 debug : Request Id:undefined {"when":"GET","uri":"/test","to":"main","maxLength":1000000}
+info : after route
+debug : Request Id:undefined Executing before of main
+info : before each
+info : before main
 debug : Request Id:undefined Executing handler main
+debug : Request Id:undefined Executing after of main
+info : after each
+info : after main
+info : before send
+info : after send
 debug : Request Id:undefined has been answered
 `;
         var logger = new mylogger();
         Muneem.setLogger(logger); 
 
-        const muneem = Muneem();
-        muneem.addToAnswer("justForTest", function(msg){
+        const app = Muneem();
+        app.on("route", () => { logger.info("after route"); })
+        app.on("start", () => { logger.info("after start"); })
+        app.on("request", () => { logger.info("after request"); })
+        app.on("fatBody", () => { logger.info("after fatBody"); })
+        app.on("send", () => { logger.info("after send"); })
+        app.on("close", () => { logger.info("after close"); })
+        app.on("routeNotFound", () => { logger.info("after routeNoteFound"); })
+        app.on("error", () => { logger.info("after error"); })
+
+        app.before("addRoute", () => { logger.info("before addRoute"); })
+        app.before("route", () => { logger.info("before route"); })
+        app.before("start", () => { logger.info("before start"); })
+        app.before("send", () => { logger.info("before send"); })
+        app.before("close", () => { logger.info("before close"); })
+        
+        app.on("pre", () => { logger.info("after pre"); })
+        app.on("post", () => { logger.info("after post"); })
+        app.on("each", () => { logger.info("after each"); })
+        app.on("main", () => { logger.info("after main"); })
+        
+        app.before("pre", () => { logger.info("before pre"); })
+        app.before("post", () => { logger.info("before post"); })
+        app.before("each", () => { logger.info("before each"); })
+        app.before("main", () => { logger.info("before main"); })
+        
+
+        app.addToAnswer("justForTest", function(msg){
             this.write("justforTest : " + msg);
         } );
-        muneem.addHandler("main", (asked,answer) => {
+        app.addHandler("main", (asked,answer) => {
             answer.justForTest("main");
         } ) ;
 
-        const routesManager = muneem.routesManager;
+        const routesManager = app.routesManager;
         
-        muneem.route({
+        app.route({
             uri: "/test",
             to: "main"
         });
@@ -46,6 +108,7 @@ debug : Request Id:undefined has been answered
         var response = new MockRes();
 
         response.on('finish', function() {
+            //console.log(logger.logs)
             expect(logger.logs ).toEqual(expctedLogs);
             expect(response._getString() ).toEqual("justforTest : main");
             expect(response.statusCode ).toEqual(200);

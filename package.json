@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "anumargak": "^1.9.5",
+    "merge-descriptors": "^1.0.1",
     "pump": "^3.0.0",
     "yamljs": "^0.3.0"
   },
