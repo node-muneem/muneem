@@ -10,10 +10,10 @@ HttpAsked is the wrapper on original HTTP request instance. This is passed as fi
 
 **headers** : Request header parameters map.
 
-**cookie** : return cookie header value. The value should be parsed to get the value of specific cookie. 
+**cookies** : return cookie header value. The value should be parsed to get the value of specific cookie. 
 
 ```js
-asked.cookie();
+asked.cookies;
 ```
 
 You can use some external library for parsing. Eg
@@ -40,24 +40,4 @@ muneem.add("handler", (asked, answer) => {
 await asked.readBody();
 var data = asked.data;
 //var data = await asked.readBody()
-```
-
-**context** : It contains route mappig and route specific app configuration.
-
-```js
-{
-    route : {
-        uri : "sample/uri", 
-        when : "POST", 
-        to : main, 
-        after : [ pre, handlers ], 
-        then : [ post, handlers ], 
-        in : "envName"
-    },
-    app : {
-        http2 : false,
-        https: true,
-        maxLength: 1e6
-    }
-}
 ```

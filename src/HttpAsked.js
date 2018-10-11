@@ -1,17 +1,17 @@
 var url = require('url');
 
 
-function HttpAsked(request,params,context){
+function HttpAsked(request,params){
     this.id = request.id;
     this.params = params;
     this.headers = request.headers;
     this._native = request;
     this.stream = request;
-    this.context = context;
     this.body =[];
     this.path = this._native._path;
     this.queryStr = this._native._queryStr;
     this.hashStr = this._native.hashStr;
+    this.cookies =   this.headers.cookie;
 
     if(request.headers['content-length'] !== undefined){
         this.contentLength = Number(request.headers['content-length']);
@@ -19,10 +19,10 @@ function HttpAsked(request,params,context){
         this.contentLength =  -1;
     }
 }
-
+/* 
 HttpAsked.prototype.cookie = function(){
     return this.headers.cookie;
-}
+} */
 
 HttpAsked.prototype.readBody = async function(){
     if(this._mayHaveBody === false || this.contentLength === 0) return;

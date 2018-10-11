@@ -15,6 +15,8 @@ function checkPath(filepath){
     }
 }
 
+const methodsWithoutBody = [ "GET" , "HEAD" , "UNLOCK" , "PURGE" , "COPY"];
+
 RoutesManager.prototype.addRoutesFromMappingsFile = function(filepath){
     checkPath(filepath);
     if(fs.lstatSync(filepath).isDirectory()){
@@ -58,7 +60,7 @@ RoutesManager.prototype.readRoutesFromFile = function(filepath){
  */
 RoutesManager.prototype.addRoutes = function(routes){
     for(let index=0;index<routes.length;index++){
-        this.addRoute(routes[index].route);
+        this.addRoute( routes[index].route );
     }
 }
 
@@ -80,24 +82,20 @@ RoutesManager.prototype.addRoute = function(route){
     
     route =  Object.assign({},defaultRouteConfig,route);
 
-
-    const context = {
-        app: this.appContext,
-        route: route
-    };
-    context.route.maxLength = context.route.maxLength || context.app.maxLength;
+    const routeContext = route;
+    routeContext.maxLength = route.maxLength || this.store["app context"].maxLength;
+    this.store["route context"] = routeContext;
 
     //build the chain of handlers need to run for given route
     const handlerRunners = this.extractHandlersFromRoute(route);
 
-    //read request body forcefully or as per method
-    let mayHaveBody = this.appContext.alwaysReadRequestPayload || 
-            ( route.when !== "GET" && route.when !== "HEAD" && route.when !== "UNLOCK" && route.when !== "PURGE" && route.when !== "COPY") ;
+    
+    let mayHaveBody =  methodsWithoutBody.indexOf(route.when) === -1;
 
-    this.eventEmitter.emit("addRoute", context.route);
+    this.eventEmitter.emit("addRoute", routeContext);
     this.router.on(route.when, route.url, async ( nativeRequest, nativeResponse, params ) => {
         logger.log.debug(`Request Id:${nativeRequest.id}`, route);
-        const asked = new HttpAsked(nativeRequest,params,context);
+        const asked = new HttpAsked(nativeRequest, params);
         asked._mayHaveBody = mayHaveBody;
         const answer = new HttpAnswer(nativeResponse,asked,this.containers,this.eventEmitter);
         
@@ -108,7 +106,7 @@ RoutesManager.prototype.addRoute = function(route){
             return;
         }else if(mayHaveBody){
             asked.stream = new StreamMeter({
-                maxLength : context.route.maxLength,
+                maxLength : routeContext.maxLength,
                 errorHandler : () => {
                     logger.log.debug(`Request Id:${asked.id} Calling __exceedContentLength handler`);
                     this.eventEmitter.emit("fat-body-notify", asked);
@@ -144,8 +142,6 @@ RoutesManager.prototype.addRoute = function(route){
             that.eventEmitter.emit("error-handler", err, asked, answer);
         }
     })//router.on ends
-
-    //this.eventEmitter.emit("afterAddRoute",context.route);
 }
 
 /**
@@ -184,9 +180,7 @@ RoutesManager.prototype.pushToHandlerRunners = function(handlersList, beforeHand
     }
 }
 
-function RoutesManager(appContext,containers,eventEmitter, store){
-    this.appContext = appContext || {};
-
+function RoutesManager(containers, eventEmitter, store){
     this.eventEmitter = eventEmitter;
     this.containers = containers;
     this.handlers = containers.handlers;
@@ -197,15 +191,14 @@ function RoutesManager(appContext,containers,eventEmitter, store){
 
     this.router = require('anumargak')( {
         ignoreTrailingSlash: true,
-        //maxParamLength: appContext.maxParamLength || 100,
         defaultRoute : (nativeRequest, nativeResponse) =>{
-            const asked = new HttpAsked(nativeRequest, null, {
-                //route : defaultRouteConfig,
-                app : appContext
-            });
+            const asked = new HttpAsked(nativeRequest, null);
             const answer = new HttpAnswer(nativeResponse,asked,this.containers,this.eventEmitter);
             this.eventEmitter.emit("route-not-found-notify", asked);
-            this.eventEmitter.emit("route-not-found-handler", asked, answer);
+            this.eventEmitter.emit("route-not-found-handler", asked, answer, (_name) => {
+                //TODO : log the name of the handler with the resource _name
+                return store[ _name ];
+            });
         }
     } );
 }

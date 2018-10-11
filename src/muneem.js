@@ -98,8 +98,8 @@ function Muneem(options){
     }
 
     this.registerDefaultHandlers();
-
-    this.routesManager = new RoutesManager( appContext, this.containers, this.eventEmitter, _store);
+    _store["app context"] = appContext;
+    this.routesManager = new RoutesManager( this.containers, this.eventEmitter, _store);
     this.before("serverClose", () => {
         this.state = "closed";
     });

@@ -56,6 +56,31 @@ app.addHandler("paymentService", (asked, answer, giveMe ) => {
 })
 ```
 
+Default resources you can find in store;
+
+* **route context** : route specific configuration. E.g.
+
+```js
+{
+    uri : "sample/uri", 
+    when : "POST", 
+    to : main, 
+    after : [ pre, handlers ], 
+    then : [ post, handlers ], 
+    in : "envName",
+    maxLength: 1e6
+}
+```
+
+* **app context** : app specific configuration. E.g.
+```js
+{
+    http2 : false,
+    https: true,
+    maxLength: 1e6
+}
+```
+
 ### Default Handlers
 
 #### Route not found handler
