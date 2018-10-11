@@ -6,7 +6,6 @@ const HttpAnswer = require('./HttpAnswer');
 const Runner = require('./HandlerRunner');
 const logger = require("./fakeLogger");
 const ApplicationSetupError = require('./ApplicationSetupError');
-const profile = process.env.NODE_ENV;
 var StreamMeter = require('./streamMeter');
 
 function checkPath(filepath){
@@ -78,7 +77,7 @@ const mayHaveBody = ["POST", "PUT", "DELETE", "OPTION"] */
  */
 RoutesManager.prototype.addRoute = function(route){
     
-    if(route.in && route.in.indexOf(profile) === -1) return; //skip mapping for other environments
+    if(route.in && route.in.indexOf(this.store["app context"].env ) === -1) return; //skip mapping for other environments
     
     route =  Object.assign({},defaultRouteConfig,route);
 

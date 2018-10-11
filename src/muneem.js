@@ -69,8 +69,8 @@ Muneem.prototype.setFatBodyHandler = function( fn ){
 }
 
 const defaultOptions = {
-    alwaysReadRequestPayload: false,
-    maxLength: 1e6
+    maxLength: 1e6,
+    env : process.env.NODE_ENV || 'dev',
 }
 function Muneem(options){
     if(!(this instanceof Muneem)) return new Muneem(options);
@@ -118,7 +118,7 @@ function Muneem(options){
         }
     }
 
-    this.start = function(){//a plugin should not know server configuration
+    this.start = function(){//plugin should not know server configuration
         /* if(this.state === "started"){
             Muneem.logger.log.info("Server has already been started");
             return;
@@ -161,8 +161,6 @@ function Muneem(options){
         
     }
     
-    
-
     this.addToStore = function(_name, resource, safe){
         this.checkIfNotStarted();
         if( _store[ _name] && safe) throw ApplicationSetupError(`You're trying to overwrite a resource ${_name}`);

@@ -77,7 +77,8 @@ Default resources you can find in store;
 {
     http2 : false,
     https: true,
-    maxLength: 1e6
+    maxLength: 1e6,
+    env: "dev", //process.env.NODE_ENV
 }
 ```
 
