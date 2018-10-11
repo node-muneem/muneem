@@ -30,12 +30,12 @@ describe ('Muneem server', () => {
     } ) ;
 
     muneem.route({
-        uri: "/test",
+        url: "/test",
         to: "main"
     })
 
     muneem.route({
-        uri: "/internalError",
+        url: "/internalError",
         to: "internalError"
     })
 

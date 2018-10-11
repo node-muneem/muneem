@@ -43,7 +43,7 @@ describe ('fatBody custom handler', () => {
     });
     
     muneem.route({
-        uri: "/small",
+        url: "/small",
         when: "POST",
         to: "main",
         maxLength: 20

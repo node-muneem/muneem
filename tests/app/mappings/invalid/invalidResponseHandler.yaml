@@ -1,5 +1,5 @@
 - route: 
-    uri: /multiple/stream/handlers
+    url: /multiple/stream/handlers
     when: POST
     to: main
     then: [ stream]

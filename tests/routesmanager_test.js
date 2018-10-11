@@ -80,7 +80,7 @@ describe ('RoutesManager', () => {
 
         routesManager.addRoutesFromMappingsFile(options.mappings);
         routesManager.addRoute({
-            uri: "/route/from/code",
+            url: "/route/from/code",
             to : "main"
         });
         /* routesManager.handlers.add("__defaultRoute",new Handler("__defaultRoute",(req,res)=>{

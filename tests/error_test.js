@@ -20,7 +20,7 @@ describe ('Routes Manager', () => {
         const routesManager = muneem.routesManager;
         
         routesManager.addRoute({
-            uri: "/test",
+            url: "/test",
             to: "main"
         });
 
@@ -59,7 +59,7 @@ describe ('Routes Manager', () => {
         const routesManager = muneem.routesManager;
         
         routesManager.addRoute({
-            uri: "/test",
+            url: "/test",
             to: "main"
         });
 

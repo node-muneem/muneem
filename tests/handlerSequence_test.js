@@ -36,7 +36,7 @@ describe ('Routes Manager', () => {
         
         routesManager.addRoute({
             when : "POST",
-            uri: "/test",
+            url: "/test",
             to: "main",
             after: ["auth", "parallel"],
             then: ["post", "last"]
@@ -84,7 +84,7 @@ describe ('Routes Manager', () => {
         
         muneem.add ("route", {
             when : "POST",
-            uri: "/test",
+            url: "/test",
             to: "main",
             after: ["auth", "parallel"],
             then: ["post", "last"]
@@ -132,7 +132,7 @@ describe ('Routes Manager', () => {
         
         routesManager.addRoute({
             when : "POST",
-            uri: "/test",
+            url: "/test",
             to: main,
             after: [ auth, parallel],
             then: [post, last]
@@ -187,7 +187,7 @@ describe ('Routes Manager', () => {
         
         routesManager.addRoute({
             when : "POST",
-            uri: "/test",
+            url: "/test",
             to: "main",
             after: ["auth", "stream"],
             then: ["post", "last"]
@@ -256,7 +256,7 @@ describe ('Routes Manager', () => {
         });
 
         routesManager.addRoute({
-            uri: "/test",
+            url: "/test",
             to: "main",
             when: ["POST"],
             after: ["auth", "parallel"],
@@ -311,7 +311,7 @@ describe ('Routes Manager', () => {
         });
 
         routesManager.addRoute({
-            uri: "/test",
+            url: "/test",
             to: "main",
             when: ["POST"],
             after: ["auth"],
@@ -381,7 +381,7 @@ describe ('Routes Manager', () => {
         });
 
         routesManager.addRoute({
-            uri: "/test",
+            url: "/test",
             to: "main",
             when: ["POST"],
             after: ["auth", "parallel"],
@@ -450,7 +450,7 @@ describe ('Routes Manager', () => {
         });
 
         routesManager.addRoute({
-            uri: "/test",
+            url: "/test",
             to: "main",
             when: ["POST"],
             after: ["auth", "parallel"],
@@ -501,7 +501,7 @@ describe ('Routes Manager', () => {
         const routesManager = muneem.routesManager;
         
         routesManager.addRoute({
-            uri: "/test/:param",
+            url: "/test/:param",
             to: "main",
             then: "parser"
         });

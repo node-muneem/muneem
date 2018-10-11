@@ -18,7 +18,7 @@ describe ('Routes Manager', () => {
         const routesManager = muneem.routesManager;
         
         routesManager.addRoute({
-            uri: "/test2",
+            url: "/test2",
             to: "main"
         });
 
@@ -51,7 +51,7 @@ describe ('Routes Manager', () => {
         });
         
         muneem.route({
-            uri: "/test2",
+            url: "/test2",
             to: async (asked) => {
                 await asked.readBody();
             }
@@ -85,7 +85,7 @@ describe ('Routes Manager', () => {
         const routesManager = muneem.routesManager;
         
         routesManager.addRoute({
-            uri: "/test",
+            url: "/test",
             when: "POST",
             to: "main",
             maxLength: 10

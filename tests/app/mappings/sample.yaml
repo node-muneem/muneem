@@ -1,42 +1,42 @@
 - route: 
-    uri: /without/pre/handlers
+    url: /without/pre/handlers
     when: POST
     to: main
     then: [ post ]
 
 - route: 
-    uri: /without/post/handlers
+    url: /without/post/handlers
     to: main
     after: [ auth, parallel ]
 
 - route: 
-    uri: /with/pre/post/handlers
+    url: /with/pre/post/handlers
     to: main
     after: [ auth, parallel ]
     then: [ post ]
 
 - route: 
-    uri: /without/pre/post/handlers
+    url: /without/pre/post/handlers
     #in: all
     to: main
 
 - route: 
-    uri: /in/test
+    url: /in/test
     in: test
     to: main
   
 - route: 
-    uri: /in/dev
+    url: /in/dev
     in: dev
     to: main
 
 #methods
 - route: 
-    uri: /post
+    url: /post
     to: stream
     when: POST
 
 - route: 
-    uri: /multiple/methods
+    url: /multiple/methods
     to: main
     when: ["POST" , "PUT"]

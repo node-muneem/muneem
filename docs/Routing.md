@@ -2,11 +2,11 @@
 
 You can define the route mapping in a separate yaml file (recommend) as they are easy to read, understand, and manage.
 
-Please check [अनुमार्गक (anumargak)](https://github.com/node-muneem/anumargak) for more detail about uri syntax.
+Please check [अनुमार्गक (anumargak)](https://github.com/node-muneem/anumargak) for more detail about url syntax.
 
 ```yaml
 - route: 
-    uri: /this/is/the/uri
+    url: /this/is/the/url
     when: ["POST", "PUT"] #default: GET
     to: serviceName
     after: [ authentication , cache-out ]
@@ -31,7 +31,7 @@ app.addHandler("paymentService", (asked, answer, giveMe) => {
 });
 //Add route
 app.route({
-    uri: "/this/is/the/uri",
+    url: "/this/is/the/url",
     when: ["POST", "PUT"], //default: GET
     to: "paymentService",
     after: [ "authentication" , "cache-out" ],
@@ -49,7 +49,7 @@ var paymentService = (asked, answer, giveMe) => {
     answer.write("I'm a fake service");
 }
 app.route({
-    uri: "/this/is/the/uri",
+    url: "/this/is/the/url",
     when: ["POST", "PUT"], //default: GET
     to: paymentService,
     after: [ "authentication" , "cache-out" ],
@@ -63,16 +63,16 @@ You can also pass an array of routes. Eg
 
 ```JavaScript
 app.route([{
-    uri : "/logout",
+    url : "/logout",
     to : logoutHandler,
 },{
-    uri : "/login",
+    url : "/login",
     to : loginHandler,
 },{
-    uri : "/public/url",
+    url : "/public/url",
     to : publicPageProvider,
 },{
-    uri : "/private/url",
+    url : "/private/url",
     to : privatePageProvider,
     after: authentication
 }]);

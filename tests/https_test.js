@@ -74,12 +74,12 @@ function buildServer(app){
 
     app.routesManager.addRoute({
         when : "GET",
-        uri: "/test",
+        url: "/test",
         to: "main"
     })
 
     app.routesManager.addRoute({
-        uri: "/invalid",
+        url: "/invalid",
         to: "invalid"
     })
 }

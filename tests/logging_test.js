@@ -44,7 +44,7 @@ info : Adding event before 'each'
 info : Adding event before 'main'
 info : Adding a method justForTest to HttpAnswer
 info : before addRoute
-debug : Request Id:undefined {"when":"GET","uri":"/test","to":"main","maxLength":1000000}
+debug : Request Id:undefined {"when":"GET","url":"/test","to":"main","maxLength":1000000}
 info : after route
 debug : Request Id:undefined Executing before of main
 info : before each
@@ -97,7 +97,7 @@ debug : Request Id:undefined has been answered
         const routesManager = app.routesManager;
         
         app.route({
-            uri: "/test",
+            url: "/test",
             to: "main"
         });
 

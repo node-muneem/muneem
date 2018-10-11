@@ -22,7 +22,7 @@ describe ('Muneem', () => {
 
         const routesManager = muneem.routesManager;
         routesManager.addRoute({
-            uri: "/test",
+            url: "/test",
             when: "POST",
             to: "fileUploader",
             maxLength: 50
@@ -66,7 +66,7 @@ describe ('Muneem', () => {
 
         const routesManager = muneem.routesManager;
         routesManager.addRoute({
-            uri: "/test",
+            url: "/test",
             when: "POST",
             to: "fileUploader",
             maxLength: 50
@@ -114,7 +114,7 @@ describe ('Muneem', () => {
 
         const routesManager = muneem.routesManager;
         routesManager.addRoute({
-            uri: "/test",
+            url: "/test",
             when: "POST",
             to: "fileUploader",
             maxLength: 50
@@ -162,7 +162,7 @@ describe ('Muneem', () => {
 
         const routesManager = muneem.routesManager;
         routesManager.addRoute({
-            uri: "/test",
+            url: "/test",
             to: "fileUploader"
         });
 
@@ -209,7 +209,7 @@ describe ('Muneem', () => {
 
         const routesManager = muneem.routesManager;
         routesManager.addRoute({
-            uri: "/test",
+            url: "/test",
             to: "fileUploader",
             then: "compress"
         });

@@ -22,18 +22,18 @@ describe ('Muneem directory loader', () => {
         const routesManager = muneem.routesManager;
         
         muneem.route({
-            uri: "/test",
+            url: "/test",
             to: "main"
         });
 
         muneem.route({
-            uri: "/testNested",
+            url: "/testNested",
             to: "nested.nested"
         });
 
         expect( () => {
             muneem.route({
-                uri: "/testNotAHandler",
+                url: "/testNotAHandler",
                 to: "not-a-handler"
             });
         }).toThrowError("Unregistered handler not-a-handler");
