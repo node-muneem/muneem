@@ -10,20 +10,20 @@ HttpAsked is the wrapper on original HTTP request instance. This is passed as fi
 
 **headers** : Request header parameters map.
 
-**cookies** : return cookie header value. The value should be parsed to get the value of specific cookie. 
+**cookies** : Muneem doesn't parse cookies by default. So you can acees them from the header to parse. 
 
 ```js
-asked.cookies;
+asked.headers.cookie;
 ```
 
-You can use some external library for parsing. Eg
+You can use some external library for parsing or express middleware. Eg
 
 ```js
 var cookie = require('cookie');
 
 muneem.add("handler", (asked, answer) => {
-    var cookies = cookie.parse( asked.cookie() );
-    console.log( cookies["foo"] );
+    asked.cookies = cookie.parse( asked.headers.cookie );
+    console.log( asked.cookies["foo"] );
     //..
 });
 ```

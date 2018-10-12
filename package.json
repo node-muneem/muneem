@@ -1,6 +1,6 @@
 {
   "name": "muneem",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "Fast and simple web framework designed for all team members",
   "main": "src/muneem.js",
   "scripts": {

@@ -11,7 +11,6 @@ function HttpAsked(request,params){
     this.path = this._native._path;
     this.queryStr = this._native._queryStr;
     this.hashStr = this._native.hashStr;
-    this.cookies =   this.headers.cookie;
 
     if(request.headers['content-length'] !== undefined){
         this.contentLength = Number(request.headers['content-length']);
@@ -19,10 +18,6 @@ function HttpAsked(request,params){
         this.contentLength =  -1;
     }
 }
-/* 
-HttpAsked.prototype.cookie = function(){
-    return this.headers.cookie;
-} */
 
 HttpAsked.prototype.readBody = async function(){
     if(this._mayHaveBody === false || this.contentLength === 0) return;
