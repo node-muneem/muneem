@@ -28,6 +28,7 @@ HttpAnswer.prototype.skip = function(num){
 HttpAnswer.prototype.status = function(code){
     this._statusCode = code;
     //msg && (this._native.statusMessage = msg);
+    return this;
 }
 
 HttpAnswer.prototype.getHeader = function(name){
@@ -46,6 +47,7 @@ HttpAnswer.prototype.cookie = function(val){
 
 
 HttpAnswer.prototype.setHeader = function(name, val){
+    //if(this._native.headersSent ) throw Error(`You're late!! Headers are already sent. Can't set ${name}`)
     name = name.toLowerCase();
     this._headers[name] = val;
 }
