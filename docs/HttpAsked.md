@@ -21,20 +21,26 @@ You can use some external library for parsing or express middleware. Eg
 ```js
 var cookie = require('cookie');
 
-muneem.add("handler", (asked, answer) => {
+app.add("handler", "someName",  (asked, answer) => {
     asked.cookies = cookie.parse( asked.headers.cookie );
     console.log( asked.cookies["foo"] );
     //..
 });
 ```
 
-**query** : Query parameters map.
+**queryStr** : complete unparsed query string 
+
+**hashStr** : complete unparsed hash string 
+
+**path**: URL without query string or hash string.
 
 **_native** : Native request. You should avoid to use it, use *stream* instead.
 
 **stream** : Metered request stream.
 
-**data** : Request Body content. It'll be set when you call `readBody` method.
+**contentLength** : The value of "content-length" header. Otherwise -1.
+
+**body** : Request Body content. It'll be set to buffer when you call `readBody()` and request body is present. Otherwise it is an empty array.
 
 ```js
 await asked.readBody();

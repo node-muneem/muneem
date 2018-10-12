@@ -10,7 +10,7 @@ function HttpAsked(request,params){
     this.body =[];
     this.path = this._native._path;
     this.queryStr = this._native._queryStr;
-    this.hashStr = this._native.hashStr;
+    this.hashStr = this._native._hashStr;
 
     if(request.headers['content-length'] !== undefined){
         this.contentLength = Number(request.headers['content-length']);
