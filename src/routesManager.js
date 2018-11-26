@@ -168,7 +168,7 @@ RoutesManager.prototype.pushToHandlerRunners = function(handlersList, beforeHand
             var fName = "", reqHandler = handlersList[i];
             if(typeof reqHandler === "string"){
                 fName = handlersList[i];
-                reqHandler = this.handlers.get(reqHandler);
+                reqHandler = this.handlers.get(reqHandler.toLowerCase());
                 if(!reqHandler) throw new ApplicationSetupError(`Unregistered handler ${fName}`);
             }else{
                 fName = reqHandler.name;

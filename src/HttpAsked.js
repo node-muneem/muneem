@@ -1,6 +1,3 @@
-var url = require('url');
-
-
 function HttpAsked(request,params){
     this.id = request.id;
     this.params = params;

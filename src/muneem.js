@@ -236,7 +236,7 @@ Muneem.prototype.add = function(type, handler, _name  ){
  * Add handlers to the container which should be used by each router
  */
 Muneem.prototype.addHandler = function(name,handler){
-    this.containers.handlers.add(name,handler);
+    this.containers.handlers.add(name.toLowerCase(),handler);
     return this;
 }
 
@@ -246,6 +246,7 @@ Handler should have name,
 */
 Muneem.prototype._addHandlers = function(dir, rootDir) {
     if(!rootDir) rootDir = dir;
+    Muneem.logger.log.info("Importing handlers from ", dir);
     fs.readdirSync(dir).forEach( file => {
         //console.log(file);
         const fullPath = path.join(dir, file);
@@ -260,7 +261,7 @@ Muneem.prototype._addHandlers = function(dir, rootDir) {
         if (isJs && isHandler(fullPath)) {
             var handlerName = fullPath.substr(rootDir.length + 1).toLowerCase().replace(/\//, ".");
             handlerName = handlerName.substr(0, handlerName.length - 3);
-            console.log("registering", handlerName);
+            Muneem.logger.log.info("registering", handlerName);
             var handler = require(fullPath);
             //TODO: call an event; onHandlerLoad or something
 
@@ -277,7 +278,7 @@ Muneem.prototype._addHandlers = function(dir, rootDir) {
 function isHandler(fullPath){
     //read the file content
     const fileContent = fs.readFileSync(fullPath).toString();
-    var result = new RegExp(/\s*\/\/\s*@handler\s*$/, "gm").exec( fileContent);
+    var result = new RegExp(/\s*\/\/\s*@[hH]andler\s*$/, "gm").exec( fileContent);
     if( result ){
         return true;
     }else{
@@ -320,6 +321,7 @@ Muneem.prototype.checkIfNotStarted = function(){
 Muneem.prototype.use = function(fn, anything){
     if(typeof fn !== 'function') throw Error("The plugin you wanna use is not a function. I don't know how should I execute it.");
     fn(this, anything);
+    return this;
 }
 
 
