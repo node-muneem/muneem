@@ -1,0 +1,1 @@
+As this framework is pretty much stanble to use. We can now prepare changelogs for future releases.
