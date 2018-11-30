@@ -92,9 +92,9 @@ RoutesManager.prototype.addRoute = function(route){
     let mayHaveBody =  methodsWithoutBody.indexOf(route.when) === -1;
 
     this.eventEmitter.emit("addRoute", routeContext);
-    this.router.on(route.when, route.url, async ( nativeRequest, nativeResponse, params ) => {
+    this.router.on(route.when, route.url, async ( nativeRequest, nativeResponse, store ) => {
         logger.log.debug(`Request Id:${nativeRequest.id}`, route);
-        const asked = new HttpAsked(nativeRequest, params);
+        const asked = new HttpAsked(nativeRequest, store);
         asked._mayHaveBody = mayHaveBody;
         const answer = new HttpAnswer(nativeResponse,asked,this.containers,this.eventEmitter);
         

@@ -13,11 +13,8 @@ describe ('HttpAsked', () => {
                 "content-length" : 0
             }
         });
-        const asked = new HttpAsked(request,undefined,{
-            route: {
-                maxLength : 20
-            }
-        });
+        request._path ={};//set by anumargak
+        const asked = new HttpAsked(request);
 
         //when
         const data = await asked.readBody();
@@ -28,11 +25,8 @@ describe ('HttpAsked', () => {
 
     it('should not read request body when _mayHaveBody is set to false', async () => {
         const request = new MockReq();
-        const asked = new HttpAsked(request,undefined,{
-            route: {
-                maxLength : 20
-            }
-        });
+        request._path ={};//set by anumargak
+        const asked = new HttpAsked(request);
         asked._mayHaveBody = false;
 
         //when
@@ -46,6 +40,7 @@ describe ('HttpAsked', () => {
         const request = new MockReq({
             method: "POST"
         });
+        request._path ={};//set by anumargak
         const asked = new HttpAsked(request,undefined);
         request.write("this is request data");
         request.end();

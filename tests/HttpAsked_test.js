@@ -15,8 +15,8 @@ describe ('HttpAsked', () => {
                 "header2" : "val2"
             }
         });
-
-        const asked = new HttpAsked(request,{param: 'val'});
+        request._path ={};//set by anumargak
+        const asked = new HttpAsked(request);
 
         //then
         expect(asked.headers).toEqual({

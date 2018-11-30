@@ -1,6 +1,6 @@
 {
   "name": "muneem",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "description": "Fast and simple web framework designed for all team members",
   "main": "src/muneem.js",
   "scripts": {
@@ -35,16 +35,16 @@
     "find-my-way": "^1.11.1",
     "get-stream": "^3.0.0",
     "h2url": "^0.1.2",
+    "istanbul": "^0.4.5",
     "jasmine": "^3.1.0",
     "jasmine-core": "^3.1.0",
     "micro": "^9.1.4",
     "mock-req": "^0.2.0",
     "mock-res": "^0.5.0",
-    "nyc": "^11.6.0",
-    "istanbul": "^0.4.5"
+    "nyc": "^11.9.0"
   },
   "dependencies": {
-    "anumargak": "^1.9.5",
+    "anumargak": "^2.0.1",
     "merge-descriptors": "^1.0.1",
     "pump": "^3.0.0",
     "yamljs": "^0.3.0"

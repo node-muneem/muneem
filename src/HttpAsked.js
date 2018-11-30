@@ -1,14 +1,14 @@
-function HttpAsked(request,params){
+function HttpAsked(request, store){
     this.id = request.id;
-    this.params = params;
     this.headers = request.headers;
     this._native = request;
     this.stream = request;
     this.body =[];
-    this.path = this._native._path;
+    this.path = this._native._path.url;
+    this.params = this._native._path.params;
     this.queryStr = this._native._queryStr;
     this.hashStr = this._native._hashStr;
-
+    this.store = store;
     if(request.headers['content-length'] !== undefined){
         this.contentLength = Number(request.headers['content-length']);
     }else{
