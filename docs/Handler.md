@@ -5,6 +5,7 @@ A request handler can be added from file system or from code;
 ```JavaScript
 const app = Muneem({
     handlers : "path/for/request/handlers",
+    //services: "path/for/services",
 })
 app.add("handler", "name", fn);
 //app.addHandler("name", fn);
@@ -25,7 +26,7 @@ module.exports = async (asked, answer, giveMe) => {
 }
 ```
 
-A handler added from the file system should have `//@handler`, which helps to differentiate other code from request handlers
+A handler added from the file system should have `//@handler`, or `//@service`, which helps to differentiate other code from request handlers
 
 ```JavaScript
 //@handler   

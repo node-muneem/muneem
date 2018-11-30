@@ -87,13 +87,15 @@ function Muneem(options){
         handlers : new Container()
     }
 
-    if(options && options.handlers){//load handlers from given path(s)
-        if(Array.isArray(options.handlers)){
-            options.handlers.forEach(dir => {
+    const handlersPath = options.handlers || options.services;
+    
+    if(handlersPath){//load handlers from given path(s)
+        if(Array.isArray(handlersPath)){
+            handlersPath.forEach(dir => {
                 this._addHandlers(dir);    
             })
         }else{
-            this._addHandlers(options.handlers);
+            this._addHandlers(handlersPath);
         }
     }
 
@@ -278,7 +280,7 @@ Muneem.prototype._addHandlers = function(dir, rootDir) {
 function isHandler(fullPath){
     //read the file content
     const fileContent = fs.readFileSync(fullPath).toString();
-    var result = new RegExp(/\s*\/\/\s*@[hH]andler\s*$/, "gm").exec( fileContent);
+    var result = new RegExp(/\s*\/\/\s*@([hH]andler|[sS]ervice)\s*$/, "gm").exec( fileContent);
     if( result ){
         return true;
     }else{
