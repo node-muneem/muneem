@@ -1,6 +1,6 @@
 {
   "name": "muneem",
-  "version": "2.4.3",
+  "version": "2.4.4",
   "description": "Fast and simple web framework designed for all team members",
   "main": "src/muneem.js",
   "scripts": {
@@ -44,7 +44,7 @@
     "nyc": "^11.9.0"
   },
   "dependencies": {
-    "anumargak": "^2.0.1",
+    "anumargak": "^2.1.0",
     "merge-descriptors": "^1.0.1",
     "pump": "^3.0.0",
     "yamljs": "^0.3.0"
