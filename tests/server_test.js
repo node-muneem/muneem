@@ -69,7 +69,7 @@ describe ('Muneem server', () => {
             });
     });
 
-    it('should not allow more than 5 headers', () => {
+    it('should not allow more than 5 headers', (done) => {
         chai.request("http://localhost:3002")
             .get('/test')
             .set("header1","value1")

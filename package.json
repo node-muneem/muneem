@@ -29,22 +29,22 @@
     "fast"
   ],
   "devDependencies": {
-    "chai": "^4.1.2",
-    "chai-http": "^4.0.0",
-    "fastify": "^1.1.1",
-    "find-my-way": "^1.11.1",
+    "chai": "^4.2.0",
+    "chai-http": "^4.2.1",
+    "fastify": "^1.14.1",
+    "find-my-way": "^1.18.1",
     "get-stream": "^3.0.0",
     "h2url": "^0.1.2",
     "istanbul": "^0.4.5",
-    "jasmine": "^3.1.0",
-    "jasmine-core": "^3.1.0",
-    "micro": "^9.1.4",
+    "jasmine": "^3.3.1",
+    "jasmine-core": "^3.3.0",
+    "micro": "^9.3.3",
     "mock-req": "^0.2.0",
     "mock-res": "^0.5.0",
     "nyc": "^11.9.0"
   },
   "dependencies": {
-    "anumargak": "^2.1.0",
+    "anumargak": "^2.2.0",
     "merge-descriptors": "^1.0.1",
     "pump": "^3.0.0",
     "yamljs": "^0.3.0"
